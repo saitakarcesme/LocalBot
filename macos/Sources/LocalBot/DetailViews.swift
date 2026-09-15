@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import ImageIO
 import UserNotifications
 struct ApprovalCard: View {
     @EnvironmentObject var model: AppModel; var approval: Approval; @State var expanded = false
@@ -93,6 +94,7 @@ struct SettingsView: View {
             Text("Use 1 on an 8 GB Mac. Tasks sharing a workspace always run in sequence.").font(.caption2).foregroundStyle(.secondary)
             Toggle("Requires authentication", isOn: Binding(get: { editing?.requiresAuth ?? false }, set: { editing?.requiresAuth = $0 }))
             if editing?.requiresAuth == true { SecureField("API key — stored in macOS Keychain", text: $secret).textFieldStyle(.roundedBorder); Text("Leave blank to keep the saved key.").font(.caption2).foregroundStyle(.secondary) }
+            if editing?.kind == "ollama" { Button("Start local Ollama") { Task { guard await persist(), let p = editing else { return }; await model.post("/providers/start", ["id": p.id]); test() } }.buttonStyle(.borderless) }
             HStack { Text(healthText).font(.caption).foregroundStyle(healthText.hasPrefix("Connected") ? .green : .secondary).textSelection(.enabled); Spacer(); if testing { ProgressView().controlSize(.small) }; Button("Save & Test") { test() }.disabled(testing); Button("Save") { Task { await persist() } }.buttonStyle(.borderedProminent) }
         }
     }
@@ -100,4 +102,20 @@ struct SettingsView: View {
     func numberField(_ key: WritableKeyPath<Provider, Int>) -> Binding<Int> { Binding(get: { editing?[keyPath: key] ?? 0 }, set: { editing?[keyPath: key] = $0 }) }
     @discardableResult func persist() async -> Bool { guard let p = editing else { return false }; guard await model.save(p, path: "/providers") else { return false }; do { if !secret.isEmpty { try Keychain.save(secret, id: p.id); _ = try await model.request("/credentials", body: ["providerId": p.id, "secret": secret]); secret = "" }; healthText = "Saved"; return true } catch { model.error = error.localizedDescription; return false } }
     func test() { testing = true; Task { defer { testing = false }; guard await persist(), let p = editing else { return }; do { let h = try JSONDecoder().decode(Health.self, from: await model.request("/providers/health", body: ["id": p.id])); models = h.models; healthText = "Connected · \(h.models.count) model(s)" } catch { healthText = error.localizedDescription } } }
+}
+
+struct ArtifactPreview: View {
+    var artifact: Artifact
+    @State private var thumbnail: NSImage?
+    var body: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            if let thumbnail { Image(nsImage: thumbnail).resizable().scaledToFit().frame(maxWidth: 220, maxHeight: 160).clipShape(RoundedRectangle(cornerRadius: 10)) }
+            Label(artifact.name, systemImage: artifact.mime.hasPrefix("image/") ? "photo" : "doc").font(.callout)
+        }.padding(10).background(.quaternary, in: RoundedRectangle(cornerRadius: 10))
+            .task(id: artifact.id) {
+                guard artifact.mime.hasPrefix("image/") else { return }
+                let url = URL(fileURLWithPath: artifact.path)
+                if let source = CGImageSourceCreateWithURL(url as CFURL, nil), let image = CGImageSourceCreateThumbnailAtIndex(source, 0, [kCGImageSourceCreateThumbnailFromImageAlways: true, kCGImageSourceThumbnailMaxPixelSize: 440, kCGImageSourceCreateThumbnailWithTransform: true] as CFDictionary) { thumbnail = NSImage(cgImage: image, size: NSSize(width: image.width, height: image.height)) }
+            }
+    }
 }

@@ -39,7 +39,7 @@ enum Keychain {
         do {
             try FileManager.default.createDirectory(at: dataDir, withIntermediateDirectories: true)
             if let data = try? Data(contentsOf: dataDir.appendingPathComponent("connection.json")) { connection = try? JSONDecoder().decode(Connection.self, from: data) }
-            if let _ = try? await request("/health") { connected = true; return }
+            if let _ = try? await request("/health") { connected = true; error = nil; lastRevision = -1; return }
             if runtime?.isRunning != true {
                 let p = Process(); let resources = Bundle.main.resourceURL!
                 let bundled = resources.appendingPathComponent("node")
@@ -78,7 +78,7 @@ enum Keychain {
             if first { for p in providers { if let secret = Keychain.read(p.id) { _ = try? await request("/credentials", body: ["providerId": p.id, "secret": secret]) } } }
             if selectedId == nil { selectedId = conversations.first(where: { $0.members == ["coder"] })?.id ?? conversations.first?.id }
             await refreshConversation()
-        } catch { connected = false; self.error = error.localizedDescription }
+        } catch { connected = false }
     }
     func refreshConversation() async {
         guard let id = selectedId else { return }

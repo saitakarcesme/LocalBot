@@ -29,7 +29,7 @@ class HTTPProvider implements ModelProvider {
     const p=this.p;
     let path:string, body:any;
     if(p.kind==='ollama') {
-      path='/api/chat'; body={model:p.model,messages:messages.map(m=>({...m,tool_name:m.name,tool_calls:m.tool_calls?.map(t=>({function:{name:t.function.name,arguments:JSON.parse(t.function.arguments)}}))})),tools:tools.length?tools:undefined,stream:true,think:false,keep_alive:'60s',options:{num_ctx:p.contextLength,num_predict:p.maxTokens,temperature:p.temperature}};
+      path='/api/chat'; body={model:p.model,messages:messages.map(m=>({...m,content:m.tool_calls?.length?'':m.content,tool_name:m.name,tool_calls:m.tool_calls?.map(t=>({function:{name:t.function.name,arguments:JSON.parse(t.function.arguments)}}))})),tools:tools.length?tools:undefined,stream:true,think:false,keep_alive:'60s',options:{num_ctx:p.contextLength,num_predict:p.maxTokens,temperature:p.temperature}};
     } else if(p.kind==='openai') { path='/chat/completions'; body={model:p.model,messages,tools:tools.length?tools:undefined,stream:true,temperature:p.temperature,max_tokens:p.maxTokens}; }
     else {
       path='/messages'; const converted:any[]=[];
@@ -58,6 +58,6 @@ class HTTPProvider implements ModelProvider {
     if(!finished)throw new Error('Model connection ended before completion.');
     for(const c of calls.values()){if(!c.function.arguments)c.function.arguments='{}';try{JSON.parse(c.function.arguments);}catch{throw new Error('Model generated invalid tool arguments');}}
     if(!content.trim()&&!calls.size)throw new Error('Model returned no message or tool calls.');
-    return {content:content.replace(/<think>[\s\S]*?<\/think>/g,'').trim(),calls:[...calls.values()]};
+    return {content:content.replace(/<think>[\s\S]*?<\/think>/g,'').replace(/<\/?think>/g,'').trim(),calls:[...calls.values()]};
   }
 }

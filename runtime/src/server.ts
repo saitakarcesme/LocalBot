@@ -2,6 +2,7 @@ import { createServer, IncomingMessage, ServerResponse } from 'node:http';
 import { randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { promises as fs, readFileSync, unlinkSync } from 'node:fs';
 import { homedir } from 'node:os';
+import { spawn } from 'node:child_process';
 import { join, resolve } from 'node:path';
 import { Store } from './store.js';
 import { Engine } from './engine.js';
@@ -56,6 +57,18 @@ const server=createServer(async(req,res)=>{
     if(m==='POST'&&p==='/conversations'){const b=await body(req);if(!Array.isArray(b.members)||!b.members.length||b.members.length>8)throw new Error('Select 1–8 agents');const members=[...new Set<string>(b.members)];for(const id of members)store.agent(id);const title=String(b.title??'New Conversation').trim().slice(0,100);if(!title)throw new Error('Title is required');const c=store.createConversation(title,members);change();json(res,201,c);return;}
     if(m==='POST'&&p==='/providers'){const b=await body(req);if(!['ollama','openai','anthropic'].includes(b.kind))throw new Error('Unsupported provider');const config:ProviderConfig={id:b.id??randomUUID(),name:String(b.name??'Local Model').slice(0,80),kind:b.kind,endpoint:String(b.endpoint),model:String(b.model??'').slice(0,150),contextLength:Math.floor(bounded(b.contextLength,2048,131072,4096)),timeout:bounded(b.timeout,10,1800,180),concurrency:Math.floor(bounded(b.concurrency,1,4,1)),temperature:bounded(b.temperature,0,2,0.3),maxTokens:Math.floor(bounded(b.maxTokens,128,16000,1200)),requiresAuth:b.requiresAuth===true};validateEndpoint(config);store.saveProvider(config);change();json(res,200,config);return;}
     if(m==='POST'&&p==='/credentials'){const b=await body(req);store.provider(b.providerId);if(b.secret)engine.secrets.set(b.providerId,String(b.secret));else engine.secrets.delete(b.providerId);json(res,200,{ok:true});return;}
+    if(m==='POST'&&p==='/providers/start') {
+      const b=await body(req),config=store.provider(b.id);
+      if(config.kind!=='ollama'||!['http://127.0.0.1:11434','http://localhost:11434'].includes(config.endpoint.replace(/\/$/,'')))throw new Error('Start is available only for local Ollama on port 11434.');
+      try{await provider(config,engine.secrets.get(config.id)).health(AbortSignal.timeout(1500));json(res,200,{ok:true});return;}catch{}
+      let binary='';for(const path of ['/opt/homebrew/bin/ollama','/usr/local/bin/ollama'])try{await fs.access(path);binary=path;break;}catch{}
+      if(!binary)throw new Error('Ollama is not installed. Install it from ollama.com, then start your local model server.');
+      const log=await fs.open(join(dir,'ollama.log'),'a',0o600);
+      const child=spawn(binary,['serve'],{detached:true,stdio:['ignore',log.fd,log.fd],env:{...process.env,OLLAMA_HOST:'127.0.0.1:11434',OLLAMA_NUM_PARALLEL:'1',OLLAMA_MAX_LOADED_MODELS:'1',OLLAMA_CONTEXT_LENGTH:'4096',OLLAMA_NO_CLOUD:'1'}});
+      child.on('error',()=>{});child.unref();await log.close();
+      for(let i=0;i<30;i++){await new Promise(r=>setTimeout(r,100));try{await provider(config).health(AbortSignal.timeout(500));json(res,200,{ok:true});return;}catch{}}
+      throw new Error('Ollama did not start. Check the local Ollama log in Application Support/LocalBot.');
+    }
     if(m==='POST'&&p==='/providers/health'){const b=await body(req),config=store.provider(b.id);json(res,200,await provider(config,engine.secrets.get(config.id)).health());return;}
     if(m==='POST'&&p==='/reactions'){const b=await body(req);if(!['👀','👍','❤️','⚠️','✅','😂','❓'].includes(b.emoji))throw new Error('Invalid reaction');store.react(b.messageId,'user',b.emoji);change();json(res,200,{ok:true});return;}
     if(m==='POST'&&p==='/attachments'){const b=await body(req);if(typeof b.name!=='string'||typeof b.data!=='string')throw new Error('Invalid attachment');const data=Buffer.from(b.data,'base64');if(data.length>10_000_000)throw new Error('Attachment exceeds 10 MB');const name=b.name.replace(/[/\\]/g,'_').slice(0,150);const tmp=join(dir,'upload-'+randomUUID());await fs.writeFile(tmp,data,{mode:0o600});try{const id=await engine.artifact(tmp,null,null,name);json(res,201,store.get('SELECT * FROM artifacts WHERE id=?',id));}finally{await fs.unlink(tmp);}return;}
