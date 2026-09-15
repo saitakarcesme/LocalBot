@@ -49,7 +49,7 @@ class HTTPProvider implements ModelProvider {
       const raw=line.startsWith('data:')?line.slice(5).trim():line.trim(); if(raw==='[DONE]'){finished=true;return;}
       let d:any; try{d=JSON.parse(raw);}catch{throw new Error('Malformed model stream');}
       if(d.error)throw new Error('Model server reported an inference error.');
-      if(p.kind==='ollama') { content+=d.message?.content??''; for(const t of d.message?.tool_calls??[]){const i=calls.size;calls.set(i,{id:randomUUID(),type:'function',function:{name:t.function.name,arguments:JSON.stringify(t.function.arguments??{})}});} if(d.done)finished=true; }
+      if(p.kind==='ollama') { content+=d.message?.content??''; for(const t of d.message?.tool_calls??[]){const i=calls.size;calls.set(i,{id:randomUUID(),type:'function',function:{name:t.function.name,arguments:JSON.stringify(t.function.arguments??{})}});} if(d.done){if(d.done_reason==='length')throw new Error('Model output limit reached. Increase Max output tokens in Settings.');finished=true;} }
       else if(p.kind==='openai') { const choice=d.choices?.[0]; content+=choice?.delta?.content??''; for(const t of choice?.delta?.tool_calls??[]){const c=calls.get(t.index)??{id:t.id??randomUUID(),type:'function',function:{name:'',arguments:''}};c.function.name+=t.function?.name??'';c.function.arguments+=t.function?.arguments??'';calls.set(t.index,c);} if(choice?.finish_reason){if(choice.finish_reason==='length')throw new Error('Model output limit reached. Increase Max output tokens in Settings.');finished=true;} }
       else { if(d.type==='content_block_start'&&d.content_block?.type==='tool_use')calls.set(d.index,{id:d.content_block.id,type:'function',function:{name:d.content_block.name,arguments:''}}); if(d.type==='content_block_delta'){if(d.delta.type==='text_delta')content+=d.delta.text; if(d.delta.type==='input_json_delta'){const c=calls.get(d.index);if(c)c.function.arguments+=d.delta.partial_json;}} if(d.type==='message_stop')finished=true; if(d.type==='message_delta'&&d.delta?.stop_reason==='max_tokens')throw new Error('Model output limit reached.'); }
     };
@@ -57,7 +57,8 @@ class HTTPProvider implements ModelProvider {
     finally { await reader.cancel().catch(()=>{});reader.releaseLock(); }
     if(!finished)throw new Error('Model connection ended before completion.');
     for(const c of calls.values()){if(!c.function.arguments)c.function.arguments='{}';try{JSON.parse(c.function.arguments);}catch{throw new Error('Model generated invalid tool arguments');}}
-    if(!content.trim()&&!calls.size)throw new Error('Model returned no message or tool calls.');
+    content=content.replace(/<think>[\s\S]*?<\/think>/g,'').replace(/<\/?think>/g,'').trim();
+    if(!content&&!calls.size)throw new Error('Model returned no message or tool calls.');
     return {content:content.replace(/<think>[\s\S]*?<\/think>/g,'').replace(/<\/?think>/g,'').trim(),calls:[...calls.values()]};
   }
 }

@@ -72,10 +72,10 @@ enum Keychain {
             let s = try JSONDecoder().decode(Snapshot.self, from: await request("/snapshot")); connected = true
             guard s.revision != lastRevision else { return }
             let previous = Dictionary(uniqueKeysWithValues: tasks.map { ($0.id, $0.status) })
-            for t in s.tasks where previous[t.id] != nil && previous[t.id] != t.status && ["completed", "failed", "awaiting_approval", "awaiting_input"].contains(t.status) { notify(t) }
+            for t in s.tasks where previous[t.id] != nil && previous[t.id] != t.status && ["completed", "completed_with_errors", "failed", "awaiting_approval", "awaiting_input"].contains(t.status) { notify(t) }
             let first = lastRevision < 0
             agents = s.agents; providers = s.providers; conversations = s.conversations; tasks = s.tasks; approvals = s.approvals; lastRevision = s.revision
-            if first { for p in providers { if let secret = Keychain.read(p.id) { _ = try? await request("/credentials", body: ["providerId": p.id, "secret": secret]) } } }
+            if first { for p in providers { if let secret = Keychain.read(p.id + "@" + p.endpoint) { _ = try? await request("/credentials", body: ["providerId": p.id, "secret": secret]) } } }
             if selectedId == nil { selectedId = conversations.first(where: { $0.members == ["coder"] })?.id ?? conversations.first?.id }
             await refreshConversation()
         } catch { connected = false }

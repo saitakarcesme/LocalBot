@@ -7,7 +7,7 @@ struct ApprovalCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 9) {
             HStack { Image(systemName: "hand.raised.fill").foregroundStyle(.orange); Text("Approval needed").font(.headline); Spacer(); Button(expanded ? "Hide details" : "Review") { expanded.toggle() } }
-            Text(approval.summary).font(.system(size: 11, design: .monospaced)).lineLimit(expanded ? nil : 3).textSelection(.enabled).frame(maxHeight: expanded ? 240 : 55, alignment: .topLeading)
+            if expanded { ScrollView { Text(approval.summary).font(.system(size: 11, design: .monospaced)).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading) }.frame(height: 220) } else { Text(approval.summary).font(.system(size: 11, design: .monospaced)).lineLimit(3).textSelection(.enabled) }
             HStack { Text("Only this action will be approved.").font(.caption).foregroundStyle(.secondary); Spacer(); Button("Deny") { decide(false) }; Button("Allow once") { decide(true) }.buttonStyle(.borderedProminent) }
         }.padding(14).background(.orange.opacity(0.08), in: RoundedRectangle(cornerRadius: 12)).overlay(RoundedRectangle(cornerRadius: 12).stroke(.orange.opacity(0.25))).padding(.horizontal, 20).padding(.vertical, 5)
     }
@@ -100,7 +100,7 @@ struct SettingsView: View {
     }
     func field(_ key: WritableKeyPath<Provider, String>) -> Binding<String> { Binding(get: { editing?[keyPath: key] ?? "" }, set: { editing?[keyPath: key] = $0 }) }
     func numberField(_ key: WritableKeyPath<Provider, Int>) -> Binding<Int> { Binding(get: { editing?[keyPath: key] ?? 0 }, set: { editing?[keyPath: key] = $0 }) }
-    @discardableResult func persist() async -> Bool { guard let p = editing else { return false }; guard await model.save(p, path: "/providers") else { return false }; do { if !secret.isEmpty { try Keychain.save(secret, id: p.id); _ = try await model.request("/credentials", body: ["providerId": p.id, "secret": secret]); secret = "" }; healthText = "Saved"; return true } catch { model.error = error.localizedDescription; return false } }
+    @discardableResult func persist() async -> Bool { guard let p = editing else { return false }; guard await model.save(p, path: "/providers") else { return false }; do { if !secret.isEmpty { try Keychain.save(secret, id: p.id + "@" + p.endpoint); _ = try await model.request("/credentials", body: ["providerId": p.id, "secret": secret]); secret = "" }; healthText = "Saved"; return true } catch { model.error = error.localizedDescription; return false } }
     func test() { testing = true; Task { defer { testing = false }; guard await persist(), let p = editing else { return }; do { let h = try JSONDecoder().decode(Health.self, from: await model.request("/providers/health", body: ["id": p.id])); models = h.models; healthText = "Connected · \(h.models.count) model(s)" } catch { healthText = error.localizedDescription } } }
 }
 

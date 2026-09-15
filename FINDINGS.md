@@ -29,3 +29,5 @@
 - Reviewed workspace-aware concurrency, group context, settings, icon generation and local-model smoke script; no embedded credentials found. Snapshot only; scripts and tests not run by synchronization task.
 - Verified remote master matches concurrency and icon tooling snapshot cb2057c. Provider edits arriving during push remain for next cycle.
 - Reviewed local Ollama startup, attachment previews, reconnection handling and provider formatting; no embedded credentials found. Snapshot only; tests not run by synchronization task.
+- Verified remote master matches Ollama startup and preview snapshot 045c199.
+- Reviewed credential endpoint scoping, tool-use verification, context limits, search serialization, approval scrolling and smoke script updates; no embedded credentials found. Snapshot only; tests not run by synchronization task.
