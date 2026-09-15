@@ -2,15 +2,12 @@
   "github_sync": {
     "repository": "https://github.com/saitakarcesme/LocalBot",
     "branch": "master",
-    "updated_at": "2026-09-15T20:13:14.582908+00:00",
+    "updated_at": "2026-09-15T20:15:18.510617+00:00",
     "status": "reviewed_snapshot_ready_to_push",
     "files": [
-      "runtime/src/server.ts",
-      "runtime/tests/core.test.mjs",
-      "runtime/tests/http.test.mjs",
-      "runtime/tests/providers.test.mjs"
+      "docs/ARCHITECTURE.md"
     ],
-    "last_pushed_commit": "0d544ca41fbe98e587d5179ed572c93c8e97021f",
+    "last_pushed_commit": "b06d7766d5ac583d873d703629cfb5f6cd7bb9bd",
     "excluded_private_files": [
       "screenshots/messages-reference-dark.png"
     ]
