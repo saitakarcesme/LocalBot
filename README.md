@@ -22,7 +22,7 @@ The app never automatically switches to a cloud model. A larger local model is p
 - “Use run_tests to run npm test. Report the actual exit code.”
 - In a group: “Each member: use read_file to inspect README.md, then give your perspective.”
 
-Approval is per action. Denied or failed tools appear as failures; the task retains a warning state. The app never claims a test passed based only on a model's statement: actual command output is available separately.
+Approval is per action. Denied or failed tools appear as failures; the task retains a warning state. Tool success is based on actual exit codes, not the model's description. Inspect Activity for evidence; a model response can still be mistaken.
 
 ## Included
 

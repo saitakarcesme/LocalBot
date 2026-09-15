@@ -2,18 +2,34 @@
   "github_sync": {
     "repository": "https://github.com/saitakarcesme/LocalBot",
     "branch": "master",
-    "updated_at": "2026-09-15T20:33:48.937611+00:00",
+    "updated_at": "2026-09-15T20:35:47.586418+00:00",
     "status": "reviewed_snapshot_ready_to_push",
     "files": [
-      "macos/Sources/LocalBot/LocalBotApp.swift",
-      "screenshots/localbot-dark.png",
-      "screenshots/localbot-light.png",
-      "screenshots/localbot-narrow.png",
-      "screenshots/localbot-settings.png"
+      "README.md",
+      "docs/QA.md"
     ],
-    "last_pushed_commit": "e48f65a074addc9d9976041be1b1bc6745df7157",
+    "last_pushed_commit": "0909e170b0ff1b3c1a941930a33da6fe27926446",
     "excluded_private_files": [
       "screenshots/messages-reference-dark.png"
+    ]
+  },
+  "implementation": {
+    "status": "usable_local_release_verified",
+    "updated_at": "2026-09-15T20:34:45.206944+00:00",
+    "app": "~/Applications/LocalBot.app",
+    "tests_passed": 22,
+    "tests_failed": 0,
+    "real_model": "qwen3:1.7b",
+    "real_group_agents_verified": 4,
+    "client": "SwiftUI/AppKit",
+    "runtime": "TypeScript/Node + SQLite",
+    "qa_report": "docs/QA.md",
+    "remaining_hardware_validation": "2x RTX 3090 PC with user-specified 27B model; endpoint not provided",
+    "known_scope_limits": [
+      "MCP server launcher not shipped",
+      "Interactive browser automation not shipped",
+      "No vision inference",
+      "Not notarized for public distribution"
     ]
   }
 }

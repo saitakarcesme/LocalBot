@@ -39,3 +39,13 @@
 - Reviewed Git inspection regression test and read_file formatting; no embedded credentials found. Tests not run by synchronization task.
 - Verified remote master matches Git inspection test snapshot e48f65a.
 - Local filesystem responsiveness recovered. Reviewed scroll observer and four LocalBot screenshots containing test conversations and local settings; no credentials or personal contact data found. UI tests not run by synchronization task.
+- Verified remote master matches scroll observer and screenshot snapshot 0909e17. Previous local I/O delay resolved.
+
+## Local implementation verification
+
+- Installed runnable native application at `~/Applications/LocalBot.app`; bundled runtime reconnects to persisted SQLite history.
+- 22/22 automated tests pass. Real Ollama Qwen3 1.7B completed file write/read, shell verification and four-agent shared-model read test with correct replies.
+- Fixed an observed SwiftUI scroll feedback loop and reverified search, appearance, resize and settings in the installed app.
+- Final observed idle RSS: client about 82 MB, runtime about 25 MB; 47% system memory free, about 12 GiB disk available. Model unloaded after idle keep-alive.
+- Architecture, remote setup, UI measurements and honest test limits are in `docs/`. PC/27B hardware remains unverified.
+- Reviewed implementation verification report and README clarification for publication; no embedded credentials or private conversation data found. Test claims belong to the implementation task and were not rerun by synchronization task.
