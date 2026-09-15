@@ -1,121 +1,468 @@
-import SwiftUI
 import AppKit
 import ImageIO
+import SwiftUI
 import UserNotifications
+
 struct ApprovalCard: View {
-    @EnvironmentObject var model: AppModel; var approval: Approval; @State var expanded = false
-    var body: some View {
-        VStack(alignment: .leading, spacing: 9) {
-            HStack { Image(systemName: "hand.raised.fill").foregroundStyle(.orange); Text("Approval needed").font(.headline); Spacer(); Button(expanded ? "Hide details" : "Review") { expanded.toggle() } }
-            if expanded { ScrollView { Text(approval.summary).font(.system(size: 11, design: .monospaced)).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading) }.frame(height: 220) } else { Text(approval.summary).font(.system(size: 11, design: .monospaced)).lineLimit(3).textSelection(.enabled) }
-            HStack { Text("Only this action will be approved.").font(.caption).foregroundStyle(.secondary); Spacer(); Button("Deny") { decide(false) }; Button("Allow once") { decide(true) }.buttonStyle(.borderedProminent) }
-        }.padding(14).background(.orange.opacity(0.08), in: RoundedRectangle(cornerRadius: 12)).overlay(RoundedRectangle(cornerRadius: 12).stroke(.orange.opacity(0.25))).padding(.horizontal, 20).padding(.vertical, 5)
-    }
-    func decide(_ allow: Bool) { Task { await model.post("/approvals", ["id": approval.id, "allow": allow]) } }
+  @EnvironmentObject var model: AppModel
+  var approval: Approval
+  @State var expanded = false
+  var body: some View {
+    VStack(alignment: .leading, spacing: 9) {
+      HStack {
+        Image(systemName: "hand.raised.fill").foregroundStyle(.orange)
+        Text("Approval needed").font(.headline)
+        Spacer()
+        Button(expanded ? "Hide details" : "Review") { expanded.toggle() }
+      }
+      if expanded {
+        ScrollView {
+          Text(approval.summary).font(.system(size: 11, design: .monospaced)).textSelection(
+            .enabled
+          ).frame(maxWidth: .infinity, alignment: .leading)
+        }.frame(height: 220)
+      } else {
+        Text(approval.summary).font(.system(size: 11, design: .monospaced)).lineLimit(3)
+          .textSelection(.enabled)
+      }
+      HStack {
+        Text("Only this action will be approved.").font(.caption).foregroundStyle(.secondary)
+        Spacer()
+        Button("Deny") { decide(false) }
+        Button("Allow once") { decide(true) }.buttonStyle(.borderedProminent)
+      }
+    }.padding(14).background(.orange.opacity(0.08), in: RoundedRectangle(cornerRadius: 12)).overlay(
+      RoundedRectangle(cornerRadius: 12).stroke(.orange.opacity(0.25))
+    ).padding(.horizontal, 20).padding(.vertical, 5)
+  }
+  func decide(_ allow: Bool) {
+    Task { await model.post("/approvals", ["id": approval.id, "allow": allow]) }
+  }
 }
 struct ActivityView: View {
-    @EnvironmentObject var model: AppModel
-    @State var expanded: Set<String> = []
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack { Text("Activity").font(.headline); Spacer(); Button { model.showActivity = false } label: { Image(systemName: "xmark") }.buttonStyle(.plain).foregroundStyle(.secondary) }.padding(16)
-            Divider()
-            ScrollView {
-                LazyVStack(alignment: .leading, spacing: 12) {
-                    if model.activity.isEmpty { Text("Tool calls appear here as your agents work.").foregroundStyle(.secondary).font(.callout).padding(.top, 20) }
-                    ForEach(model.activity) { a in
-                        VStack(alignment: .leading, spacing: 6) {
-                            Button { if expanded.contains(a.id) { expanded.remove(a.id) } else { expanded.insert(a.id) } } label: {
-                                HStack(alignment: .top, spacing: 8) { Image(systemName: a.status == "completed" ? "checkmark.circle.fill" : a.status == "failed" ? "exclamationmark.circle" : "circle.dotted").foregroundStyle(a.status == "completed" ? .green : a.status == "failed" ? .orange : .secondary); VStack(alignment: .leading, spacing: 3) { Text(a.name.replacingOccurrences(of: "_", with: " ")).font(.system(size: 12, weight: .medium)); Text("\(model.agent(a.agentId)?.name ?? "Agent") · \(a.status)").font(.system(size: 10)).foregroundStyle(.secondary) }; Spacer(); Image(systemName: expanded.contains(a.id) ? "chevron.down" : "chevron.right").font(.caption2).foregroundStyle(.tertiary) }
-                            }.buttonStyle(.plain)
-                            if expanded.contains(a.id) { Text(a.arguments + "\n\n" + (a.output ?? "Waiting…")).font(.system(size: 10, design: .monospaced)).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading).padding(8).background(.quaternary.opacity(0.4), in: RoundedRectangle(cornerRadius: 7)) }
-                        }
-                    }
-                    if !model.currentTasks.isEmpty { Divider().padding(.top, 10); Text("Tasks").font(.headline); ForEach(model.currentTasks.prefix(12)) { t in VStack(alignment: .leading, spacing: 3) { Text(t.prompt).font(.caption).lineLimit(2); Text(t.status.replacingOccurrences(of: "_", with: " ")).font(.caption2).foregroundStyle(.secondary); if let error = t.error { Text(error).font(.caption2).foregroundStyle(.orange) } }.padding(.vertical, 3) } }
-                }.padding(16)
+  @EnvironmentObject var model: AppModel
+  @State var expanded: Set<String> = []
+  var body: some View {
+    VStack(alignment: .leading, spacing: 0) {
+      HStack {
+        Text("Activity").font(.headline)
+        Spacer()
+        Button {
+          model.showActivity = false
+        } label: {
+          Image(systemName: "xmark")
+        }.buttonStyle(.plain).foregroundStyle(.secondary)
+      }.padding(16)
+      Divider()
+      ScrollView {
+        LazyVStack(alignment: .leading, spacing: 12) {
+          if model.activity.isEmpty {
+            Text("Tool calls appear here as your agents work.").foregroundStyle(.secondary).font(
+              .callout
+            ).padding(.top, 20)
+          }
+          ForEach(model.activity) { a in
+            VStack(alignment: .leading, spacing: 6) {
+              Button {
+                if expanded.contains(a.id) { expanded.remove(a.id) } else { expanded.insert(a.id) }
+              } label: {
+                HStack(alignment: .top, spacing: 8) {
+                  Image(
+                    systemName: a.status == "completed"
+                      ? "checkmark.circle.fill"
+                      : a.status == "failed" ? "exclamationmark.circle" : "circle.dotted"
+                  ).foregroundStyle(
+                    a.status == "completed" ? .green : a.status == "failed" ? .orange : .secondary)
+                  VStack(alignment: .leading, spacing: 3) {
+                    Text(a.name.replacingOccurrences(of: "_", with: " ")).font(
+                      .system(size: 12, weight: .medium))
+                    Text("\(model.agent(a.agentId)?.name ?? "Agent") · \(a.status)").font(
+                      .system(size: 10)
+                    ).foregroundStyle(.secondary)
+                  }
+                  Spacer()
+                  Image(systemName: expanded.contains(a.id) ? "chevron.down" : "chevron.right")
+                    .font(.caption2).foregroundStyle(.tertiary)
+                }
+              }.buttonStyle(.plain)
+              if expanded.contains(a.id) {
+                Text(a.arguments + "\n\n" + (a.output ?? "Waiting…")).font(
+                  .system(size: 10, design: .monospaced)
+                ).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading).padding(8)
+                  .background(.quaternary.opacity(0.4), in: RoundedRectangle(cornerRadius: 7))
+              }
             }
-        }.background(.regularMaterial)
-    }
+          }
+          if !model.currentTasks.isEmpty {
+            Divider().padding(.top, 10)
+            Text("Tasks").font(.headline)
+            ForEach(model.currentTasks.prefix(12)) { t in
+              VStack(alignment: .leading, spacing: 3) {
+                Text(t.prompt).font(.caption).lineLimit(2)
+                Text(t.status.replacingOccurrences(of: "_", with: " ")).font(.caption2)
+                  .foregroundStyle(.secondary)
+                if let error = t.error { Text(error).font(.caption2).foregroundStyle(.orange) }
+              }.padding(.vertical, 3)
+            }
+          }
+        }.padding(16)
+      }
+    }.background(.regularMaterial)
+  }
 }
 struct NewConversationView: View {
-    @EnvironmentObject var model: AppModel; @Environment(\.dismiss) var dismiss
-    @State var title = ""; @State var selected: Set<String> = []
-    var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            HStack { Text("New Conversation").font(.title2.bold()); Spacer(); Button("Cancel") { dismiss() }.keyboardShortcut(.cancelAction) }
-            TextField("Conversation name", text: $title).textFieldStyle(.roundedBorder)
-            Text("Choose your contacts").font(.headline)
-            ForEach(model.agents) { a in Toggle(isOn: Binding(get: { selected.contains(a.id) }, set: { if $0 { selected.insert(a.id) } else { selected.remove(a.id) } })) { HStack { Avatar(agent: a, size: 32); VStack(alignment: .leading) { Text(a.name); Text(a.role).font(.caption).foregroundStyle(.secondary) } } }.toggleStyle(.checkbox) }
-            HStack { Button("Create Agent…") { dismiss(); model.editingAgent = Agent(id: UUID().uuidString, name: "New Agent", avatar: "person.fill", color: "blue", role: "Assistant", systemPrompt: "Help the user and verify your work.", providerId: model.providers.first?.id ?? "local", model: "", workspace: FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("LocalBot Workspace").path, permissions: Permissions(filesystem: "read", terminal: false, git: false, web: false), autonomy: "ask", memory: "") }; Spacer(); Button("Create") { Task { let name = title.isEmpty ? model.agents.filter { selected.contains($0.id) }.map(\.name).joined(separator: ", ") : title; await model.post("/conversations", ["title": name, "members": model.agents.filter { selected.contains($0.id) }.map(\.id)]); model.selectedId = model.conversations.first?.id; dismiss() } }.buttonStyle(.borderedProminent).disabled(selected.isEmpty).keyboardShortcut(.defaultAction) }
-        }.padding(24).frame(width: 430)
-    }
+  @EnvironmentObject var model: AppModel
+  @Environment(\.dismiss) var dismiss
+  @State var title = ""
+  @State var selected: Set<String> = []
+  var body: some View {
+    VStack(alignment: .leading, spacing: 18) {
+      HStack {
+        Text("New Conversation").font(.title2.bold())
+        Spacer()
+        Button("Cancel") { dismiss() }.keyboardShortcut(.cancelAction)
+      }
+      TextField("Conversation name", text: $title).textFieldStyle(.roundedBorder)
+      Text("Choose your contacts").font(.headline)
+      ForEach(model.agents) { a in
+        Toggle(
+          isOn: Binding(
+            get: { selected.contains(a.id) },
+            set: { if $0 { selected.insert(a.id) } else { selected.remove(a.id) } })
+        ) {
+          HStack {
+            Avatar(agent: a, size: 32)
+            VStack(alignment: .leading) {
+              Text(a.name)
+              Text(a.role).font(.caption).foregroundStyle(.secondary)
+            }
+          }
+        }.toggleStyle(.checkbox)
+      }
+      HStack {
+        Button("Create Agent…") {
+          dismiss()
+          model.editingAgent = Agent(
+            id: UUID().uuidString, name: "New Agent", avatar: "person.fill", color: "blue",
+            role: "Assistant", systemPrompt: "Help the user and verify your work.",
+            providerId: model.providers.first?.id ?? "local", model: "",
+            workspace: FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(
+              "LocalBot Workspace"
+            ).path,
+            permissions: Permissions(filesystem: "read", terminal: false, git: false, web: false),
+            autonomy: "ask", memory: "")
+        }
+        Spacer()
+        Button("Create") {
+          Task {
+            let name =
+              title.isEmpty
+              ? model.agents.filter { selected.contains($0.id) }.map(\.name).joined(separator: ", ")
+              : title
+            await model.post(
+              "/conversations",
+              [
+                "title": name,
+                "members": model.agents.filter { selected.contains($0.id) }.map(\.id),
+              ])
+            model.selectedId = model.conversations.first?.id
+            dismiss()
+          }
+        }.buttonStyle(.borderedProminent).disabled(selected.isEmpty).keyboardShortcut(
+          .defaultAction)
+      }
+    }.padding(24).frame(width: 430)
+  }
 }
 struct AgentEditor: View {
-    @EnvironmentObject var model: AppModel; @Environment(\.dismiss) var dismiss; @State var agent: Agent
-    var body: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 12) { Avatar(agent: agent, size: 52); VStack(alignment: .leading) { Text(agent.name).font(.title2.bold()); Text("Contact Details").foregroundStyle(.secondary) }; Spacer(); Button("Cancel") { dismiss() }; Button("Save") { Task { if await model.save(agent, path: "/agents") { dismiss() } } }.buttonStyle(.borderedProminent).keyboardShortcut(.defaultAction) }.padding(22)
-            Divider()
-            Form {
-                Section("Identity") { TextField("Name", text: $agent.name); TextField("Role", text: $agent.role); Picker("Avatar", selection: $agent.avatar) { ForEach(["person.fill", "hammer.fill", "sparkle.magnifyingglass", "checkmark.shield.fill", "testtube.2", "brain", "paintbrush.fill"], id: \.self) { Image(systemName: $0).tag($0) } }; Picker("Color", selection: $agent.color) { ForEach(["blue", "purple", "green", "orange", "pink"], id: \.self) { Text($0.capitalized).tag($0) } } }
-                Section("Model") { Picker("Provider", selection: $agent.providerId) { ForEach(model.providers) { Text($0.name).tag($0.id) } }; TextField("Model override (blank uses provider)", text: $agent.model) }
-                Section("Workspace") { HStack { Text(agent.workspace).font(.caption).textSelection(.enabled); Spacer(); Button("Choose…") { let panel = NSOpenPanel(); panel.canChooseDirectories = true; panel.canChooseFiles = false; if panel.runModal() == .OK, let url = panel.url { agent.workspace = url.path } } } }
-                Section("Tools & Permissions") { Picker("Filesystem", selection: $agent.permissions.filesystem) { Text("Off").tag("off"); Text("Read only").tag("read"); Text("Read & write").tag("write") }; Toggle("Terminal & tests", isOn: $agent.permissions.terminal); Toggle("Git inspection", isOn: $agent.permissions.git); Toggle("Public web", isOn: $agent.permissions.web); Picker("Autonomy", selection: $agent.autonomy) { Text("Ask before changes").tag("ask"); Text("Allow workspace edits").tag("trusted") }; Text("Shell commands always require approval and run without network access. File tools stay within this workspace.").font(.caption).foregroundStyle(.secondary) }
-                Section("System Prompt") { TextEditor(text: $agent.systemPrompt).font(.body).frame(minHeight: 90) }
-                Section("Memory") { TextEditor(text: $agent.memory).font(.body).frame(minHeight: 70); Text("Durable notes used only by this contact.").font(.caption).foregroundStyle(.secondary) }
-            }.formStyle(.grouped)
-        }.frame(width: 550, height: 700)
-    }
+  @EnvironmentObject var model: AppModel
+  @Environment(\.dismiss) var dismiss
+  @State var agent: Agent
+  var body: some View {
+    VStack(spacing: 0) {
+      HStack(spacing: 12) {
+        Avatar(agent: agent, size: 52)
+        VStack(alignment: .leading) {
+          Text(agent.name).font(.title2.bold())
+          Text("Contact Details").foregroundStyle(.secondary)
+        }
+        Spacer()
+        Button("Cancel") { dismiss() }
+        Button("Save") { Task { if await model.save(agent, path: "/agents") { dismiss() } } }
+          .buttonStyle(.borderedProminent).keyboardShortcut(.defaultAction)
+      }.padding(22)
+      Divider()
+      Form {
+        Section("Identity") {
+          TextField("Name", text: $agent.name)
+          TextField("Role", text: $agent.role)
+          Picker("Avatar", selection: $agent.avatar) {
+            ForEach(
+              [
+                "person.fill", "hammer.fill", "sparkle.magnifyingglass", "checkmark.shield.fill",
+                "testtube.2", "brain", "paintbrush.fill",
+              ], id: \.self
+            ) { Image(systemName: $0).tag($0) }
+          }
+          Picker("Color", selection: $agent.color) {
+            ForEach(["blue", "purple", "green", "orange", "pink"], id: \.self) {
+              Text($0.capitalized).tag($0)
+            }
+          }
+        }
+        Section("Model") {
+          Picker("Provider", selection: $agent.providerId) {
+            ForEach(model.providers) { Text($0.name).tag($0.id) }
+          }
+          TextField("Model override (blank uses provider)", text: $agent.model)
+        }
+        Section("Workspace") {
+          HStack {
+            Text(agent.workspace).font(.caption).textSelection(.enabled)
+            Spacer()
+            Button("Choose…") {
+              let panel = NSOpenPanel()
+              panel.canChooseDirectories = true
+              panel.canChooseFiles = false
+              if panel.runModal() == .OK, let url = panel.url { agent.workspace = url.path }
+            }
+          }
+        }
+        Section("Tools & Permissions") {
+          Picker("Filesystem", selection: $agent.permissions.filesystem) {
+            Text("Off").tag("off")
+            Text("Read only").tag("read")
+            Text("Read & write").tag("write")
+          }
+          Toggle("Terminal & tests", isOn: $agent.permissions.terminal)
+          Toggle("Git inspection", isOn: $agent.permissions.git)
+          Toggle("Public web", isOn: $agent.permissions.web)
+          Picker("Autonomy", selection: $agent.autonomy) {
+            Text("Ask before changes").tag("ask")
+            Text("Allow workspace edits").tag("trusted")
+          }
+          Text(
+            "Shell commands always require approval and run without network access. File tools stay within this workspace."
+          ).font(.caption).foregroundStyle(.secondary)
+        }
+        Section("System Prompt") {
+          TextEditor(text: $agent.systemPrompt).font(.body).frame(minHeight: 90)
+        }
+        Section("Memory") {
+          TextEditor(text: $agent.memory).font(.body).frame(minHeight: 70)
+          Text("Durable notes used only by this contact.").font(.caption).foregroundStyle(
+            .secondary)
+        }
+      }.formStyle(.grouped)
+    }.frame(width: 550, height: 700)
+  }
 }
 struct SettingsView: View {
-    @EnvironmentObject var model: AppModel; @Environment(\.dismiss) var dismiss
-    @State var selection: String?; @State var editing: Provider?; @State var secret = ""; @State var healthText = ""; @State var models: [String] = []; @State var testing = false
-    @AppStorage("appearance") var appearance = "system"; @AppStorage("notifications") var notifications = false
-    var body: some View {
-        VStack(alignment: .leading, spacing: 15) {
-            HStack { Text("Settings").font(.title2.bold()); Spacer(); Button("Done") { dismiss() }.keyboardShortcut(.cancelAction) }
-            HStack { Picker("Appearance", selection: $appearance) { Text("System").tag("system"); Text("Light").tag("light"); Text("Dark").tag("dark") }; Toggle("Notifications", isOn: $notifications).onChange(of: notifications) { _, enabled in if enabled { UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in } } } }
-            Divider()
-            HStack { Text("Model Connections").font(.headline); Spacer(); Button { let p = Provider(id: UUID().uuidString, name: "Inference Server", kind: "openai", endpoint: "http://127.0.0.1:8080/v1", model: "", contextLength: 4096, timeout: 180, concurrency: 1, temperature: 0.3, maxTokens: 1200, requiresAuth: false); editing = p; selection = p.id; secret = ""; models = []; healthText = "" } label: { Label("Add", systemImage: "plus") } }
-            if !model.providers.isEmpty { Picker("Connection", selection: $selection) { ForEach(model.providers) { Text($0.name).tag(Optional($0.id)) }; if let p = editing, !model.providers.contains(where: { $0.id == p.id }) { Text(p.name).tag(Optional(p.id)) } }.onChange(of: selection) { _, id in if let p = model.providers.first(where: { $0.id == id }) { editing = p; secret = ""; healthText = ""; models = [] } } }
-            if editing != nil { providerForm }
-            Text("Local models are primary. Ollama uses its native API; llama.cpp, vLLM and MLX use OpenAI-compatible endpoints. For a remote PC use HTTPS with authentication, or an SSH tunnel to localhost.").font(.caption).foregroundStyle(.secondary)
-        }.padding(24).frame(width: 620).onAppear { if editing == nil { editing = model.providers.first; selection = editing?.id } }
-    }
-    var providerForm: some View {
-        VStack(spacing: 10) {
-            TextField("Connection name", text: field(\.name)).textFieldStyle(.roundedBorder)
-            Picker("Protocol", selection: field(\.kind)) { Text("Ollama").tag("ollama"); Text("OpenAI compatible").tag("openai"); Text("Anthropic (optional)").tag("anthropic") }.pickerStyle(.segmented)
-            TextField("Endpoint", text: field(\.endpoint)).textFieldStyle(.roundedBorder)
-            HStack { TextField("Model identifier", text: field(\.model)).textFieldStyle(.roundedBorder); if !models.isEmpty { Menu("Models") { ForEach(models, id: \.self) { name in Button(name) { editing?.model = name } } } } }
-            HStack { Text("Context"); TextField("4096", value: numberField(\.contextLength), format: .number).frame(width: 80); Text("Max output"); TextField("1200", value: numberField(\.maxTokens), format: .number).frame(width: 80); Text("Timeout (s)"); TextField("180", value: numberField(\.timeout), format: .number).frame(width: 60) }.textFieldStyle(.roundedBorder).font(.caption)
-            HStack { Text("Temperature").font(.caption); Slider(value: Binding(get: { editing?.temperature ?? 0.3 }, set: { editing?.temperature = $0 }), in: 0...2, step: 0.1); Text(String(format: "%.1f", editing?.temperature ?? 0.3)).font(.caption.monospacedDigit()) }
-            Stepper("Concurrent tasks: \(editing?.concurrency ?? 1)", value: numberField(\.concurrency), in: 1...4)
-            Text("Use 1 on an 8 GB Mac. Tasks sharing a workspace always run in sequence.").font(.caption2).foregroundStyle(.secondary)
-            Toggle("Requires authentication", isOn: Binding(get: { editing?.requiresAuth ?? false }, set: { editing?.requiresAuth = $0 }))
-            if editing?.requiresAuth == true { SecureField("API key — stored in macOS Keychain", text: $secret).textFieldStyle(.roundedBorder); Text("Leave blank to keep the saved key.").font(.caption2).foregroundStyle(.secondary) }
-            if editing?.kind == "ollama" { Button("Start local Ollama") { Task { guard await persist(), let p = editing else { return }; await model.post("/providers/start", ["id": p.id]); test() } }.buttonStyle(.borderless) }
-            HStack { Text(healthText).font(.caption).foregroundStyle(healthText.hasPrefix("Connected") ? .green : .secondary).textSelection(.enabled); Spacer(); if testing { ProgressView().controlSize(.small) }; Button("Save & Test") { test() }.disabled(testing); Button("Save") { Task { await persist() } }.buttonStyle(.borderedProminent) }
+  @EnvironmentObject var model: AppModel
+  @Environment(\.dismiss) var dismiss
+  @State var selection: String?
+  @State var editing: Provider?
+  @State var secret = ""
+  @State var healthText = ""
+  @State var models: [String] = []
+  @State var testing = false
+  @AppStorage("appearance") var appearance = "system"
+  @AppStorage("notifications") var notifications = false
+  var body: some View {
+    VStack(alignment: .leading, spacing: 15) {
+      HStack {
+        Text("Settings").font(.title2.bold())
+        Spacer()
+        Button("Done") { dismiss() }.keyboardShortcut(.cancelAction)
+      }
+      HStack {
+        Picker("Appearance", selection: $appearance) {
+          Text("System").tag("system")
+          Text("Light").tag("light")
+          Text("Dark").tag("dark")
         }
+        Toggle("Notifications", isOn: $notifications).onChange(of: notifications) { _, enabled in
+          if enabled {
+            UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) {
+              _, _ in
+            }
+          }
+        }
+      }
+      Divider()
+      HStack {
+        Text("Model Connections").font(.headline)
+        Spacer()
+        Button {
+          let p = Provider(
+            id: UUID().uuidString, name: "Inference Server", kind: "openai",
+            endpoint: "http://127.0.0.1:8080/v1", model: "", contextLength: 4096, timeout: 180,
+            concurrency: 1, temperature: 0.3, maxTokens: 1200, requiresAuth: false)
+          editing = p
+          selection = p.id
+          secret = ""
+          models = []
+          healthText = ""
+        } label: {
+          Label("Add", systemImage: "plus")
+        }
+      }
+      if !model.providers.isEmpty {
+        Picker("Connection", selection: $selection) {
+          ForEach(model.providers) { Text($0.name).tag(Optional($0.id)) }
+          if let p = editing, !model.providers.contains(where: { $0.id == p.id }) {
+            Text(p.name).tag(Optional(p.id))
+          }
+        }.onChange(of: selection) { _, id in
+          if let p = model.providers.first(where: { $0.id == id }) {
+            editing = p
+            secret = ""
+            healthText = ""
+            models = []
+          }
+        }
+      }
+      if editing != nil { providerForm }
+      Text(
+        "Local models are primary. Ollama uses its native API; llama.cpp, vLLM and MLX use OpenAI-compatible endpoints. For a remote PC use HTTPS with authentication, or an SSH tunnel to localhost."
+      ).font(.caption).foregroundStyle(.secondary)
+    }.padding(24).frame(width: 620).onAppear {
+      if editing == nil {
+        editing = model.providers.first
+        selection = editing?.id
+      }
     }
-    func field(_ key: WritableKeyPath<Provider, String>) -> Binding<String> { Binding(get: { editing?[keyPath: key] ?? "" }, set: { editing?[keyPath: key] = $0 }) }
-    func numberField(_ key: WritableKeyPath<Provider, Int>) -> Binding<Int> { Binding(get: { editing?[keyPath: key] ?? 0 }, set: { editing?[keyPath: key] = $0 }) }
-    @discardableResult func persist() async -> Bool { guard let p = editing else { return false }; guard await model.save(p, path: "/providers") else { return false }; do { if !secret.isEmpty { try Keychain.save(secret, id: p.id + "@" + p.endpoint); _ = try await model.request("/credentials", body: ["providerId": p.id, "secret": secret]); secret = "" }; healthText = "Saved"; return true } catch { model.error = error.localizedDescription; return false } }
-    func test() { testing = true; Task { defer { testing = false }; guard await persist(), let p = editing else { return }; do { let h = try JSONDecoder().decode(Health.self, from: await model.request("/providers/health", body: ["id": p.id])); models = h.models; healthText = "Connected · \(h.models.count) model(s)" } catch { healthText = error.localizedDescription } } }
+  }
+  var providerForm: some View {
+    VStack(spacing: 10) {
+      TextField("Connection name", text: field(\.name)).textFieldStyle(.roundedBorder)
+      Picker("Protocol", selection: field(\.kind)) {
+        Text("Ollama").tag("ollama")
+        Text("OpenAI compatible").tag("openai")
+        Text("Anthropic (optional)").tag("anthropic")
+      }.pickerStyle(.segmented)
+      TextField("Endpoint", text: field(\.endpoint)).textFieldStyle(.roundedBorder)
+      HStack {
+        TextField("Model identifier", text: field(\.model)).textFieldStyle(.roundedBorder)
+        if !models.isEmpty {
+          Menu("Models") {
+            ForEach(models, id: \.self) { name in Button(name) { editing?.model = name } }
+          }
+        }
+      }
+      HStack {
+        Text("Context")
+        TextField("4096", value: numberField(\.contextLength), format: .number).frame(width: 80)
+        Text("Max output")
+        TextField("1200", value: numberField(\.maxTokens), format: .number).frame(width: 80)
+        Text("Timeout (s)")
+        TextField("180", value: numberField(\.timeout), format: .number).frame(width: 60)
+      }.textFieldStyle(.roundedBorder).font(.caption)
+      HStack {
+        Text("Temperature").font(.caption)
+        Slider(
+          value: Binding(get: { editing?.temperature ?? 0.3 }, set: { editing?.temperature = $0 }),
+          in: 0...2, step: 0.1)
+        Text(String(format: "%.1f", editing?.temperature ?? 0.3)).font(.caption.monospacedDigit())
+      }
+      Stepper(
+        "Concurrent tasks: \(editing?.concurrency ?? 1)", value: numberField(\.concurrency),
+        in: 1...4)
+      Text("Use 1 on an 8 GB Mac. Tasks sharing a workspace always run in sequence.").font(
+        .caption2
+      ).foregroundStyle(.secondary)
+      Toggle(
+        "Requires authentication",
+        isOn: Binding(get: { editing?.requiresAuth ?? false }, set: { editing?.requiresAuth = $0 }))
+      if editing?.requiresAuth == true {
+        SecureField("API key — stored in macOS Keychain", text: $secret).textFieldStyle(
+          .roundedBorder)
+        Text("Leave blank to keep the saved key.").font(.caption2).foregroundStyle(.secondary)
+      }
+      if editing?.kind == "ollama" {
+        Button("Start local Ollama") {
+          Task {
+            guard await persist(), let p = editing else { return }
+            await model.post("/providers/start", ["id": p.id])
+            test()
+          }
+        }.buttonStyle(.borderless)
+      }
+      HStack {
+        Text(healthText).font(.caption).foregroundStyle(
+          healthText.hasPrefix("Connected") ? .green : .secondary
+        ).textSelection(.enabled)
+        Spacer()
+        if testing { ProgressView().controlSize(.small) }
+        Button("Save & Test") { test() }.disabled(testing)
+        Button("Save") { Task { await persist() } }.buttonStyle(.borderedProminent)
+      }
+    }
+  }
+  func field(_ key: WritableKeyPath<Provider, String>) -> Binding<String> {
+    Binding(get: { editing?[keyPath: key] ?? "" }, set: { editing?[keyPath: key] = $0 })
+  }
+  func numberField(_ key: WritableKeyPath<Provider, Int>) -> Binding<Int> {
+    Binding(get: { editing?[keyPath: key] ?? 0 }, set: { editing?[keyPath: key] = $0 })
+  }
+  @discardableResult func persist() async -> Bool {
+    guard let p = editing else { return false }
+    guard await model.save(p, path: "/providers") else { return false }
+    do {
+      if !secret.isEmpty {
+        try Keychain.save(secret, id: p.id + "@" + p.endpoint)
+        _ = try await model.request("/credentials", body: ["providerId": p.id, "secret": secret])
+        secret = ""
+      }
+      healthText = "Saved"
+      return true
+    } catch {
+      model.error = error.localizedDescription
+      return false
+    }
+  }
+  func test() {
+    testing = true
+    Task {
+      defer { testing = false }
+      guard await persist(), let p = editing else { return }
+      do {
+        let h = try JSONDecoder().decode(
+          Health.self, from: await model.request("/providers/health", body: ["id": p.id]))
+        models = h.models
+        healthText = "Connected · \(h.models.count) model(s)"
+      } catch { healthText = error.localizedDescription }
+    }
+  }
 }
 
 struct ArtifactPreview: View {
-    var artifact: Artifact
-    @State private var thumbnail: NSImage?
-    var body: some View {
-        VStack(alignment: .leading, spacing: 5) {
-            if let thumbnail { Image(nsImage: thumbnail).resizable().scaledToFit().frame(maxWidth: 220, maxHeight: 160).clipShape(RoundedRectangle(cornerRadius: 10)) }
-            Label(artifact.name, systemImage: artifact.mime.hasPrefix("image/") ? "photo" : "doc").font(.callout)
-        }.padding(10).background(.quaternary, in: RoundedRectangle(cornerRadius: 10))
-            .task(id: artifact.id) {
-                guard artifact.mime.hasPrefix("image/") else { return }
-                let url = URL(fileURLWithPath: artifact.path)
-                if let source = CGImageSourceCreateWithURL(url as CFURL, nil), let image = CGImageSourceCreateThumbnailAtIndex(source, 0, [kCGImageSourceCreateThumbnailFromImageAlways: true, kCGImageSourceThumbnailMaxPixelSize: 440, kCGImageSourceCreateThumbnailWithTransform: true] as CFDictionary) { thumbnail = NSImage(cgImage: image, size: NSSize(width: image.width, height: image.height)) }
-            }
-    }
+  var artifact: Artifact
+  @State private var thumbnail: NSImage?
+  var body: some View {
+    VStack(alignment: .leading, spacing: 5) {
+      if let thumbnail {
+        Image(nsImage: thumbnail).resizable().scaledToFit().frame(maxWidth: 220, maxHeight: 160)
+          .clipShape(RoundedRectangle(cornerRadius: 10))
+      }
+      Label(artifact.name, systemImage: artifact.mime.hasPrefix("image/") ? "photo" : "doc").font(
+        .callout)
+    }.padding(10).background(.quaternary, in: RoundedRectangle(cornerRadius: 10))
+      .task(id: artifact.id) {
+        guard artifact.mime.hasPrefix("image/") else { return }
+        let url = URL(fileURLWithPath: artifact.path)
+        if let source = CGImageSourceCreateWithURL(url as CFURL, nil),
+          let image = CGImageSourceCreateThumbnailAtIndex(
+            source, 0,
+            [
+              kCGImageSourceCreateThumbnailFromImageAlways: true,
+              kCGImageSourceThumbnailMaxPixelSize: 440,
+              kCGImageSourceCreateThumbnailWithTransform: true,
+            ] as CFDictionary)
+        {
+          thumbnail = NSImage(
+            cgImage: image, size: NSSize(width: image.width, height: image.height))
+        }
+      }
+  }
 }

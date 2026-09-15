@@ -1,166 +1,465 @@
-import SwiftUI
 import AppKit
+import SwiftUI
+
 @main struct LocalBotApp: App {
-    @StateObject private var model = AppModel()
-    @AppStorage("appearance") private var appearance = "system"
-    var body: some Scene {
-        WindowGroup {
-            MainView().environmentObject(model).frame(minWidth: 760, minHeight: 520)
-                .preferredColorScheme(appearance == "dark" ? .dark : appearance == "light" ? .light : nil)
-                .task { model.start(); NSApp.setActivationPolicy(.regular); NSApp.activate(ignoringOtherApps: true) }
-        }
-        .defaultSize(width: 1100, height: 740)
-        .windowToolbarStyle(.unified)
-        .commands {
-            CommandGroup(replacing: .newItem) { Button("New Conversation") { model.showNew = true }.keyboardShortcut("n") }
-            CommandGroup(replacing: .appSettings) { Button("Settings…") { model.showSettings = true }.keyboardShortcut(",") }
-            CommandMenu("Conversation") {
-                Button("Show Activity") { model.showActivity.toggle() }.keyboardShortcut("i", modifiers: [.command, .shift])
-                Button("Stop Task") { if let t = model.activeTask { Task { await model.post("/cancel", ["taskId": t.id]) } } }.keyboardShortcut(".")
-                Button("Find Messages") { NotificationCenter.default.post(name: .init("FocusSearch"), object: nil) }.keyboardShortcut("f")
-            }
+  @StateObject private var model = AppModel()
+  @AppStorage("appearance") private var appearance = "system"
+  var body: some Scene {
+    WindowGroup {
+      MainView().environmentObject(model).frame(minWidth: 760, minHeight: 520)
+        .preferredColorScheme(appearance == "dark" ? .dark : appearance == "light" ? .light : nil)
+        .task {
+          model.start()
+          NSApp.setActivationPolicy(.regular)
+          NSApp.activate(ignoringOtherApps: true)
         }
     }
+    .defaultSize(width: 1100, height: 740)
+    .windowToolbarStyle(.unified)
+    .commands {
+      CommandGroup(replacing: .newItem) {
+        Button("New Conversation") { model.showNew = true }.keyboardShortcut("n")
+      }
+      CommandGroup(replacing: .appSettings) {
+        Button("Settings…") { model.showSettings = true }.keyboardShortcut(",")
+      }
+      CommandMenu("Conversation") {
+        Button("Show Activity") { model.showActivity.toggle() }.keyboardShortcut(
+          "i", modifiers: [.command, .shift])
+        Button("Stop Task") {
+          if let t = model.activeTask { Task { await model.post("/cancel", ["taskId": t.id]) } }
+        }.keyboardShortcut(".")
+        Button("Find Messages") {
+          NotificationCenter.default.post(name: .init("FocusSearch"), object: nil)
+        }.keyboardShortcut("f")
+      }
+    }
+  }
 }
 struct Avatar: View {
-    var agent: Agent?; var group = false; var size: CGFloat = 40
-    var body: some View {
-        ZStack { Circle().fill((group ? Color.indigo : agent?.tint ?? .gray).gradient); Image(systemName: group ? "person.2.fill" : agent?.avatar ?? "person.fill").font(.system(size: size * 0.43, weight: .medium)).foregroundStyle(.white) }.frame(width: size, height: size).accessibilityHidden(true)
-    }
+  var agent: Agent?
+  var group = false
+  var size: CGFloat = 40
+  var body: some View {
+    ZStack {
+      Circle().fill((group ? Color.indigo : agent?.tint ?? .gray).gradient)
+      Image(systemName: group ? "person.2.fill" : agent?.avatar ?? "person.fill").font(
+        .system(size: size * 0.43, weight: .medium)
+      ).foregroundStyle(.white)
+    }.frame(width: size, height: size).accessibilityHidden(true)
+  }
 }
 struct MainView: View {
-    @EnvironmentObject var model: AppModel
-    @FocusState var searchFocused: Bool
-    var body: some View {
-        NavigationSplitView {
-            VStack(spacing: 0) {
-                HStack(spacing: 6) { Image(systemName: "magnifyingglass").foregroundStyle(.secondary); TextField("Search", text: $model.search).textFieldStyle(.plain).focused($searchFocused); if !model.search.isEmpty { Button { model.search = "" } label: { Image(systemName: "xmark.circle.fill") }.buttonStyle(.plain).foregroundStyle(.secondary) } }.padding(9).background(.quaternary.opacity(0.4), in: RoundedRectangle(cornerRadius: 10)).padding(.horizontal, 12).padding(.bottom, 8)
-                if model.search.isEmpty {
-                    List(selection: $model.selectedId) {
-                        ForEach(model.conversations) { c in
-                            ConversationRow(conversation: c).tag(c.id).listRowBackground(model.selectedId == c.id ? Color.blue : Color.clear).foregroundStyle(model.selectedId == c.id ? Color.white : Color.primary).listRowInsets(EdgeInsets(top: 4, leading: 7, bottom: 4, trailing: 7))
-                                .contextMenu { Button("New conversation with these agents") { Task { await model.post("/conversations", ["title": c.title, "members": c.members]); model.selectedId = model.conversations.first?.id } }; if c.members.count == 1, let agent = model.agent(c.members[0]) { Button("Contact Details…") { model.editingAgent = agent } } }
-                        }
-                    }.listStyle(.sidebar)
-                } else {
-                    List(model.searchResults) { m in Button { model.selectedId = m.conversationId; model.search = "" } label: { VStack(alignment: .leading, spacing: 4) { Text(model.conversations.first { $0.id == m.conversationId }?.title ?? "Conversation").font(.headline); Text(m.content).font(.caption).lineLimit(3).foregroundStyle(.secondary) }.frame(maxWidth: .infinity, alignment: .leading) }.buttonStyle(.plain) }
-                    if model.searchResults.isEmpty { Text("No messages found").foregroundStyle(.secondary).padding() }
+  @EnvironmentObject var model: AppModel
+  @FocusState var searchFocused: Bool
+  var body: some View {
+    NavigationSplitView {
+      VStack(spacing: 0) {
+        HStack(spacing: 6) {
+          Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
+          TextField("Search", text: $model.search).textFieldStyle(.plain).focused($searchFocused)
+          if !model.search.isEmpty {
+            Button {
+              model.search = ""
+            } label: {
+              Image(systemName: "xmark.circle.fill")
+            }.buttonStyle(.plain).foregroundStyle(.secondary)
+          }
+        }.padding(9).background(.quaternary.opacity(0.4), in: RoundedRectangle(cornerRadius: 10))
+          .padding(.horizontal, 12).padding(.bottom, 8)
+        if model.search.isEmpty {
+          List(selection: $model.selectedId) {
+            ForEach(model.conversations) { c in
+              ConversationRow(conversation: c).tag(c.id).listRowBackground(
+                model.selectedId == c.id ? Color.blue : Color.clear
+              ).foregroundStyle(model.selectedId == c.id ? Color.white : Color.primary)
+                .listRowInsets(EdgeInsets(top: 4, leading: 7, bottom: 4, trailing: 7))
+                .contextMenu {
+                  Button("New conversation with these agents") {
+                    Task {
+                      await model.post("/conversations", ["title": c.title, "members": c.members])
+                      model.selectedId = model.conversations.first?.id
+                    }
+                  }
+                  if c.members.count == 1, let agent = model.agent(c.members[0]) {
+                    Button("Contact Details…") { model.editingAgent = agent }
+                  }
                 }
-                HStack(spacing: 7) { Circle().fill(model.connected ? .green : .orange).frame(width: 6, height: 6); Text(model.connected ? "Local runtime" : "Connecting…").font(.caption).foregroundStyle(.secondary); Spacer(); Button { model.showSettings = true } label: { Image(systemName: "gearshape") }.buttonStyle(.plain).help("Model settings") }.padding(14)
             }
-            .navigationSplitViewColumnWidth(min: 250, ideal: 300, max: 380)
-            .toolbar { ToolbarItem { Button { model.showNew = true } label: { Image(systemName: "square.and.pencil") }.help("New conversation (⌘N)") } }
-        } detail: {
-            if let c = model.selected { ConversationView(conversation: c).id(c.id) } else { ContentUnavailableView("Your agents, one conversation away", systemImage: "bubble.left.and.bubble.right", description: Text("Choose a contact to begin.")) }
+          }.listStyle(.sidebar)
+        } else {
+          List(model.searchResults) { m in
+            Button {
+              model.selectedId = m.conversationId
+              model.search = ""
+            } label: {
+              VStack(alignment: .leading, spacing: 4) {
+                Text(
+                  model.conversations.first { $0.id == m.conversationId }?.title ?? "Conversation"
+                ).font(.headline)
+                Text(m.content).font(.caption).lineLimit(3).foregroundStyle(.secondary)
+              }.frame(maxWidth: .infinity, alignment: .leading)
+            }.buttonStyle(.plain)
+          }
+          if model.searchResults.isEmpty {
+            Text("No messages found").foregroundStyle(.secondary).padding()
+          }
         }
-        .sheet(isPresented: $model.showNew) { NewConversationView() }
-        .sheet(isPresented: $model.showSettings) { SettingsView() }
-        .sheet(item: $model.editingAgent) { AgentEditor(agent: $0) }
-        .alert("LocalBot", isPresented: Binding(get: { model.error != nil }, set: { if !$0 { model.error = nil } })) { Button("OK") { model.error = nil } } message: { Text(model.error ?? "") }
-        .task(id: model.search) { try? await Task.sleep(for: .milliseconds(250)); if !Task.isCancelled { await model.runSearch() } }
-        .onReceive(NotificationCenter.default.publisher(for: .init("FocusSearch"))) { _ in searchFocused = true }
+        HStack(spacing: 7) {
+          Circle().fill(model.connected ? .green : .orange).frame(width: 6, height: 6)
+          Text(model.connected ? "Local runtime" : "Connecting…").font(.caption).foregroundStyle(
+            .secondary)
+          Spacer()
+          Button {
+            model.showSettings = true
+          } label: {
+            Image(systemName: "gearshape")
+          }.buttonStyle(.plain).help("Model settings")
+        }.padding(14)
+      }
+      .navigationSplitViewColumnWidth(min: 250, ideal: 300, max: 380)
+      .toolbar {
+        ToolbarItem {
+          Button {
+            model.showNew = true
+          } label: {
+            Image(systemName: "square.and.pencil")
+          }.help("New conversation (⌘N)")
+        }
+      }
+    } detail: {
+      if let c = model.selected {
+        ConversationView(conversation: c).id(c.id)
+      } else {
+        ContentUnavailableView(
+          "Your agents, one conversation away", systemImage: "bubble.left.and.bubble.right",
+          description: Text("Choose a contact to begin."))
+      }
     }
+    .sheet(isPresented: $model.showNew) { NewConversationView() }
+    .sheet(isPresented: $model.showSettings) { SettingsView() }
+    .sheet(item: $model.editingAgent) { AgentEditor(agent: $0) }
+    .alert(
+      "LocalBot",
+      isPresented: Binding(get: { model.error != nil }, set: { if !$0 { model.error = nil } })
+    ) {
+      Button("OK") { model.error = nil }
+    } message: {
+      Text(model.error ?? "")
+    }
+    .task(id: model.search) {
+      try? await Task.sleep(for: .milliseconds(250))
+      if !Task.isCancelled { await model.runSearch() }
+    }
+    .onReceive(NotificationCenter.default.publisher(for: .init("FocusSearch"))) { _ in
+      searchFocused = true
+    }
+  }
 }
 struct ConversationRow: View {
-    @EnvironmentObject var model: AppModel; var conversation: Conversation
-    var body: some View {
-        HStack(alignment: .center, spacing: 10) {
-            Avatar(agent: model.agent(conversation.members.first), group: conversation.members.count > 1, size: 40)
-            VStack(alignment: .leading, spacing: 4) {
-                HStack { Text(conversation.title).font(.system(size: 13, weight: .semibold)).lineLimit(1); Spacer(minLength: 1); if conversation.preview != nil { Text(dateFrom(conversation.updatedAt), style: .time).font(.system(size: 10)).foregroundStyle(.secondary) } }
-                Text(conversation.preview?.replacingOccurrences(of: "\n", with: " ") ?? (conversation.members.count > 1 ? "\(conversation.members.count) agents · shared workspace" : model.agent(conversation.members.first)?.role ?? "Agent")).font(.system(size: 12)).foregroundStyle(.secondary).lineLimit(2).frame(maxWidth: .infinity, alignment: .leading)
-            }
-        }.frame(height: 68).padding(.horizontal, 3)
-    }
+  @EnvironmentObject var model: AppModel
+  var conversation: Conversation
+  var body: some View {
+    HStack(alignment: .center, spacing: 10) {
+      Avatar(
+        agent: model.agent(conversation.members.first), group: conversation.members.count > 1,
+        size: 40)
+      VStack(alignment: .leading, spacing: 4) {
+        HStack {
+          Text(conversation.title).font(.system(size: 13, weight: .semibold)).lineLimit(1)
+          Spacer(minLength: 1)
+          if conversation.preview != nil {
+            Text(dateFrom(conversation.updatedAt), style: .time).font(.system(size: 10))
+              .foregroundStyle(.secondary)
+          }
+        }
+        Text(
+          conversation.preview?.replacingOccurrences(of: "\n", with: " ")
+            ?? (conversation.members.count > 1
+              ? "\(conversation.members.count) agents · shared workspace"
+              : model.agent(conversation.members.first)?.role ?? "Agent")
+        ).font(.system(size: 12)).foregroundStyle(.secondary).lineLimit(2).frame(
+          maxWidth: .infinity, alignment: .leading)
+      }
+    }.frame(height: 68).padding(.horizontal, 3)
+  }
 }
 struct ConversationView: View {
-    @EnvironmentObject var model: AppModel; var conversation: Conversation
-    @State var draft = ""; @State var attachments: [Artifact] = []; @State var following = true
-    @FocusState var composing: Bool
-    var members: [Agent] { conversation.members.compactMap { model.agent($0) } }
-    var body: some View {
-        HStack(spacing: 0) {
-            VStack(spacing: 0) {
-                ScrollViewReader { proxy in
-                    ScrollView {
-                        LazyVStack(spacing: 13) {
-                            Text("LocalBot").font(.system(size: 11, weight: .semibold)).foregroundStyle(.tertiary).padding(.top, 20)
-                            if model.messages.isEmpty { emptyConversation }
-                            ForEach(model.messages) { m in MessageBubble(message: m, group: members.count > 1) }
-                            if let t = model.activeTask {
-                                HStack(spacing: 8) { ProgressView().controlSize(.mini); Text(t.status == "awaiting_approval" ? "Waiting for your approval…" : t.status == "queued" ? "Queued…" : "\(activeName) is working…").font(.caption).foregroundStyle(.secondary); Spacer() }.padding(.horizontal, 28).padding(.top, 5)
-                            }
-                            Color.clear.frame(height: 1).id("bottom").onAppear { following = true }.onDisappear { following = false }
-                        }.padding(.bottom, 16)
-                    }
-                    .defaultScrollAnchor(.bottom)
-                    .onChange(of: model.messages.count) { _, _ in if following { withAnimation(.easeOut(duration: 0.18)) { proxy.scrollTo("bottom", anchor: .bottom) } } }
-                    .overlay(alignment: .bottomTrailing) { if !following && !model.messages.isEmpty { Button { withAnimation { proxy.scrollTo("bottom", anchor: .bottom) } } label: { Image(systemName: "arrow.down").padding(8) }.buttonStyle(.bordered).clipShape(Circle()).padding() } }
-                }
-                ForEach(model.approvals.filter { a in model.currentTasks.contains { $0.id == a.taskId } }) { a in ApprovalCard(approval: a) }
-                composer
-            }.background(Color(nsColor: .textBackgroundColor))
-            if model.showActivity { Divider(); ActivityView().frame(width: 310) }
-        }
-        .navigationTitle("")
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                Menu {
-                    ForEach(members) { a in Button("\(a.name) · \(a.role)") { model.editingAgent = a } }
-                } label: { HStack(spacing: 9) { Avatar(agent: members.first, group: members.count > 1, size: 28); VStack(alignment: .leading, spacing: 1) { Text(conversation.title).font(.headline); Text(members.count > 1 ? members.map(\.name).joined(separator: ", ") : members.first?.role ?? "Agent").font(.system(size: 10)).foregroundStyle(.secondary) } } }.menuStyle(.borderlessButton).fixedSize()
+  @EnvironmentObject var model: AppModel
+  var conversation: Conversation
+  @State var draft = ""
+  @State var attachments: [Artifact] = []
+  @State var following = true
+  @FocusState var composing: Bool
+  var members: [Agent] { conversation.members.compactMap { model.agent($0) } }
+  var body: some View {
+    HStack(spacing: 0) {
+      VStack(spacing: 0) {
+        ScrollViewReader { proxy in
+          ScrollView {
+            LazyVStack(spacing: 13) {
+              Text("LocalBot").font(.system(size: 11, weight: .semibold)).foregroundStyle(.tertiary)
+                .padding(.top, 20)
+              if model.messages.isEmpty { emptyConversation }
+              ForEach(model.messages) { m in MessageBubble(message: m, group: members.count > 1) }
+              if let t = model.activeTask {
+                HStack(spacing: 8) {
+                  ProgressView().controlSize(.mini)
+                  Text(
+                    t.status == "awaiting_approval"
+                      ? "Waiting for your approval…"
+                      : t.status == "queued" ? "Queued…" : "\(activeName) is working…"
+                  ).font(.caption).foregroundStyle(.secondary)
+                  Spacer()
+                }.padding(.horizontal, 28).padding(.top, 5)
+              }
+              Color.clear.frame(height: 1).id("bottom").onAppear { following = true }.onDisappear {
+                following = false
+              }
+            }.padding(.bottom, 16)
+          }
+          .defaultScrollAnchor(.bottom)
+          .onChange(of: model.messages.count) { _, _ in
+            if following {
+              withAnimation(.easeOut(duration: 0.18)) { proxy.scrollTo("bottom", anchor: .bottom) }
             }
-            ToolbarItem { Button { model.showActivity.toggle() } label: { Image(systemName: "sidebar.right") }.help("Activity and artifacts") }
-            ToolbarItem { Menu { ForEach(members) { a in Button(a.name) { model.editingAgent = a } } } label: { Image(systemName: "info.circle") }.help("Contact details") }
+          }
+          .overlay(alignment: .bottomTrailing) {
+            if !following && !model.messages.isEmpty {
+              Button {
+                withAnimation { proxy.scrollTo("bottom", anchor: .bottom) }
+              } label: {
+                Image(systemName: "arrow.down").padding(8)
+              }.buttonStyle(.bordered).clipShape(Circle()).padding()
+            }
+          }
         }
-        .onAppear { draft = UserDefaults.standard.string(forKey: "draft.\(conversation.id)") ?? ""; composing = true }
-        .onChange(of: draft) { _, new in UserDefaults.standard.set(new, forKey: "draft.\(conversation.id)") }
-    }
-    var activeName: String { if let a = model.activity.last, let agent = model.agent(a.agentId), model.activeTask?.id == a.taskId { return agent.name }; return members.first?.name ?? "Agent" }
-    var emptyConversation: some View {
-        VStack(spacing: 12) {
-            Avatar(agent: members.first, group: members.count > 1, size: 72)
-            Text(conversation.title).font(.title2.weight(.semibold))
-            Text(members.count > 1 ? "Different perspectives. One local model.\nYour team works in sequence and shares its results." : "\(members.first?.role ?? "Your agent"), right here on your Mac.\nSend a message to start working together.").font(.callout).foregroundStyle(.secondary).multilineTextAlignment(.center)
-            if let a = members.first { Button { model.editingAgent = a } label: { Label("Choose workspace & permissions", systemImage: "folder") }.buttonStyle(.borderless).padding(.top, 4) }
-        }.frame(maxWidth: .infinity).padding(.vertical, 80)
-    }
-    var composer: some View {
-        VStack(spacing: 8) {
-            if !attachments.isEmpty { HStack { ForEach(attachments) { a in HStack { Image(systemName: "paperclip"); Text(a.name).lineLimit(1); Button { attachments.removeAll { $0.id == a.id } } label: { Image(systemName: "xmark.circle.fill") }.buttonStyle(.plain) }.font(.caption).padding(6).background(.quaternary, in: Capsule()) }; Spacer() }.padding(.horizontal, 55) }
-            HStack(alignment: .bottom, spacing: 10) {
-                Button { Task { attachments += await model.attach() } } label: { Image(systemName: "plus").font(.system(size: 18)).frame(width: 30, height: 32) }.buttonStyle(.plain).foregroundStyle(.secondary).help("Attach files")
-                HStack(alignment: .bottom, spacing: 8) {
-                    TextField("Message", text: $draft, axis: .vertical).lineLimit(1...7).textFieldStyle(.plain).font(.system(size: 14)).focused($composing)
-                        .onKeyPress(keys: [.return]) { event in if event.modifiers.contains(.shift) { return .ignored }; send(); return .handled }.padding(.vertical, 9)
-                    if let t = model.activeTask {
-                        Button { Task { await model.post("/cancel", ["taskId": t.id]) } } label: { Image(systemName: "stop.circle.fill").font(.system(size: 25)).foregroundStyle(.orange) }.buttonStyle(.plain).padding(.bottom, 5).help("Stop task (⌘.)")
-                    } else {
-                        Button(action: send) { Image(systemName: "arrow.up.circle.fill").font(.system(size: 25)).foregroundStyle(draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && attachments.isEmpty ? Color.gray.opacity(0.3) : .blue) }.buttonStyle(.plain).disabled(model.sending || !model.connected || (draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && attachments.isEmpty)).padding(.bottom, 5).help("Send message")
-                    }
-                }.padding(.leading, 13).padding(.trailing, 6).background(Color(nsColor: .controlBackgroundColor).opacity(0.45), in: RoundedRectangle(cornerRadius: 20)).overlay(RoundedRectangle(cornerRadius: 20).stroke(.gray.opacity(0.25), lineWidth: 1))
-            }.padding(.horizontal, 16).padding(.bottom, 16).padding(.top, 7)
+        ForEach(model.approvals.filter { a in model.currentTasks.contains { $0.id == a.taskId } }) {
+          a in ApprovalCard(approval: a)
         }
+        composer
+      }.background(Color(nsColor: .textBackgroundColor))
+      if model.showActivity {
+        Divider()
+        ActivityView().frame(width: 310)
+      }
     }
-    func send() { let content = draft.trimmingCharacters(in: .whitespacesAndNewlines); guard !content.isEmpty || !attachments.isEmpty else { return }; let files = attachments; Task { if await model.send(content, attachments: files) { if draft.trimmingCharacters(in: .whitespacesAndNewlines) == content { draft = "" }; attachments = []; following = true } } }
+    .navigationTitle("")
+    .toolbar {
+      ToolbarItem(placement: .principal) {
+        Menu {
+          ForEach(members) { a in Button("\(a.name) · \(a.role)") { model.editingAgent = a } }
+        } label: {
+          HStack(spacing: 9) {
+            Avatar(agent: members.first, group: members.count > 1, size: 28)
+            VStack(alignment: .leading, spacing: 1) {
+              Text(conversation.title).font(.headline)
+              Text(
+                members.count > 1
+                  ? members.map(\.name).joined(separator: ", ") : members.first?.role ?? "Agent"
+              ).font(.system(size: 10)).foregroundStyle(.secondary)
+            }
+          }
+        }.menuStyle(.borderlessButton).fixedSize()
+      }
+      ToolbarItem {
+        Button {
+          model.showActivity.toggle()
+        } label: {
+          Image(systemName: "sidebar.right")
+        }.help("Activity and artifacts")
+      }
+      ToolbarItem {
+        Menu {
+          ForEach(members) { a in Button(a.name) { model.editingAgent = a } }
+        } label: {
+          Image(systemName: "info.circle")
+        }.help("Contact details")
+      }
+    }
+    .onAppear {
+      draft = UserDefaults.standard.string(forKey: "draft.\(conversation.id)") ?? ""
+      composing = true
+    }
+    .onChange(of: draft) { _, new in
+      UserDefaults.standard.set(new, forKey: "draft.\(conversation.id)")
+    }
+  }
+  var activeName: String {
+    if let a = model.activity.last, let agent = model.agent(a.agentId),
+      model.activeTask?.id == a.taskId
+    {
+      return agent.name
+    }
+    return members.first?.name ?? "Agent"
+  }
+  var emptyConversation: some View {
+    VStack(spacing: 12) {
+      Avatar(agent: members.first, group: members.count > 1, size: 72)
+      Text(conversation.title).font(.title2.weight(.semibold))
+      Text(
+        members.count > 1
+          ? "Different perspectives. One local model.\nYour team works in sequence and shares its results."
+          : "\(members.first?.role ?? "Your agent"), right here on your Mac.\nSend a message to start working together."
+      ).font(.callout).foregroundStyle(.secondary).multilineTextAlignment(.center)
+      if let a = members.first {
+        Button {
+          model.editingAgent = a
+        } label: {
+          Label("Choose workspace & permissions", systemImage: "folder")
+        }.buttonStyle(.borderless).padding(.top, 4)
+      }
+    }.frame(maxWidth: .infinity).padding(.vertical, 80)
+  }
+  var composer: some View {
+    VStack(spacing: 8) {
+      if !attachments.isEmpty {
+        HStack {
+          ForEach(attachments) { a in
+            HStack {
+              Image(systemName: "paperclip")
+              Text(a.name).lineLimit(1)
+              Button {
+                attachments.removeAll { $0.id == a.id }
+              } label: {
+                Image(systemName: "xmark.circle.fill")
+              }.buttonStyle(.plain)
+            }.font(.caption).padding(6).background(.quaternary, in: Capsule())
+          }
+          Spacer()
+        }.padding(.horizontal, 55)
+      }
+      HStack(alignment: .bottom, spacing: 10) {
+        Button {
+          Task { attachments += await model.attach() }
+        } label: {
+          Image(systemName: "plus").font(.system(size: 18)).frame(width: 30, height: 32)
+        }.buttonStyle(.plain).foregroundStyle(.secondary).help("Attach files")
+        HStack(alignment: .bottom, spacing: 8) {
+          TextField("Message", text: $draft, axis: .vertical).lineLimit(1...7).textFieldStyle(
+            .plain
+          ).font(.system(size: 14)).focused($composing)
+            .onKeyPress(keys: [.return]) { event in
+              if event.modifiers.contains(.shift) { return .ignored }
+              send()
+              return .handled
+            }.padding(.vertical, 9)
+          if let t = model.activeTask {
+            Button {
+              Task { await model.post("/cancel", ["taskId": t.id]) }
+            } label: {
+              Image(systemName: "stop.circle.fill").font(.system(size: 25)).foregroundStyle(.orange)
+            }.buttonStyle(.plain).padding(.bottom, 5).help("Stop task (⌘.)")
+          } else {
+            Button(action: send) {
+              Image(systemName: "arrow.up.circle.fill").font(.system(size: 25)).foregroundStyle(
+                draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && attachments.isEmpty
+                  ? Color.gray.opacity(0.3) : .blue)
+            }.buttonStyle(.plain).disabled(
+              model.sending || !model.connected
+                || (draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                  && attachments.isEmpty)
+            ).padding(.bottom, 5).help("Send message")
+          }
+        }.padding(.leading, 13).padding(.trailing, 6).background(
+          Color(nsColor: .controlBackgroundColor).opacity(0.45),
+          in: RoundedRectangle(cornerRadius: 20)
+        ).overlay(RoundedRectangle(cornerRadius: 20).stroke(.gray.opacity(0.25), lineWidth: 1))
+      }.padding(.horizontal, 16).padding(.bottom, 16).padding(.top, 7)
+    }
+  }
+  func send() {
+    let content = draft.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !content.isEmpty || !attachments.isEmpty else { return }
+    let files = attachments
+    Task {
+      if await model.send(content, attachments: files) {
+        if draft.trimmingCharacters(in: .whitespacesAndNewlines) == content { draft = "" }
+        attachments = []
+        following = true
+      }
+    }
+  }
 }
 struct MessageBubble: View {
-    @EnvironmentObject var model: AppModel; @Environment(\.colorScheme) var colorScheme; var message: ChatMessage; var group: Bool
-    var outgoing: Bool { message.role == "user" }
-    var body: some View {
-        if message.role == "system" { Text(message.content).font(.caption).foregroundStyle(.secondary).multilineTextAlignment(.center).padding(.horizontal, 40).textSelection(.enabled) }
-        else {
-            HStack(alignment: .bottom, spacing: 7) {
-                if outgoing { Spacer(minLength: 80) } else if group { Avatar(agent: model.agent(message.agentId), size: 25) }
-                VStack(alignment: outgoing ? .trailing : .leading, spacing: 4) {
-                    if group && !outgoing { Text(model.agent(message.agentId)?.name ?? "Agent").font(.system(size: 10)).foregroundStyle(.secondary).padding(.leading, 9) }
-                    if !message.reactions.isEmpty { HStack(spacing: 2) { ForEach(message.reactions, id: \.actor) { r in Text(r.emoji).font(.system(size: 14)).help(r.actor == "user" ? "You" : model.agent(r.actor)?.name ?? r.actor) } }.padding(.horizontal, 8).padding(.vertical, 3).background(.quaternary, in: Capsule()).padding(.horizontal, 6) }
-                    if !message.content.isEmpty { Text(message.content).font(.system(size: 14)).textSelection(.enabled).padding(.horizontal, 13).padding(.vertical, 9).foregroundStyle(outgoing ? Color.white : Color.primary).background(outgoing ? Color(nsColor: .systemBlue) : (colorScheme == .dark ? Color(white: 0.23) : Color(white: 0.9)), in: RoundedRectangle(cornerRadius: 18)).fixedSize(horizontal: false, vertical: true) }
-                    ForEach(message.attachments) { a in Button { model.openArtifact(a) } label: { ArtifactPreview(artifact: a) }.buttonStyle(.plain) }
-                    HStack(spacing: 8) { Text(dateFrom(message.createdAt), style: .time).font(.system(size: 9)).foregroundStyle(.tertiary); if let run = message.runId { let count = model.activity.filter { $0.runId == run }.count; if count > 0 { Button("\(count) action\(count == 1 ? "" : "s")") { model.showActivity = true }.font(.system(size: 10)).buttonStyle(.plain).foregroundStyle(.secondary) } } }.padding(.horizontal, 6)
-                }.frame(maxWidth: 560, alignment: outgoing ? .trailing : .leading)
-                    .contextMenu { Button("Copy") { NSPasteboard.general.clearContents(); NSPasteboard.general.setString(message.content, forType: .string) }; Menu("React") { ForEach(["👍", "❤️", "👀", "✅", "😂", "❓"], id: \.self) { emoji in Button(emoji) { Task { await model.post("/reactions", ["messageId": message.id, "emoji": emoji]) } } } } }
-                if !outgoing { Spacer(minLength: 80) }
-            }.padding(.horizontal, 24)
+  @EnvironmentObject var model: AppModel
+  @Environment(\.colorScheme) var colorScheme
+  var message: ChatMessage
+  var group: Bool
+  var outgoing: Bool { message.role == "user" }
+  var body: some View {
+    if message.role == "system" {
+      Text(message.content).font(.caption).foregroundStyle(.secondary).multilineTextAlignment(
+        .center
+      ).padding(.horizontal, 40).textSelection(.enabled)
+    } else {
+      HStack(alignment: .bottom, spacing: 7) {
+        if outgoing {
+          Spacer(minLength: 80)
+        } else if group {
+          Avatar(agent: model.agent(message.agentId), size: 25)
         }
+        VStack(alignment: outgoing ? .trailing : .leading, spacing: 4) {
+          if group && !outgoing {
+            Text(model.agent(message.agentId)?.name ?? "Agent").font(.system(size: 10))
+              .foregroundStyle(.secondary).padding(.leading, 9)
+          }
+          if !message.reactions.isEmpty {
+            HStack(spacing: 2) {
+              ForEach(message.reactions, id: \.actor) { r in
+                Text(r.emoji).font(.system(size: 14)).help(
+                  r.actor == "user" ? "You" : model.agent(r.actor)?.name ?? r.actor)
+              }
+            }.padding(.horizontal, 8).padding(.vertical, 3).background(.quaternary, in: Capsule())
+              .padding(.horizontal, 6)
+          }
+          if !message.content.isEmpty {
+            Text(message.content).font(.system(size: 14)).textSelection(.enabled).padding(
+              .horizontal, 13
+            ).padding(.vertical, 9).foregroundStyle(outgoing ? Color.white : Color.primary)
+              .background(
+                outgoing
+                  ? Color(nsColor: .systemBlue)
+                  : (colorScheme == .dark ? Color(white: 0.23) : Color(white: 0.9)),
+                in: RoundedRectangle(cornerRadius: 18)
+              ).fixedSize(horizontal: false, vertical: true)
+          }
+          ForEach(message.attachments) { a in
+            Button {
+              model.openArtifact(a)
+            } label: {
+              ArtifactPreview(artifact: a)
+            }.buttonStyle(.plain)
+          }
+          HStack(spacing: 8) {
+            Text(dateFrom(message.createdAt), style: .time).font(.system(size: 9)).foregroundStyle(
+              .tertiary)
+            if let run = message.runId {
+              let count = model.activity.filter { $0.runId == run }.count
+              if count > 0 {
+                Button("\(count) action\(count == 1 ? "" : "s")") { model.showActivity = true }
+                  .font(.system(size: 10)).buttonStyle(.plain).foregroundStyle(.secondary)
+              }
+            }
+          }.padding(.horizontal, 6)
+        }.frame(maxWidth: 560, alignment: outgoing ? .trailing : .leading)
+          .contextMenu {
+            Button("Copy") {
+              NSPasteboard.general.clearContents()
+              NSPasteboard.general.setString(message.content, forType: .string)
+            }
+            Menu("React") {
+              ForEach(["👍", "❤️", "👀", "✅", "😂", "❓"], id: \.self) { emoji in
+                Button(emoji) {
+                  Task {
+                    await model.post("/reactions", ["messageId": message.id, "emoji": emoji])
+                  }
+                }
+              }
+            }
+          }
+        if !outgoing { Spacer(minLength: 80) }
+      }.padding(.horizontal, 24)
     }
+  }
 }
