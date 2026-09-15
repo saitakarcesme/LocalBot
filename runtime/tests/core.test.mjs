@@ -385,3 +385,10 @@ test("overlapping workspaces serialize even when provider concurrency is raised"
   );
   store.saveProvider(config);
 });
+
+test("Git inspection returns actual repository changes", async () => {
+  const { spawnSync } = await import("node:child_process");
+  assert.equal(spawnSync("/usr/bin/git", ["init", workspace]).status, 0);
+  const result = await executeTool(a, "git", { operation: "status" }, signal());
+  assert.match(result.output, /\?\? src\//);
+});

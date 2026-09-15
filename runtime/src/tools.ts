@@ -385,7 +385,10 @@ export async function executeTool(
       if (!stat.isFile() || stat.size > 200_000)
         throw new Error("Only regular files up to 200 KB may be read.");
       return {
-        output: JSON.stringify({ path: args.path, content: await fs.readFile(p, "utf8") }),
+        output: JSON.stringify({
+          path: args.path,
+          content: await fs.readFile(p, "utf8"),
+        }),
       };
     }
     case "write_file": {
