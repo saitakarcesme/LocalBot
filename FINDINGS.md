@@ -11,3 +11,5 @@
 - Excluded personal reference screenshot using local Git excludes; contains contact details and private content.
 - Verified remote master matches server snapshot 5e001d4.
 - Reviewed macOS package, data models and app controller snapshot; no embedded credentials found. Development snapshot, not a tested release.
+- Verified remote master matches macOS controller snapshot ede580f.
+- Reviewed main macOS conversation UI snapshot; no embedded credentials found. Development snapshot, not a tested release.
