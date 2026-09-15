@@ -25,7 +25,7 @@ SQLite FTS5 indexes messages. No vector store or embedding model is needed. The 
 
 ## Execution
 
-Tasks queue durably. One task runs at a time by default; members of a group run in the configured member order. Each member sees earlier members' actual messages. This is deliberate for the 8 GB development Mac and shared-model inference: one model stays loaded, and members do not compete to edit a workspace. There is no fabricated agent-to-agent chatter or simulated test result.
+Tasks queue durably. One task runs at a time by default; provider concurrency can be raised to four for independent workspaces. Overlapping workspaces are serialized. Members of a group run in the configured member order. Each member sees earlier members' actual messages. This is deliberate for the 8 GB development Mac and shared-model inference: one model stays loaded, and members do not compete to edit a workspace. There is no fabricated agent-to-agent chatter or simulated test result.
 
 A run allows up to 24 model steps. Tools are surfaced based on permissions and checked again before every execution. File changes and memory writes require approval in Ask mode. Shell/test calls always require one-action approval. Revocation during an approval wait is enforced before execution. Cancellation aborts inference and terminates the shell process group. A question ends the current run in `awaiting_input`; the next user message starts a new task with the conversation context.
 

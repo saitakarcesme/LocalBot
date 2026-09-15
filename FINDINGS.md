@@ -25,3 +25,5 @@
 - Reviewed runtime process lock and HTTP, provider streaming, sandbox and cancellation test additions; no embedded credentials found. Snapshot only; tests not run by synchronization task.
 - Verified remote master matches runtime lock and test snapshot b06d776.
 - Reviewed architecture documentation for publication; no embedded credentials or private conversation data found. Documentation claims were not independently tested by synchronization task.
+- Verified remote master matches architecture documentation snapshot b9f84d3. New smoke script remains for next cycle.
+- Reviewed workspace-aware concurrency, group context, settings, icon generation and local-model smoke script; no embedded credentials found. Snapshot only; scripts and tests not run by synchronization task.

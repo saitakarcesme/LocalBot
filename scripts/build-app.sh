@@ -28,11 +28,14 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
 <plist version="1.0"><dict>
 <key>CFBundleName</key><string>LocalBot</string><key>CFBundleDisplayName</key><string>LocalBot</string>
 <key>CFBundleIdentifier</key><string>app.localbot.mac</string><key>CFBundleExecutable</key><string>LocalBot</string>
+<key>CFBundleIconFile</key><string>LocalBot</string>
 <key>CFBundlePackageType</key><string>APPL</string><key>CFBundleShortVersionString</key><string>0.1.0</string>
 <key>CFBundleVersion</key><string>1</string><key>LSMinimumSystemVersion</key><string>14.0</string>
 <key>NSHighResolutionCapable</key><true/><key>NSAppTransportSecurity</key><dict><key>NSAllowsLocalNetworking</key><true/></dict>
 </dict></plist>
 PLIST
+swift scripts/make-icon.swift build/LocalBot.iconset
+iconutil -c icns build/LocalBot.iconset -o "$APP/Contents/Resources/LocalBot.icns"
 xattr -cr "$APP"
 codesign --force --deep --sign - "$APP"
 echo "Built: $APP"

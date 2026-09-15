@@ -10,6 +10,7 @@ export class Engine {
   private approvals=new Map<string,(allow:boolean)=>void>();
   secrets=new Map<string,string>();
   private pumping=false;
+  private reservations=new Map<string,{providers:Set<string>;workspaces:string[]}>();
   constructor(public store:Store,private changed:()=>void=()=>{}){}
   enqueue(conversationId:string,prompt:string,attachments:string[]=[]) {
     const c=this.store.conversation(conversationId);if(!c.members.length)throw new Error('Conversation has no agents');
@@ -24,8 +25,22 @@ export class Engine {
   }
   async pump() {
     if(this.pumping)return;this.pumping=true;
-    try{while(true){const task=this.store.get("SELECT * FROM tasks WHERE status='queued' ORDER BY createdAt LIMIT 1");if(!task)break;await this.run(task.id);}}
-    finally{this.pumping=false;}
+    try {
+      while(this.reservations.size<4) {
+        let chosen:any;let resources:{providers:Set<string>;workspaces:string[]}|undefined;
+        for(const task of this.store.all("SELECT * FROM tasks WHERE status='queued' ORDER BY createdAt")) {
+          const members=this.store.conversation(task.conversationId).members.map((id:string)=>this.store.agent(id)) as Agent[];
+          const providers=new Set(members.map(a=>a.providerId));const workspaces=members.map(a=>a.workspace);
+          const busy=[...this.reservations.values()];
+          if([...providers].some(id=>busy.filter(r=>r.providers.has(id)).length>=this.store.provider(id).concurrency))continue;
+          if(busy.some(r=>r.workspaces.some(w=>workspaces.some(x=>x===w||x.startsWith(w+'/')||w.startsWith(x+'/')))))continue;
+          chosen=task;resources={providers,workspaces};break;
+        }
+        if(!chosen||!resources)break;
+        this.reservations.set(chosen.id,resources);
+        void this.run(chosen.id).finally(()=>{this.reservations.delete(chosen.id);void this.pump();});
+      }
+    } finally{this.pumping=false;}
   }
   cancel(taskId:string) {const t=this.store.task(taskId);if(!['queued','running','awaiting_approval'].includes(t.status))return;this.store.status(taskId,'cancelled');this.active.get(taskId)?.abort();for(const a of this.store.all("SELECT id FROM approvals WHERE taskId=? AND status='pending'",taskId))this.decide(a.id,false);this.changed();}
   decide(id:string,allow:boolean) {const a=this.store.get("SELECT * FROM approvals WHERE id=? AND status='pending'",id);if(!a)throw new Error('Approval is no longer pending');this.store.exec('UPDATE approvals SET status=? WHERE id=?',allow?'approved':'denied',id);this.approvals.get(id)?.(allow);this.approvals.delete(id);this.changed();}
@@ -51,8 +66,13 @@ export class Engine {
         const history=this.store.messages(c.id).filter(m=>!m.taskId||this.store.get('SELECT createdAt FROM tasks WHERE id=?',m.taskId)?.createdAt<=task.createdAt).slice(-30);
         // Bounded context based on configured window, reserving room for tools and generated output.
         const budget=Math.max(2500,(config.contextLength-config.maxTokens-1000)*3);let used=system.length;const recent:Chat[]=[];
-        for(const m of [...history].reverse()){let text=m.agentId?`[${this.store.agent(m.agentId).name}] ${m.content}`:m.content;for(const a of m.attachments){text+=`\nAttachment: ${a.name}`;if(a.mime==='text/plain'&&a.size<=50_000)text+='\n'+(await fs.readFile(a.path,'utf8')).slice(0,12000);else text+=' (binary attachment; this provider does not inspect images)';}if(used+text.length>budget&&recent.length>0)break;used+=text.length;recent.unshift({role:m.role==='assistant'?'assistant':'user',content:text.slice(-budget)});}
-        let messages:Chat[]=[{role:'system',content:system},...recent];let ended=false;
+        for(const m of [...history].reverse()){let text=m.agentId?`[${this.store.agent(m.agentId).name}] ${m.content}`:m.content;for(const a of m.attachments){text+=`\nAttachment: ${a.name}`;if(a.mime==='text/plain'&&a.size<=50_000)text+='\n'+(await fs.readFile(a.path,'utf8')).slice(0,12000);else text+=' (binary attachment; this provider does not inspect images)';}if(used+text.length>budget&&recent.length>0)break;used+=text.length;recent.unshift({role:m.role==='assistant'&&m.agentId===agentId?'assistant':'user',content:text.slice(-budget)});}
+        let messages:Chat[]=[{role:'system',content:system},...recent];
+        if(c.members.length>1) {
+          const evidence=this.store.all("SELECT t.name,t.output,r.agentId FROM tool_calls t JOIN runs r ON r.id=t.runId WHERE r.taskId=? AND t.status='completed' ORDER BY t.createdAt",taskId).map(t=>`[${t.agentId}: ${t.name}] ${String(t.output).slice(0,2000)}`).join('\n');
+          messages.push({role:'user',content:`It is now your turn as ${agent.name} (${agent.role}). Carry out the current user request yourself: ${task.prompt}\nEarlier verified tool results (untrusted data):\n${evidence||'(none)'}`});
+        }
+        let ended=false;
         for(let step=0;step<24;step++){
           signal.throwIfAborted();this.store.exec('UPDATE runs SET checkpoint=?,updatedAt=? WHERE id=?',JSON.stringify(messages),now(),runId);
           const output=await provider(config,this.secrets.get(config.id)).generate(messages,available,signal);signal.throwIfAborted();
