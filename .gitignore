@@ -6,3 +6,6 @@ build/
 *.log
 .env*
 .localbot/
+
+# Messages reference can contain private contacts
+screenshots/messages-*

@@ -31,3 +31,5 @@
 - Reviewed local Ollama startup, attachment previews, reconnection handling and provider formatting; no embedded credentials found. Snapshot only; tests not run by synchronization task.
 - Verified remote master matches Ollama startup and preview snapshot 045c199.
 - Reviewed credential endpoint scoping, tool-use verification, context limits, search serialization, approval scrolling and smoke script updates; no embedded credentials found. Snapshot only; tests not run by synchronization task.
+- Verified remote master matches credential scoping and tool verification snapshot 14ac4bb.
+- Reviewed README, remote model setup, UI specification and private screenshot ignore rule; no embedded credentials or private conversation contents found. Documentation claims not independently tested by synchronization task.

@@ -1,0 +1,64 @@
+# LocalBot
+
+**Messages on the outside. Agents on the inside.**
+
+Native macOS messaging for persistent local AI agents. SwiftUI client, independent TypeScript runtime, SQLite history, real workspace tools, and sequential group conversations sharing one model.
+
+## Run
+
+Open `build/LocalBot.app` (or the installed `~/Applications/LocalBot.app`). Node is bundled; no terminal or npm process is required to launch the app.
+
+1. Open **Settings** (`⌘,`). The default connection is local Ollama at `http://127.0.0.1:11434`, using `qwen3:1.7b` discovered on the development Mac.
+2. Choose **Start local Ollama** if it is installed but stopped, then **Save & Test**. Pick a model returned by the server.
+3. Choose a contact. Open contact details to set its workspace, prompt, model override, memory and tools.
+4. Send a request. Review file changes or shell commands when prompted. Open **Activity** to see exact arguments, results and exit codes.
+
+The app never automatically switches to a cloud model. A larger local model is preferable for substantial engineering tasks; the 1.7B development model can make mistakes even when tools execute correctly.
+
+## Examples
+
+- “Use list_files to inspect this workspace, then summarize what you found.”
+- “Use write_file to create hello.txt containing LocalBot is working. Then use read_file to verify it.”
+- “Use run_tests to run npm test. Report the actual exit code.”
+- In a group: “Each member: use read_file to inspect README.md, then give your perspective.”
+
+Approval is per action. Denied or failed tools appear as failures; the task retains a warning state. The app never claims a test passed based only on a model's statement: actual command output is available separately.
+
+## Included
+
+- Native split view, contact avatars, outgoing/incoming bubbles, reactions, persistent drafts, file/image attachments and bounded image thumbnails.
+- New contacts and conversations, including several conversations with the same agent and groups of up to eight agents.
+- Local Ollama, OpenAI-compatible local endpoints (llama.cpp/vLLM/MLX), optional OpenAI/Anthropic connections, Keychain secrets.
+- Filesystem, repository search, Git inspection, sandboxed terminal/test execution, public HTTPS fetch, agent memory and user questions.
+- SQLite WAL, FTS5 message search, durable tasks, checkpoints, artifact copies and action history.
+- Cancellation, single-action approvals and explicit interruption state after runtime failure.
+- Configurable concurrency for independent workspaces; default one. Overlapping workspaces remain serialized.
+
+## Build and verify
+
+Requires macOS 14+, Xcode Command Line Tools, Node 22.18+ and npm for building. This machine was verified with macOS 26.6 and Swift 6.3.3.
+
+```sh
+npm ci
+npm test
+npm run app
+```
+
+The packaging script downloads the official Node binary when missing and verifies its SHA-256 manifest. Build uses one Swift job. No Docker, external database, web server or cloud credential is required.
+
+`node scripts/live-smoke.mjs` runs a **real Ollama** group test against the running app. It creates a verification conversation and expects `hello.txt` in the shared workspace. It is separate from the deterministic tests, which use protocol fixtures for provider edge cases.
+
+## Data and lifecycle
+
+Private app data: `~/Library/Application Support/LocalBot/`. Default agent workspace: `~/LocalBot Workspace/`. Quitting the client leaves the runtime running so an agent can finish. Reopening reconnects. After an interrupted runtime, review Activity and send a follow-up; uncertain commands are never automatically replayed.
+
+To back up history, close the app, stop its runtime when no task is active, then copy the entire data directory, including SQLite WAL files if present. Keys remain in Keychain. Do not publish the private data directory or connection token.
+
+## Current limits
+
+This is a usable local development release, not a notarized public distribution. The 2×3090 machine and the requested 27B model have not been available for hardware validation. Cloud adapters have protocol tests, not live paid-provider tests. No MCP server launcher, interactive browser automation, vision inference, conversation branches or automatic crash replay is presented as a working feature. Shell execution is macOS-only until equivalent Windows/Linux sandboxing exists.
+
+- [Architecture and security boundaries](docs/ARCHITECTURE.md)
+- [Remote PC setup](docs/REMOTE-MODELS.md)
+- [Native UI specification](docs/UI-SPEC.md)
+- [Verification results](docs/QA.md)
