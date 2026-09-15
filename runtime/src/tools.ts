@@ -45,7 +45,7 @@ function sandboxProfile(root:string, filesystem:string) {
   const reads=['/System','/usr','/bin','/sbin','/Library/Apple','/Library/Developer','/Library/Preferences','/opt/homebrew','/private/etc','/private/var/db','/dev'];
   if(filesystem!=='off')reads.push(root);
   // Deny file data outside the workspace and OS/toolchain paths. Keep normal process IPC intact.
-  return `(version 1) (allow default) (deny network*) (deny file-read-data (require-all ${reads.map(p=>`(require-not (subpath ${q(p)}))`).join(' ')})) (deny file-write* (require-all (require-not (subpath ${q(join(root,'.localbot-tmp'))})) ${filesystem==='write'?`(require-not (subpath ${q(root)}))`:''} (require-not (literal "/dev/null")))) (deny file-read* file-write* (regex #"/\\.env($|[./])" #"/\\.ssh(/|$)" #"/\\.aws(/|$)" #"/\\.npmrc$"))`;
+  return `(version 1) (allow default) (deny network*) (deny file-read-data (require-all (require-not (literal "/")) ${reads.map(p=>`(require-not (subpath ${q(p)}))`).join(' ')})) (deny file-write* (require-all (require-not (subpath ${q(join(root,'.localbot-tmp'))})) ${filesystem==='write'?`(require-not (subpath ${q(root)}))`:''} (require-not (literal "/dev/null")))) (deny file-read* file-write* (regex #"/\\.env($|[./])" #"/\\.ssh(/|$)" #"/\\.aws(/|$)" #"/\\.npmrc$"))`;
 }
 export async function executeProcess(agent:Agent,command:string,signal:AbortSignal) {
   if(process.platform!=='darwin')throw new Error('Terminal execution is disabled on this platform until a native sandbox is configured. Filesystem and model tools remain available.');
