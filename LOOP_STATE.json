@@ -1,0 +1,13 @@
+{
+  "github_sync": {
+    "repository": "https://github.com/saitakarcesme/LocalBot",
+    "branch": "master",
+    "updated_at": "2026-09-15T19:56:20.411639+00:00",
+    "status": "reviewed_snapshot_ready_to_push",
+    "files": [
+      "runtime/src/engine.ts",
+      "runtime/src/providers.ts",
+      "runtime/src/tools.ts"
+    ]
+  }
+}
