@@ -1,0 +1,8 @@
+node_modules/
+runtime/dist/
+macos/.build/
+build/
+.DS_Store
+*.log
+.env*
+.localbot/

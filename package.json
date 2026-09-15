@@ -1,0 +1,6 @@
+{
+  "name": "localbot", "version": "0.1.0", "private": true, "type": "module",
+  "engines": {"node": ">=22.18.0"},
+  "scripts": {"build": "tsc -p runtime/tsconfig.json", "start": "node runtime/dist/server.js", "test": "npm run build && node --test --test-concurrency=1 runtime/tests/*.test.mjs", "app": "bash scripts/build-app.sh", "check": "npm test && swift build --package-path macos -j 1"},
+  "devDependencies": {"@types/node": "^22.0.0", "typescript": "^5.9.0"}
+}
