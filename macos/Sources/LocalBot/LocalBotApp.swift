@@ -38,7 +38,7 @@ struct MainView: View {
                 if model.search.isEmpty {
                     List(selection: $model.selectedId) {
                         ForEach(model.conversations) { c in
-                            ConversationRow(conversation: c).tag(c.id).listRowInsets(EdgeInsets(top: 4, leading: 7, bottom: 4, trailing: 7))
+                            ConversationRow(conversation: c).tag(c.id).listRowBackground(model.selectedId == c.id ? Color.blue : Color.clear).foregroundStyle(model.selectedId == c.id ? Color.white : Color.primary).listRowInsets(EdgeInsets(top: 4, leading: 7, bottom: 4, trailing: 7))
                                 .contextMenu { Button("New conversation with these agents") { Task { await model.post("/conversations", ["title": c.title, "members": c.members]); model.selectedId = model.conversations.first?.id } }; if c.members.count == 1, let agent = model.agent(c.members[0]) { Button("Contact Details…") { model.editingAgent = agent } } }
                         }
                     }.listStyle(.sidebar)
@@ -70,7 +70,7 @@ struct ConversationRow: View {
                 HStack { Text(conversation.title).font(.system(size: 13, weight: .semibold)).lineLimit(1); Spacer(minLength: 1); if conversation.preview != nil { Text(dateFrom(conversation.updatedAt), style: .time).font(.system(size: 10)).foregroundStyle(.secondary) } }
                 Text(conversation.preview?.replacingOccurrences(of: "\n", with: " ") ?? (conversation.members.count > 1 ? "\(conversation.members.count) agents · shared workspace" : model.agent(conversation.members.first)?.role ?? "Agent")).font(.system(size: 12)).foregroundStyle(.secondary).lineLimit(2).frame(maxWidth: .infinity, alignment: .leading)
             }
-        }.frame(height: 64).padding(.horizontal, 3)
+        }.frame(height: 68).padding(.horizontal, 3)
     }
 }
 struct ConversationView: View {
@@ -102,7 +102,7 @@ struct ConversationView: View {
             }.background(Color(nsColor: .textBackgroundColor))
             if model.showActivity { Divider(); ActivityView().frame(width: 310) }
         }
-        .navigationTitle(conversation.title)
+        .navigationTitle("")
         .toolbar {
             ToolbarItem(placement: .principal) {
                 Menu {
@@ -144,7 +144,7 @@ struct ConversationView: View {
     func send() { let content = draft.trimmingCharacters(in: .whitespacesAndNewlines); guard !content.isEmpty || !attachments.isEmpty else { return }; let files = attachments; Task { if await model.send(content, attachments: files) { if draft.trimmingCharacters(in: .whitespacesAndNewlines) == content { draft = "" }; attachments = []; following = true } } }
 }
 struct MessageBubble: View {
-    @EnvironmentObject var model: AppModel; var message: ChatMessage; var group: Bool
+    @EnvironmentObject var model: AppModel; @Environment(\.colorScheme) var colorScheme; var message: ChatMessage; var group: Bool
     var outgoing: Bool { message.role == "user" }
     var body: some View {
         if message.role == "system" { Text(message.content).font(.caption).foregroundStyle(.secondary).multilineTextAlignment(.center).padding(.horizontal, 40).textSelection(.enabled) }
@@ -154,7 +154,7 @@ struct MessageBubble: View {
                 VStack(alignment: outgoing ? .trailing : .leading, spacing: 4) {
                     if group && !outgoing { Text(model.agent(message.agentId)?.name ?? "Agent").font(.system(size: 10)).foregroundStyle(.secondary).padding(.leading, 9) }
                     if !message.reactions.isEmpty { HStack(spacing: 2) { ForEach(message.reactions, id: \.actor) { r in Text(r.emoji).font(.system(size: 14)).help(r.actor == "user" ? "You" : model.agent(r.actor)?.name ?? r.actor) } }.padding(.horizontal, 8).padding(.vertical, 3).background(.quaternary, in: Capsule()).padding(.horizontal, 6) }
-                    if !message.content.isEmpty { Text(message.content).font(.system(size: 14)).textSelection(.enabled).padding(.horizontal, 13).padding(.vertical, 9).foregroundStyle(outgoing ? Color.white : Color.primary).background(outgoing ? Color(nsColor: .systemBlue) : Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 18)).fixedSize(horizontal: false, vertical: true) }
+                    if !message.content.isEmpty { Text(message.content).font(.system(size: 14)).textSelection(.enabled).padding(.horizontal, 13).padding(.vertical, 9).foregroundStyle(outgoing ? Color.white : Color.primary).background(outgoing ? Color(nsColor: .systemBlue) : (colorScheme == .dark ? Color(white: 0.23) : Color(white: 0.9)), in: RoundedRectangle(cornerRadius: 18)).fixedSize(horizontal: false, vertical: true) }
                     ForEach(message.attachments) { a in Button { model.openArtifact(a) } label: { Label(a.name, systemImage: a.mime.hasPrefix("image/") ? "photo" : "doc").font(.callout).padding(10).background(.quaternary, in: RoundedRectangle(cornerRadius: 10)) }.buttonStyle(.plain) }
                     HStack(spacing: 8) { Text(dateFrom(message.createdAt), style: .time).font(.system(size: 9)).foregroundStyle(.tertiary); if let run = message.runId { let count = model.activity.filter { $0.runId == run }.count; if count > 0 { Button("\(count) action\(count == 1 ? "" : "s")") { model.showActivity = true }.font(.system(size: 10)).buttonStyle(.plain).foregroundStyle(.secondary) } } }.padding(.horizontal, 6)
                 }.frame(maxWidth: 560, alignment: outgoing ? .trailing : .leading)

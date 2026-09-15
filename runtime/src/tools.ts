@@ -57,7 +57,7 @@ export async function executeProcess(agent:Agent,command:string,signal:AbortSign
     signal.addEventListener('abort',abort,{once:true});if(signal.aborted)abort();
     const collect=(b:Buffer)=>{if(output.length<100_000)output+=b.toString().slice(0,100_000-output.length);else kill('Output limit exceeded');};child.stdout.on('data',collect);child.stderr.on('data',collect);
     const cleanup=()=>{clearTimeout(timer);signal.removeEventListener('abort',abort);};
-    child.on('error',e=>{cleanup();reject(e);});child.on('close',(code)=>{cleanup();resolveResult(`${stopped?stopped+'\n':''}Exit code: ${code??'signal'}\n${output}`);});
+    child.on('error',e=>{cleanup();reject(e);});child.on('close',(code)=>{cleanup();const result=`${stopped?stopped+'\n':''}Exit code: ${code??'signal'}\n${output}`; if(code!==0||stopped)reject(new Error(result));else resolveResult(result);});
   });
 }
 export function publicIP(ip:string) {if(isIP(ip)===4){const [a,b]=ip.split('.').map(Number);return !(a===0||a===10||a===127||a===169&&b===254||a===172&&b>=16&&b<=31||a===192&&b===168||a===100&&b>=64&&b<=127||a>=224||a===198&&(b===18||b===19));}return isIP(ip)===6&&!/^(::|fc|fd|fe[89ab]|2001:db8)/i.test(ip);}
