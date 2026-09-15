@@ -2,12 +2,13 @@
   "github_sync": {
     "repository": "https://github.com/saitakarcesme/LocalBot",
     "branch": "master",
-    "updated_at": "2026-09-15T20:02:45.332281+00:00",
+    "updated_at": "2026-09-15T20:04:53.228434+00:00",
     "status": "reviewed_snapshot_ready_to_push",
     "files": [
-      "macos/Sources/LocalBot/LocalBotApp.swift"
+      "macos/Sources/LocalBot/DetailViews.swift",
+      "scripts/build-app.sh"
     ],
-    "last_pushed_commit": "ede580f8a32095cee842bb202ee162174d1416e3",
+    "last_pushed_commit": "154f3ea8b805f383052426078dd30a0b1a68b66e",
     "excluded_private_files": [
       "screenshots/messages-reference-dark.png"
     ]

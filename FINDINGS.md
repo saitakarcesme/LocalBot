@@ -13,3 +13,5 @@
 - Reviewed macOS package, data models and app controller snapshot; no embedded credentials found. Development snapshot, not a tested release.
 - Verified remote master matches macOS controller snapshot ede580f.
 - Reviewed main macOS conversation UI snapshot; no embedded credentials found. Development snapshot, not a tested release.
+- Verified remote master matches conversation UI snapshot 154f3ea.
+- Reviewed macOS settings, approval and activity views plus app packaging script; no embedded credentials found. Development snapshot, not a tested release.
