@@ -1,6 +1,6 @@
 import { createServer, IncomingMessage, ServerResponse } from 'node:http';
 import { randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
-import { promises as fs } from 'node:fs';
+import { promises as fs, readFileSync, unlinkSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { Store } from './store.js';
@@ -10,6 +10,18 @@ import { Agent, ProviderConfig, errorText } from './types.js';
 const dir=process.env.LOCALBOT_DATA_DIR??join(homedir(),'Library','Application Support','LocalBot');
 const workspace=process.env.LOCALBOT_WORKSPACE??join(homedir(),'LocalBot Workspace');
 await fs.mkdir(workspace,{recursive:true});
+await fs.mkdir(dir,{recursive:true,mode:0o700});
+const lockPath=join(dir,'runtime.pid');
+try {
+  const lock=await fs.open(lockPath,'wx',0o600);await lock.writeFile(String(process.pid));await lock.close();
+} catch(e:any) {
+  if(e.code!=='EEXIST')throw e;
+  const pid=Number(await fs.readFile(lockPath,'utf8'));
+  let alive=false;try{process.kill(pid,0);alive=true;}catch{}
+  if(alive){console.log('LocalBot runtime already running.');process.exit(0);}
+  await fs.unlink(lockPath);const lock=await fs.open(lockPath,'wx',0o600);await lock.writeFile(String(process.pid));await lock.close();
+}
+process.on('exit',()=>{try{if(readFileSync(lockPath,'utf8')===String(process.pid))unlinkSync(lockPath);}catch{}});
 const store=new Store(dir);store.seed(workspace);store.recover();
 const tokenPath=join(dir,'runtime-token');let token:string;
 try{token=await fs.readFile(tokenPath,'utf8');}catch{token=randomBytes(32).toString('hex');await fs.writeFile(tokenPath,token,{mode:0o600});}
