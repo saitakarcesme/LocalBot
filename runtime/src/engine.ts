@@ -19,7 +19,7 @@ export class Engine {
     this.store.transaction(()=>{
       const messageId=this.store.addMessage(conversationId,'user',prompt,{taskId:id});
       for(const artifactId of attachments){const artifact=this.store.get('SELECT * FROM artifacts WHERE id=? AND messageId IS NULL AND runId IS NULL',artifactId);if(!artifact)throw new Error('Attachment not found or already attached');this.store.exec('UPDATE artifacts SET messageId=? WHERE id=?',messageId,artifactId);}
-      this.store.exec('INSERT INTO tasks VALUES(?,?,?,?,?,?,?,?,?,?)',id,conversationId,conversationId,messageId,prompt,'queued',date,date,null);
+      this.store.exec('INSERT INTO tasks VALUES(?,?,?,?,?,?,?,?,?)',id,conversationId,conversationId,messageId,prompt,'queued',date,date,null);
     });this.changed();void this.pump();return this.store.task(id);
   }
   async pump() {

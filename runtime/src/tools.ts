@@ -40,16 +40,18 @@ export async function safePath(workspace:string,path:string,write=false) {
   let current=root;for(const part of rel.split('/').filter(Boolean)){current=join(current,part);try{if((await fs.lstat(current)).isSymbolicLink())throw new Error('Symbolic links are not available to agent tools.');}catch(e:any){if(e.code!=='ENOENT')throw e;}}
   return full;
 }
-function sandboxProfile(root:string) {
+function sandboxProfile(root:string, filesystem:string) {
   const q=(x:string)=>JSON.stringify(x);
-  const reads=['/System','/usr','/bin','/sbin','/Library/Apple','/Library/Developer','/opt/homebrew','/private/etc','/dev/null','/dev/urandom'];
-  return `(version 1) (deny default) (allow process*) (allow sysctl-read) (allow mach-lookup) (allow signal (target self)) (allow file-read-metadata) ${reads.map(p=>`(allow file-read* (subpath ${q(p)}))`).join(' ')} (allow file-read* (subpath ${q(root)})) (allow file-write* (subpath ${q(root)})) (allow file-read* file-write* (subpath ${q(join(root,'.localbot-tmp'))})) (allow file-write* (literal "/dev/null")) (deny network*) ${['.env','.ssh','.aws','.git/config','.npmrc'].map(p=>`(deny file-read* file-write* (subpath ${q(join(root,p))}))`).join(' ')}`;
+  const reads=['/System','/usr','/bin','/sbin','/Library/Apple','/Library/Developer','/Library/Preferences','/opt/homebrew','/private/etc','/private/var/db','/dev'];
+  if(filesystem!=='off')reads.push(root);
+  // Deny file data outside the workspace and OS/toolchain paths. Keep normal process IPC intact.
+  return `(version 1) (allow default) (deny network*) (deny file-read-data (require-all ${reads.map(p=>`(require-not (subpath ${q(p)}))`).join(' ')})) (deny file-write* (require-all (require-not (subpath ${q(join(root,'.localbot-tmp'))})) ${filesystem==='write'?`(require-not (subpath ${q(root)}))`:''} (require-not (literal "/dev/null")))) (deny file-read* file-write* (regex #"/\\.env($|[./])" #"/\\.ssh(/|$)" #"/\\.aws(/|$)" #"/\\.npmrc$"))`;
 }
 export async function executeProcess(agent:Agent,command:string,signal:AbortSignal) {
   if(process.platform!=='darwin')throw new Error('Terminal execution is disabled on this platform until a native sandbox is configured. Filesystem and model tools remain available.');
   const root=await fs.realpath(agent.workspace);await fs.mkdir(join(root,'.localbot-tmp'),{recursive:true});
   return new Promise<string>((resolveResult,reject)=>{
-    const child=spawn('/usr/bin/sandbox-exec',['-p',sandboxProfile(root),'/bin/sh','-c',command],{cwd:root,detached:true,env:{PATH:'/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin',HOME:join(root,'.localbot-tmp'),TMPDIR:join(root,'.localbot-tmp'),LANG:'en_US.UTF-8',CI:'1'},stdio:['ignore','pipe','pipe']});
+    const child=spawn('/usr/bin/sandbox-exec',['-p',sandboxProfile(root,agent.permissions.filesystem),'/bin/sh','-c',command],{cwd:root,detached:true,env:{PATH:'/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin',HOME:join(root,'.localbot-tmp'),TMPDIR:join(root,'.localbot-tmp'),LANG:'en_US.UTF-8',CI:'1'},stdio:['ignore','pipe','pipe']});
     let output='',stopped='';const kill=(why:string)=>{if(stopped)return;stopped=why;try{process.kill(-child.pid!,'SIGKILL');}catch{child.kill('SIGKILL');}};
     const abort=()=>kill('Cancelled');const timer=setTimeout(()=>kill('Timed out after 60 seconds'),60_000);
     signal.addEventListener('abort',abort,{once:true});if(signal.aborted)abort();

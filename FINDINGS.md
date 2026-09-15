@@ -15,3 +15,5 @@
 - Reviewed main macOS conversation UI snapshot; no embedded credentials found. Development snapshot, not a tested release.
 - Verified remote master matches conversation UI snapshot 154f3ea.
 - Reviewed macOS settings, approval and activity views plus app packaging script; no embedded credentials found. Development snapshot, not a tested release.
+- Verified remote master matches settings and packaging snapshot e81d1b3.
+- Reviewed runtime regression tests, task insert correction, shell permission changes and SwiftUI fixes; no embedded credentials found. Snapshot only; tests not run by synchronization task.

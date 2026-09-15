@@ -131,7 +131,7 @@ struct ConversationView: View {
                 Button { Task { attachments += await model.attach() } } label: { Image(systemName: "plus").font(.system(size: 18)).frame(width: 30, height: 32) }.buttonStyle(.plain).foregroundStyle(.secondary).help("Attach files")
                 HStack(alignment: .bottom, spacing: 8) {
                     TextField("Message", text: $draft, axis: .vertical).lineLimit(1...7).textFieldStyle(.plain).font(.system(size: 14)).focused($composing)
-                        .onKeyPress(.return) { event in if event.modifiers.contains(.shift) { return .ignored }; send(); return .handled }.padding(.vertical, 9)
+                        .onKeyPress(keys: [.return]) { event in if event.modifiers.contains(.shift) { return .ignored }; send(); return .handled }.padding(.vertical, 9)
                     if let t = model.activeTask {
                         Button { Task { await model.post("/cancel", ["taskId": t.id]) } } label: { Image(systemName: "stop.circle.fill").font(.system(size: 25)).foregroundStyle(.orange) }.buttonStyle(.plain).padding(.bottom, 5).help("Stop task (⌘.)")
                     } else {
@@ -158,7 +158,7 @@ struct MessageBubble: View {
                     ForEach(message.attachments) { a in Button { model.openArtifact(a) } label: { Label(a.name, systemImage: a.mime.hasPrefix("image/") ? "photo" : "doc").font(.callout).padding(10).background(.quaternary, in: RoundedRectangle(cornerRadius: 10)) }.buttonStyle(.plain) }
                     HStack(spacing: 8) { Text(dateFrom(message.createdAt), style: .time).font(.system(size: 9)).foregroundStyle(.tertiary); if let run = message.runId { let count = model.activity.filter { $0.runId == run }.count; if count > 0 { Button("\(count) action\(count == 1 ? "" : "s")") { model.showActivity = true }.font(.system(size: 10)).buttonStyle(.plain).foregroundStyle(.secondary) } } }.padding(.horizontal, 6)
                 }.frame(maxWidth: 560, alignment: outgoing ? .trailing : .leading)
-                    .contextMenu { Button("Copy") { NSPasteboard.general.clearContents(); NSPasteboard.general.setString(message.content, forType: .string) }; Menu("React") { ForEach(["👍", "❤️", "👀", "✅", "😂", "❓"], id: \.self) { emoji in Button(emoji) { Task { await model.post("/reactions", ["messageId": message.id, "emoji": emoji]) } } } }
+                    .contextMenu { Button("Copy") { NSPasteboard.general.clearContents(); NSPasteboard.general.setString(message.content, forType: .string) }; Menu("React") { ForEach(["👍", "❤️", "👀", "✅", "😂", "❓"], id: \.self) { emoji in Button(emoji) { Task { await model.post("/reactions", ["messageId": message.id, "emoji": emoji]) } } } } }
                 if !outgoing { Spacer(minLength: 80) }
             }.padding(.horizontal, 24)
         }
