@@ -213,12 +213,11 @@ struct ConversationView: View {
                   Spacer()
                 }.padding(.horizontal, 28).padding(.top, 5)
               }
-              Color.clear.frame(height: 1).id("bottom").onAppear { following = true }.onDisappear {
-                following = false
-              }
+              Color.clear.frame(height: 1).id("bottom")
             }.padding(.bottom, 16)
           }
           .defaultScrollAnchor(.bottom)
+          .modifier(ScrollPositionObserver(isAtBottom: $following))
           .onChange(of: model.messages.count) { _, _ in
             if following {
               withAnimation(.easeOut(duration: 0.18)) { proxy.scrollTo("bottom", anchor: .bottom) }
@@ -460,6 +459,21 @@ struct MessageBubble: View {
           }
         if !outgoing { Spacer(minLength: 80) }
       }.padding(.horizontal, 24)
+    }
+  }
+}
+
+struct ScrollPositionObserver: ViewModifier {
+  @Binding var isAtBottom: Bool
+  func body(content: Content) -> some View {
+    if #available(macOS 15.0, *) {
+      content.onScrollGeometryChange(for: Bool.self) { geometry in
+        geometry.contentOffset.y + geometry.containerSize.height >= geometry.contentSize.height - 60
+      } action: { _, nearBottom in
+        if isAtBottom != nearBottom { isAtBottom = nearBottom }
+      }
+    } else {
+      content
     }
   }
 }
