@@ -1329,7 +1329,8 @@
     },
     {
       "name": "view_image",
-      "status": "not-yet-implemented"
+      "status": "partial-equivalent",
+      "route": "Codex CLI provider can inspect user-attached images via multimodal input, with bounded validated files. Agent-requested workspace image viewing tool is not implemented yet; HTTP providers do not inspect images."
     },
     {
       "name": "web__run",

@@ -66,7 +66,7 @@ To back up history, close the app, stop its runtime when no task is active, then
 
 ## Current limits
 
-This is a usable local development release, not a notarized public distribution. The 2×3090 machine and the requested 27B model have not been available for hardware validation. API adapters have protocol tests; the Codex ChatGPT subscription bridge has live agent and project tests. Interactive browser automation, vision inference, conversation branches and automatic crash replay remain unimplemented. Shell execution is macOS-only until equivalent Windows/Linux sandboxing exists.
+This is a usable local development release, not a notarized public distribution. The 2×3090 machine and the requested 27B model have not been available for hardware validation. API adapters have protocol tests; the Codex ChatGPT subscription bridge has live agent and project tests. Interactive browser automation, image inference through HTTP providers, conversation branches and automatic crash replay remain unimplemented. Shell execution is macOS-only until equivalent Windows/Linux sandboxing exists.
 
 - [Architecture and security boundaries](docs/ARCHITECTURE.md)
 - [Remote PC setup](docs/REMOTE-MODELS.md)
@@ -102,3 +102,5 @@ Local MCP processes use an absolute executable, JSON argument array and absolute
 Incoming messages render native inline emphasis and code, with fenced code blocks and Copy code. User messages remain literal. Sidebar/search previews use readable text. Whole-message Copy preserves the original message. Tables and heading layout are not rendered as full Markdown documents.
 
 `process_poll` waits for new output or process exit for up to `wait_ms` (decimal string, 0–60000; default 10000). Use 0 for an immediate snapshot. Pending waits end on task cancellation; output is consumed only once.
+
+Codex subscription agents can inspect attached PNG/JPEG/GIF/WebP images through CLI multimodal input: at most four recent context images, 5 MB per image and 12 MB total. Native attachment previews remain unchanged. PNG image understanding was live-tested; other formats have signature handling but have not been individually live-tested. HTTP providers currently receive an explicit unsupported-image note. The image adapter follows [Codex App Server input types](https://learn.chatgpt.com/docs/app-server).

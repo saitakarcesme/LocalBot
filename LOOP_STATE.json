@@ -27,14 +27,14 @@
     "remaining_hardware_validation": "2x RTX 3090 PC with user-specified 27B model; endpoint not provided",
     "known_scope_limits": [
       "Interactive browser automation not shipped",
-      "No vision inference",
+      "Image inspection currently available only through Codex CLI",
       "Not notarized for public distribution"
     ]
   },
   "v0_2": {
     "status": "core_implemented_live_verified_tool_parity_in_progress",
-    "updated_at": "2026-09-16T12:38:36.817350+00:00",
-    "runtime_tests_passed": 53,
+    "updated_at": "2026-09-16T12:44:32.308900+00:00",
+    "runtime_tests_passed": 55,
     "real_subscription_agents_verified": 5,
     "real_project": "Focus Ledger",
     "project_tests_passed": 5,
@@ -58,6 +58,6 @@
       "manual scrolling survives Activity width change",
       "last selected chat survives relaunch"
     ],
-    "checkpoint": "Cancellable process output/exit waits verified with delayed live GPT task and native result"
+    "checkpoint": "Codex CLI image attachment understanding verified with generated fixture and native screenshot"
   }
 }
