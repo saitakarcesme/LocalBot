@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { CodexProvider } from "./codex-provider.js";
 import {
   Chat,
   Generation,
@@ -16,6 +17,7 @@ export interface ModelProvider {
   capabilities(): { tools: boolean; streaming: boolean; images: boolean };
 }
 export function validateEndpoint(p: ProviderConfig) {
+  if (p.kind === "codex") return;
   const u = new URL(p.endpoint);
   if (
     !["http:", "https:"].includes(u.protocol) ||
@@ -37,6 +39,7 @@ export function validateEndpoint(p: ProviderConfig) {
     throw new Error("Remote endpoints require authentication.");
 }
 export function provider(p: ProviderConfig, secret?: string): ModelProvider {
+  if (p.kind === "codex") return new CodexProvider(p);
   return new HTTPProvider(p, secret);
 }
 class HTTPProvider implements ModelProvider {

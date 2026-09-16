@@ -340,8 +340,14 @@ struct SettingsView: View {
         Text("Ollama").tag("ollama")
         Text("OpenAI compatible").tag("openai")
         Text("Anthropic (optional)").tag("anthropic")
+        Text("Codex subscription").tag("codex")
       }.pickerStyle(.segmented)
-      TextField("Endpoint", text: field(\.endpoint)).textFieldStyle(.roundedBorder)
+      if editing?.kind == "codex" {
+        Text("Uses the ChatGPT account signed in to Codex CLI on this Mac.")
+          .font(.caption).foregroundStyle(.secondary)
+      } else {
+        TextField("Endpoint", text: field(\.endpoint)).textFieldStyle(.roundedBorder)
+      }
       HStack {
         TextField("Model identifier", text: field(\.model)).textFieldStyle(.roundedBorder)
         if !models.isEmpty {
@@ -371,13 +377,14 @@ struct SettingsView: View {
       Text("Use 1 on an 8 GB Mac. Tasks sharing a workspace always run in sequence.").font(
         .caption2
       ).foregroundStyle(.secondary)
-      Toggle(
+      if editing?.kind != "codex" { Toggle(
         "Requires authentication",
         isOn: Binding(get: { editing?.requiresAuth ?? false }, set: { editing?.requiresAuth = $0 }))
       if editing?.requiresAuth == true {
         SecureField("API key — stored in macOS Keychain", text: $secret).textFieldStyle(
           .roundedBorder)
         Text("Leave blank to keep the saved key.").font(.caption2).foregroundStyle(.secondary)
+      }
       }
       if editing?.kind == "ollama" {
         Button("Start local Ollama") {

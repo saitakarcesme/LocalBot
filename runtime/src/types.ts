@@ -21,7 +21,7 @@ export type Agent = {
 export type ProviderConfig = {
   id: string;
   name: string;
-  kind: "ollama" | "openai" | "anthropic";
+  kind: "ollama" | "openai" | "anthropic" | "codex";
   endpoint: string;
   model: string;
   contextLength: number;

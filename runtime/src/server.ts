@@ -282,7 +282,7 @@ const server = createServer(async (req, res) => {
     }
     if (m === "POST" && p === "/providers") {
       const b = await body(req);
-      if (!["ollama", "openai", "anthropic"].includes(b.kind))
+      if (!["ollama", "openai", "anthropic", "codex"].includes(b.kind))
         throw new Error("Unsupported provider");
       const config: ProviderConfig = {
         id: b.id ?? randomUUID(),
