@@ -73,7 +73,7 @@ This is a usable local development release, not a notarized public distribution.
 - [Native UI specification](docs/UI-SPEC.md)
 - [Verification results](docs/QA.md)
 
-The [269-entry Codex tool inventory](docs/CODEX-TOOL-INVENTORY.json) is a coverage target, not a claim that all Codex-hosted services are implemented. LocalBot currently exposes 24 built-in tool entries, including MCP discovery and invocation. External integrations require their own supported endpoint and authentication.
+The [269-entry Codex tool inventory](docs/CODEX-TOOL-INVENTORY.json) is a coverage target, not a claim that all Codex-hosted services are implemented. LocalBot currently exposes 25 built-in tool entries, including MCP discovery and invocation. External integrations require their own supported endpoint and authentication.
 
 For precise edits, read_file returns a SHA-256 fingerprint. edit_file replaces one unique old_text block using that fingerprint; stale or ambiguous edits fail without changing the target. It follows the contact’s filesystem permission and edit approval policy.
 
@@ -86,3 +86,7 @@ Agents can start a sandboxed process, poll output, send stdin and stop it. Start
 Project messages enter the persistent task queue immediately, including while the team is being selected. Stop cancels routing as well as execution. Each queued request selects its own team; project messages retain their sender names and avatars when that team changes.
 
 MCP integrations can expose tools, resources or both. Agents can list resource pages and URI templates, then request an approved resource read. Resource contents are treated as untrusted data and bounded to 100 KB; binary contents remain base64. Save & Test displays discovered resources/templates as well as tools. Protocol reference: [MCP resources](https://modelcontextprotocol.io/specification/2025-11-25/server/resources).
+
+### Multi-file patches
+
+`apply_patch` supports Add/Update/Delete File, Move to, exact `@@` hunks and End of File markers. Read existing files first and supply their SHA-256 values in `expected_hashes`. Every patch requires approval. All paths and hunks are checked before target changes; execution failures attempt rollback. A recovery JSON artifact retains base64 preimages and file modes, including deleted files. Matching is exact and unique; fuzzy matching is not supported. Multi-file updates are not crash-atomic; recovery records are retained under the workspace `.localbot-tmp` directory.

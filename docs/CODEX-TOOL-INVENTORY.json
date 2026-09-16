@@ -7,7 +7,7 @@
     {
       "name": "apply_patch",
       "status": "partial-equivalent",
-      "route": "edit_file: unique exact-block replacement, stale SHA-256 checks and atomic file replacement; write_file for whole files. Multi-file Codex patch syntax remains open."
+      "route": "apply_patch supports multi-file Add/Update/Delete, Move to, exact @@ hunks and End of File; all existing sources require read_file SHA-256, every patch requires approval, recovery preimages retained. Strict unique matching; not the full fuzzy Codex parser or crash-atomic filesystem transactions."
     },
     {
       "name": "clock__curr_time",
