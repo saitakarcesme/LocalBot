@@ -306,6 +306,7 @@ struct ConversationView: View {
     }
   }
   var activeName: String {
+    if let run = model.activeRuns.first(where: { $0.taskId == model.activeTask?.id }), let agent = model.agent(run.agentId) { return agent.name }
     if let a = model.activity.last, let agent = model.agent(a.agentId),
       model.activeTask?.id == a.taskId
     {

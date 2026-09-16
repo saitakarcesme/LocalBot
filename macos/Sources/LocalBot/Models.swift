@@ -118,12 +118,19 @@ struct Activity: Codable, Identifiable {
 }
 struct Snapshot: Codable {
   var projects: [Project]?
+  var activeRuns: [ActiveRun]?
   var agents: [Agent]
   var providers: [Provider]
   var conversations: [Conversation]
   var tasks: [AgentTask]
   var approvals: [Approval]
   var revision: Int
+}
+struct ActiveRun: Codable, Identifiable {
+  var id: String
+  var taskId: String
+  var agentId: String
+  var status: String
 }
 struct Health: Codable {
   var ok: Bool

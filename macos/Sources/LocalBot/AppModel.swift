@@ -45,6 +45,7 @@ enum Keychain {
   @Published var agents: [Agent] = []
   @Published var providers: [Provider] = []
   @Published var projects: [Project] = []
+  @Published var activeRuns: [ActiveRun] = []
   @Published var showProject = false
   @Published var conversations: [Conversation] = []
   @Published var tasks: [AgentTask] = []
@@ -187,6 +188,7 @@ enum Keychain {
       agents = s.agents
       providers = s.providers
       projects = s.projects ?? []
+      activeRuns = s.activeRuns ?? []
       conversations = s.conversations
       tasks = s.tasks
       approvals = s.approvals

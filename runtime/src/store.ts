@@ -187,6 +187,7 @@ export class Store {
       agents: this.agents(),
       providers: this.providers(),
       projects: this.projects(),
+      activeRuns: this.all("SELECT id,taskId,agentId,status FROM runs WHERE status IN ('running','awaiting_approval')"),
       conversations: this.conversations(),
       tasks: this.all("SELECT * FROM tasks ORDER BY createdAt DESC LIMIT 200"),
       approvals: this.all("SELECT * FROM approvals WHERE status='pending'"),
