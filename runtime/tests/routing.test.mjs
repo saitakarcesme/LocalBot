@@ -441,3 +441,40 @@ test('task listing uses persisted project states, paginates and excludes future/
   assert.equal(f.store.task('prior-11').status,'awaiting_input');
  }finally{await f.close();}
 });
+
+
+test('automatic routing sees executable tool permissions rather than trusting contact roles',async()=>{
+ let offered;
+ const f=await setup(async(body,res)=>{
+  if(body.tools.some(t=>t.function.name==='organize')){
+   const data=JSON.parse(body.messages.at(-1).content);
+   const restricted=data.agents.find(a=>a.id==='coder');
+   const capable=data.agents.find(a=>a.id==='researcher');
+   assert(!restricted.tools.includes('write_file'));
+   assert(!restricted.tools.includes('terminal'));
+   assert(!restricted.tools.includes('view_image'));
+   assert(!restricted.tools.includes('web_search'));
+   assert(restricted.tools.includes('read_file'));
+   assert(capable.tools.includes('write_file'));
+   assert(!JSON.stringify(data.agents).includes('PRIVATE_CONTACT_MEMORY'));
+   offered=capable.tools;
+   const writer=data.agents.find(a=>a.tools.includes('write_file'));
+   reply(res,{content:'',tool_calls:[{function:{name:'organize',arguments:{title:'Write the approved result',members:[writer.id]}}}]});
+  }else if(body.messages.some(m=>m.role==='tool'))reply(res,{content:'Dosya hazır.'});
+  else{
+   assert.deepEqual(body.tools.map(t=>t.function.name),offered);
+   reply(res,{content:'',tool_calls:[{function:{name:'write_file',arguments:{path:'result.json',content:'{"done":true}'}}}]});
+  }
+ });
+ try{
+  for(const a of f.store.agents())f.store.saveAgent({...a,autonomy:'trusted',memory:'PRIVATE_CONTACT_MEMORY',permissions:{filesystem:a.id==='researcher'?'write':'read',terminal:false,git:false,web:true}});
+  const task=f.engine.enqueue(f.conversation.id,'Create result.json with done true.');
+  await until(()=>['completed','failed','completed_with_errors'].includes(f.store.task(task.id).status));
+  assert.equal(f.store.task(task.id).status,'completed');
+  assert.deepEqual(f.store.conversation(f.conversation.id).members,['researcher']);
+  const calls=f.store.all('SELECT t.name,t.status,r.agentId FROM tool_calls t JOIN runs r ON r.id=t.runId WHERE r.taskId=?',task.id);
+  assert.deepEqual(calls.map(c=>[c.name,c.status,c.agentId]),[['write_file','completed','researcher']]);
+  assert.deepEqual(JSON.parse(await readFile(join(f.store.project(f.conversation.projectId).workspace,'result.json'),'utf8')),{done:true});
+  assert.equal(f.store.agent('coder').permissions.filesystem,'read');
+ }finally{await f.close();}
+});
