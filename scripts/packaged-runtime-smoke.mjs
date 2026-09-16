@@ -38,7 +38,11 @@ try{
  await start();
  const unauthenticated=await fetch(connection.url+'/snapshot');assert.equal(unauthenticated.status,401);
  assert.equal((await stat(join(data,'connection.json'))).mode&0o777,0o600);
- const initial=await api('/snapshot');const local=initial.providers.find(p=>p.id==='local');
+ const beforeRestart=await api('/snapshot');assert.equal(typeof beforeRestart.instanceId,'string');
+ await stop();await start();
+ const initial=await api('/snapshot');assert.notEqual(initial.instanceId,beforeRestart.instanceId);
+ assert.equal(initial.revision,beforeRestart.revision);
+ const local=initial.providers.find(p=>p.id==='local');
  await api('/providers',{...local,kind:'codex',name:'Subscription package verification',model:'gpt-5.6-sol',contextLength:16000,timeout:90});
  const c=await api('/conversations',{title:'Paket doğrulaması',members:['researcher']});
  const task=await api('/messages',{conversationId:c.id,content:'current_time aracını yalnızca bir kez çağır. Sonra read_activity ile bu çağrıyı bul ve call_id ile kaydedilen çıktıyı oku. Saati tekrar sorgulama. Kısa Türkçe yanıtla.'});
@@ -60,5 +64,5 @@ try{
  assert.deepEqual(after,messages);
  assert.equal((await api('/snapshot')).tasks.find(t=>t.id===task.id).status,'completed');
  assert.equal((await api('/activity?conversationId='+c.id)).length,actions.length);
- console.log(JSON.stringify({verified:true,bundle,packagedNode:true,authenticatedRPC:true,clockCalls:clocks.length,activityReads:reads.length,restartPreservedHistory:true,answer:final.content}));
+ console.log(JSON.stringify({verified:true,bundle,packagedNode:true,authenticatedRPC:true,clockCalls:clocks.length,activityReads:reads.length,restartPreservedHistory:true,sameRevisionRestartIdentified:true,answer:final.content}));
 }finally{await stop();}

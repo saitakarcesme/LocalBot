@@ -58,6 +58,7 @@ try {
   token = randomBytes(32).toString("hex");
   await fs.writeFile(tokenPath, token, { mode: 0o600 });
 }
+const instanceId = randomUUID();
 let revision = 0;
 const streams = new Set<ServerResponse>();
 const change = () => {
@@ -160,7 +161,7 @@ const server = createServer(async (req, res) => {
       return;
     }
     if (m === "GET" && p === "/snapshot") {
-      json(res, 200, { ...store.snapshot(), revision });
+      json(res, 200, { ...store.snapshot(), revision, instanceId });
       return;
     }
     if (m === "GET" && p === "/messages") {

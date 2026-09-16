@@ -33,7 +33,7 @@
   },
   "v0_2": {
     "status": "core_implemented_live_verified_tool_parity_in_progress",
-    "updated_at": "2026-09-16T16:30:01.078967+00:00",
+    "updated_at": "2026-09-16T16:33:20.420510+00:00",
     "runtime_tests_passed": 87,
     "real_subscription_agents_verified": 5,
     "real_project": "Focus Ledger",
@@ -58,7 +58,7 @@
       "manual scrolling survives Activity width change",
       "last selected chat survives relaunch"
     ],
-    "checkpoint": "Actual app-bundled Node/server passed authenticated subscription task and restart persistence smoke; 87 runtime tests remain baseline; native installation/window verification pending",
+    "checkpoint": "Native polling detects same-revision restarts through server instance IDs; Swift checks, 87 runtime tests and native build pass; extended packaged smoke running; native installation/window verification pending",
     "tests_passed": 87,
     "packaged_runtime_subscription_verified": true
   }

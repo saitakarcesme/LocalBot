@@ -121,6 +121,7 @@ struct Activity: Codable, Identifiable {
   var createdAt: String
 }
 struct Snapshot: Codable {
+  var instanceId: String?
   var goals: [AgentGoal]?
   var integrations: [MCPConnection]?
   var projects: [Project]?

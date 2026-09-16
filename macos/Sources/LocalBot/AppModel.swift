@@ -88,7 +88,7 @@ enum Keychain {
   @Published var editingConversation: Conversation?
   @Published var sending = false
   var connection: Connection?
-  var lastRevision = -1
+  var snapshotCursor = RuntimeSnapshotCursor()
   var polling: Task<Void, Never>?
   var runtime: Process?
   let dataDir = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(
@@ -119,7 +119,7 @@ enum Keychain {
       if (try? await request("/health")) != nil {
         connected = true
         error = nil
-        lastRevision = -1
+        snapshotCursor.reset()
         return
       }
       if runtime?.isRunning != true {
@@ -154,7 +154,7 @@ enum Keychain {
         if (try? await request("/health")) != nil {
           connected = true
           error = nil
-          lastRevision = -1
+          snapshotCursor.reset()
           return
         }
       }
@@ -195,14 +195,15 @@ enum Keychain {
     do {
       let s = try JSONDecoder().decode(Snapshot.self, from: await request("/snapshot"))
       connected = true
-      guard s.revision != lastRevision else { return }
+      let update = snapshotCursor.receive(instanceId: s.instanceId, revision: s.revision)
+      guard update != .unchanged else { return }
       let previous = Dictionary(uniqueKeysWithValues: tasks.map { ($0.id, $0.status) })
       for t in s.tasks
       where previous[t.id] != nil && previous[t.id] != t.status
         && ["completed", "completed_with_errors", "failed", "awaiting_approval", "awaiting_input"]
           .contains(t.status)
       { notify(t) }
-      let first = lastRevision < 0
+      let first = update == .restarted
       agents = s.agents
       providers = s.providers
       projects = s.projects ?? []
@@ -212,7 +213,6 @@ enum Keychain {
       conversations = s.conversations
       tasks = s.tasks
       approvals = s.approvals
-      lastRevision = s.revision
       if first {
         for i in integrations {
           if let secret = Keychain.read("mcp:" + i.id + "@" + i.endpoint) {
