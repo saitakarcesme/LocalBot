@@ -253,7 +253,9 @@ struct ConversationView: View {
             }.padding(.bottom, 16)
           }
           .defaultScrollAnchor(.bottom)
-          .modifier(ScrollPositionObserver(isAtBottom: $following))
+          .modifier(ScrollPositionObserver(isAtBottom: $following, hasMessages: !model.messages.isEmpty) {
+            proxy.scrollTo("bottom", anchor: .bottom)
+          })
           .onChange(of: model.messages.count) { _, _ in
             if following && !initialScroll {
               withAnimation(.easeOut(duration: 0.18)) { proxy.scrollTo("bottom", anchor: .bottom) }
@@ -270,6 +272,7 @@ struct ConversationView: View {
           .overlay(alignment: .bottomTrailing) {
             if !following && !model.messages.isEmpty {
               Button {
+                following = true
                 withAnimation { proxy.scrollTo("bottom", anchor: .bottom) }
               } label: {
                 Image(systemName: "arrow.down").padding(8)
@@ -509,14 +512,46 @@ struct MessageBubble: View {
   }
 }
 
+private struct TranscriptGeometry: Equatable {
+  var contentHeight: CGFloat
+  var viewportSize: CGSize
+  var nearBottom: Bool
+}
+
 struct ScrollPositionObserver: ViewModifier {
   @Binding var isAtBottom: Bool
+  var hasMessages: Bool
+  var scrollToBottom: () -> Void
+  @State private var userScrolling = false
+  @State private var nearBottom = true
   func body(content: Content) -> some View {
     if #available(macOS 15.0, *) {
-      content.onScrollGeometryChange(for: Bool.self) { geometry in
-        geometry.contentOffset.y + geometry.containerSize.height >= geometry.contentSize.height - 60
-      } action: { _, nearBottom in
-        if isAtBottom != nearBottom { isAtBottom = nearBottom }
+      content.onScrollGeometryChange(for: TranscriptGeometry.self) { geometry in
+        TranscriptGeometry(contentHeight: geometry.contentSize.height, viewportSize: geometry.containerSize,
+          nearBottom: geometry.contentOffset.y + geometry.containerSize.height >= geometry.contentSize.height - 60)
+      } action: { old, new in
+        nearBottom = new.nearBottom
+        if userScrolling {
+          isAtBottom = new.nearBottom
+        } else if hasMessages && isAtBottom && (old.contentHeight != new.contentHeight || old.viewportSize != new.viewportSize) {
+          // Lazy rows and attachment previews can resolve after the first jump.
+          // Follow geometry changes only while the user intends to stay at the end.
+          scrollToBottom()
+        }
+      }
+      .onScrollPhaseChange { _, phase in
+        switch phase {
+        case .tracking, .interacting, .decelerating:
+          userScrolling = true
+          isAtBottom = nearBottom
+        case .idle:
+          if userScrolling { isAtBottom = nearBottom }
+          userScrolling = false
+        case .animating:
+          break
+        @unknown default:
+          break
+        }
       }
     } else {
       content
