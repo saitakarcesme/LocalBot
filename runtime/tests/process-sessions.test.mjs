@@ -69,6 +69,14 @@ test('process tools enforce permissions and use the real macOS sandbox', { skip:
       await new Promise(r => setTimeout(r, 10));
     }
     assert.equal(result.state, 'exited'); assert.equal(result.exitCode, 0); assert.equal(output, 'received:sandbox works');
+    const failed = JSON.parse((await executeTool(a, 'process_start', { command: 'exit 7' }, signal, 'sandbox')).output);
+    let rejected = false;
+    for (let i = 0; i < 100; i++) {
+      try { await executeTool(a, 'process_poll', { session_id: failed.sessionId }, signal, 'sandbox'); }
+      catch (e) { assert.equal(JSON.parse(e.message).exitCode, 7); rejected = true; break; }
+      await new Promise(r => setTimeout(r, 10));
+    }
+    assert(rejected, 'Nonzero exit must be a failed tool call');
   } finally { processSessions.releaseTask('sandbox'); await rm(workspace, { recursive: true, force: true }); }
 });
 

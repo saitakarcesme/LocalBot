@@ -404,6 +404,8 @@ export async function executeTool(
       else if (name === "process_input") result = await processSessions.input(owner, args.session_id, args.text, args.end === "true");
       else if (name === "process_stop") result = processSessions.stop(owner, args.session_id);
       else result = processSessions.poll(owner, args.session_id);
+      if (name === "process_poll" && "state" in result && result.state === "exited" && (result.exitCode !== 0 || result.reason))
+        throw new Error(JSON.stringify(result));
       return { output: JSON.stringify(result) };
     }
     case "list_files": {
