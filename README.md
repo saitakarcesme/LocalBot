@@ -100,3 +100,5 @@ Local MCP processes use an absolute executable, JSON argument array and absolute
 `current_time` reads the runtime clock, returning UTC plus an optional IANA time zone (for example `Europe/Luxembourg`). It requires no filesystem, terminal or network permission and records its result in Activity.
 
 Incoming messages render native inline emphasis and code, with fenced code blocks and Copy code. User messages remain literal. Sidebar/search previews use readable text. Whole-message Copy preserves the original message. Tables and heading layout are not rendered as full Markdown documents.
+
+`process_poll` waits for new output or process exit for up to `wait_ms` (decimal string, 0–60000; default 10000). Use 0 for an immediate snapshot. Pending waits end on task cancellation; output is consumed only once.

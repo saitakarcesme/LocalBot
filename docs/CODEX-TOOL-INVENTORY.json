@@ -22,7 +22,7 @@
     {
       "name": "exec_command",
       "status": "partial-equivalent",
-      "route": "Sandboxed process_start/process_poll/process_input/process_stop with task/agent/workspace ownership, bounded output, stdin, five-minute lifetime and cleanup. No PTY, persistent detached jobs or network access."
+      "route": "Sandboxed process_start/process_poll/process_input/process_stop with task/agent/workspace ownership, bounded output, stdin, five-minute lifetime and cleanup. No PTY, persistent detached jobs or network access. process_poll supports cancellable output/exit waits up to 60 seconds (10 seconds by default), with 0 for immediate snapshots."
     },
     {
       "name": "get_goal",
@@ -1339,7 +1339,7 @@
     {
       "name": "write_stdin",
       "status": "partial-equivalent",
-      "route": "Sandboxed process_start/process_poll/process_input/process_stop with task/agent/workspace ownership, bounded output, stdin, five-minute lifetime and cleanup. No PTY, persistent detached jobs or network access."
+      "route": "Sandboxed process_start/process_poll/process_input/process_stop with task/agent/workspace ownership, bounded output, stdin, five-minute lifetime and cleanup. No PTY, persistent detached jobs or network access. process_poll supports cancellable output/exit waits up to 60 seconds (10 seconds by default), with 0 for immediate snapshots."
     }
   ],
   "localbotBuiltins": [
