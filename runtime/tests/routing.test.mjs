@@ -123,3 +123,28 @@ test('automatic team selection receives bounded prior project context without un
   assert.deepEqual(f.store.all('SELECT agentId FROM runs WHERE taskId=? ORDER BY rowid',target.id).map(r=>r.agentId),['coder','tester']);
  }finally{release();await f.close();}
 });
+
+
+test('local direct chats get stable request titles without extra inference or team changes',async()=>{
+ let requests=0;
+ const f=await setup(async(body,res)=>{requests++;assert(!body.tools.some(t=>t.function.name==='organize'));reply(res,{content:'İncelendi.'});});
+ try{
+  const c=f.store.createConversation('Mira',['researcher']);
+  const first=f.engine.enqueue(c.id,'  SQLite WAL\n  eşzamanlılık 🚀  ');
+  await until(()=>f.store.task(first.id).status==='completed');
+  assert.equal(f.store.conversation(c.id).title,'Mira · SQLite WAL eşzamanlılık 🚀');
+  assert.deepEqual(f.store.conversation(c.id).members,['researcher']);
+  const second=f.engine.enqueue(c.id,'Başka bir ayrıntıyı da incele');
+  await until(()=>f.store.task(second.id).status==='completed');
+  assert.equal(f.store.conversation(c.id).title,'Mira · SQLite WAL eşzamanlılık 🚀');
+  assert.equal(requests,2);
+  const long=f.store.createConversation('Mira',['researcher']);
+  const third=f.engine.enqueue(long.id,'🚀'.repeat(100));
+  await until(()=>f.store.task(third.id).status==='completed');
+  assert.equal(f.store.conversation(long.id).title,'Mira · '+'🚀'.repeat(79)+'…');
+  const manual=f.store.createConversation('Kendi başlığım',['researcher']);
+  f.store.exec('UPDATE conversation_context SET titled=1 WHERE conversationId=?',manual.id);
+  const fourth=f.engine.enqueue(manual.id,'Bunu incele');await until(()=>f.store.task(fourth.id).status==='completed');
+  assert.equal(f.store.conversation(manual.id).title,'Kendi başlığım');
+ }finally{await f.close();}
+});

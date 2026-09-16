@@ -43,7 +43,22 @@ export class Engine {
     const c = this.store.conversation(task.conversationId);
     const prompt = task.prompt;
     const project = c.projectId ? this.store.project(c.projectId) : null;
-    if (!c.automatic && (c.titled || this.store.provider(this.store.agent(c.members[0]).providerId).kind !== "codex")) return;
+    if (!c.automatic && c.titled) return;
+    if (!c.automatic && this.store.provider(this.store.agent(c.members[0]).providerId).kind !== "codex") {
+      // Local-first: label the request without spending a second inference on metadata.
+      const attachment = this.store.get("SELECT name FROM artifacts WHERE messageId=? ORDER BY rowid LIMIT 1", task.messageId);
+      const text = (prompt.trim() || attachment?.name || "").replace(/\s+/gu, " ").trim();
+      if (!text) return;
+      const characters = Array.from(text);
+      const topic = characters.length > 80 ? characters.slice(0, 79).join("") + "…" : text;
+      const title = !c.projectId && c.members.length === 1 ? `${this.store.agent(c.members[0]).name} · ${topic}` : topic;
+      this.store.transaction(() => {
+        this.store.exec("UPDATE conversations SET title=? WHERE id=?", title, c.id);
+        this.store.exec("INSERT INTO conversation_context VALUES(?,?,?,1) ON CONFLICT(conversationId) DO UPDATE SET titled=1", c.id, c.projectId ?? null, 0);
+      });
+      this.changed();
+      return;
+    }
     const candidates = this.store.agents();
     const lead = candidates.find(a => a.id === c.members[0]) ?? candidates[0];
     if (!lead) throw new Error("Create an agent first");
