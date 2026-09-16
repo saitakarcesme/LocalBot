@@ -7,7 +7,7 @@
     "node": ">=22.18.0"
   },
   "scripts": {
-    "build": "tsc -p runtime/tsconfig.json",
+    "build": "node scripts/build-runtime.mjs",
     "start": "node runtime/dist/server.js",
     "test": "npm run build && node --test --test-concurrency=1 runtime/tests/*.test.mjs",
     "app": "bash scripts/build-app.sh",
