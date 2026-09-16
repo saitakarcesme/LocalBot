@@ -1,3 +1,4 @@
+import {appBuildPath} from './app-build-path.mjs';
 // Runs the actual app bundle's Node and server in an isolated data directory.
 // Requires an existing Codex ChatGPT login; never reads or exports its credentials.
 import assert from 'node:assert/strict';
@@ -6,7 +7,7 @@ import {randomUUID} from 'node:crypto';
 import {mkdtemp,readFile,stat} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
-const bundle=resolve(process.argv[2]??'build/LocalBot.app');
+const bundle=resolve(process.argv[2]??appBuildPath());
 const root=await mkdtemp(join(tmpdir(),'localbot-package-live-'));
 const data=join(root,'data'),workspace=join(root,'workspace');
 let child,closed,connection;

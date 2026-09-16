@@ -6,7 +6,7 @@ Native macOS messaging for persistent local AI agents. SwiftUI client, independe
 
 ## Run
 
-Open `build/LocalBot.app` (or the installed `~/Applications/LocalBot.app`). Node is bundled; no terminal or npm process is required to launch the app.
+Open `~/Library/Caches/LocalBot/AppBuild/LocalBot.app` (or the installed `~/Applications/LocalBot.app`). Node is bundled; no terminal or npm process is required to launch the app.
 
 1. Open **Settings** (`⌘,`). The default connection is local Ollama at `http://127.0.0.1:11434`, using `qwen3:1.7b` discovered on the development Mac.
 2. Choose **Start local Ollama** if it is installed but stopped, then **Save & Test**. Pick a model returned by the server.
@@ -132,3 +132,5 @@ After `npm run app`, run `npm run test:packaged-subscription` with an existing C
 Native message retries reuse a saved request ID until the send is acknowledged. The runtime returns the original task for an identical retry, including after its restart, so a lost HTTP reply does not create duplicate work. Changed content receives a new ID. Older clients that omit request IDs retain their existing behavior.
 
 `list_tasks` gives agents five-task pages of recorded conversation/project work with status, source IDs and bounded prompt excerpts. Its active filter includes queued, running and approval/input waits. It includes the requesting task and earlier work only; it neither changes tasks nor reveals other projects.
+
+App bundles are assembled outside synced Documents folders to avoid file-provider metadata invalidating macOS signatures. Override the destination with `LOCALBOT_APP_BUILD_DIR` if needed. Each build includes `Contents/Resources/build-info.json` and an adjacent `LocalBot.app.manifest.json` with hashes of the signed files. Run `node scripts/verify-build-manifest.mjs` to check all bundle files against that manifest; this is an integrity check, not publisher authentication.

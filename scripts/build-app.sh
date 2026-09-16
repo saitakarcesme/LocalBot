@@ -4,7 +4,8 @@ cd "$(dirname "$0")/.."
 npm run build
 SWIFT_BUILD_DIR="${LOCALBOT_SWIFT_BUILD_DIR:-$HOME/Library/Caches/LocalBot/SwiftBuild}"
 swift build --package-path macos --scratch-path "$SWIFT_BUILD_DIR" -j 1
-APP="$PWD/build/LocalBot.app"
+APP_BUILD_DIR="${LOCALBOT_APP_BUILD_DIR:-$HOME/Library/Caches/LocalBot/AppBuild}"
+APP="$APP_BUILD_DIR/LocalBot.app"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources/runtime"
 cp "$SWIFT_BUILD_DIR/debug/LocalBot" "$APP/Contents/MacOS/LocalBot"
 cp runtime/dist/*.js "$APP/Contents/Resources/runtime/"
@@ -37,6 +38,10 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
 PLIST
 swift scripts/make-icon.swift build/LocalBot.iconset
 iconutil -c icns build/LocalBot.iconset -o "$APP/Contents/Resources/LocalBot.icns"
+node scripts/write-build-manifest.mjs "$APP" --metadata
 xattr -cr "$APP"
 codesign --force --deep --sign - "$APP"
+codesign --verify --deep --strict "$APP"
+node scripts/write-build-manifest.mjs "$APP"
+node scripts/verify-build-manifest.mjs "$APP"
 echo "Built: $APP"
