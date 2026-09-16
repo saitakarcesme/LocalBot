@@ -2,13 +2,13 @@
   "github_sync": {
     "repository": "https://github.com/saitakarcesme/LocalBot",
     "branch": "master",
-    "updated_at": "2026-09-15T20:35:47.586418+00:00",
+    "updated_at": "2026-09-16T11:04:19.558684+00:00",
     "status": "automation_paused_manual_microcommits",
     "files": [
       "README.md",
       "docs/QA.md"
     ],
-    "last_pushed_commit": "67d3d33398ecc0b30621d4b483ff61c7402c0430",
+    "last_pushed_commit": "f18af65fe4a408bb78d3e5a1bff89a7cf26946d1",
     "excluded_private_files": [
       "screenshots/messages-reference-dark.png"
     ]
@@ -48,6 +48,14 @@
       "Interactive browser automation",
       "MCP stdio and newer protocol revisions",
       "Remote 3090 hardware validation"
+    ],
+    "installed_version": "0.2.0",
+    "native_final_checks": [
+      "project grouping",
+      "header selection isolation",
+      "last message visible on open",
+      "reaction aggregation",
+      "MCP settings form"
     ]
   }
 }

@@ -80,3 +80,5 @@ Screenshots: `screenshots/localbot-dark.png`, `localbot-light.png`, `localbot-na
 The requested 2×3090 PC and 27B model were not available; no throughput, VRAM-fit or remote hardware readiness claim is made. Optional cloud providers were contract-tested only. Notifications remain opt-in and were not enabled for the user. Image attachments are stored/previewed, not interpreted by a vision model. No arbitrary MCP launcher or interactive browser automation is shipped. This local release is ad-hoc signed, not notarized for public distribution.
 
 The 1.7B model remains a lightweight development model. A completed model response is not proof of semantic correctness; tool evidence and user review remain important for real engineering work.
+
+Final v0.2 native checks: integration form opens from the app menu; project headers do not replace the selected chat; the installed signed binary opens the long project transcript with its final test result visible; identical reactions aggregate as a count. Runtime health reports 0.2.0.
