@@ -19,7 +19,7 @@ try {
   store.db.prepare("VACUUM INTO ?").run(backup);
   chmodSync(backup, 0o600);
   store.transaction(() => {
-    for (const table of ["approvals", "tool_calls", "runs", "tasks", "reactions", "artifacts", "messages", "threads", "conversation_context", "conversations"])
+    for (const table of ["approvals", "tool_calls", "runs", "tasks", "reactions", "artifacts", "messages", "threads", "goals", "conversation_context", "conversations"])
       store.exec(`DELETE FROM ${table}`);
     store.exec("INSERT INTO message_search(message_search) VALUES('rebuild')");
     store.saveProvider(config);

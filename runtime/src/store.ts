@@ -18,6 +18,8 @@ export class Store {
       CREATE TABLE IF NOT EXISTS projects(id TEXT PRIMARY KEY, name TEXT NOT NULL, workspace TEXT NOT NULL, memory TEXT NOT NULL DEFAULT '', createdAt TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS conversation_context(conversationId TEXT PRIMARY KEY REFERENCES conversations(id), projectId TEXT REFERENCES projects(id), automatic INTEGER NOT NULL DEFAULT 0, titled INTEGER NOT NULL DEFAULT 0);
       CREATE TABLE IF NOT EXISTS conversations(id TEXT PRIMARY KEY, title TEXT NOT NULL, members TEXT NOT NULL, createdAt TEXT NOT NULL, updatedAt TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS goals(id TEXT PRIMARY KEY, conversationId TEXT NOT NULL REFERENCES conversations(id), objective TEXT NOT NULL, status TEXT NOT NULL CHECK(status IN ('active','blocked','complete')), evidence TEXT NOT NULL DEFAULT '', createdAt TEXT NOT NULL, updatedAt TEXT NOT NULL);
+      CREATE UNIQUE INDEX IF NOT EXISTS goals_unfinished ON goals(conversationId) WHERE status IN ('active','blocked');
       CREATE TABLE IF NOT EXISTS threads(id TEXT PRIMARY KEY, conversationId TEXT NOT NULL REFERENCES conversations(id), title TEXT NOT NULL, createdAt TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS tasks(id TEXT PRIMARY KEY, conversationId TEXT NOT NULL REFERENCES conversations(id), threadId TEXT REFERENCES threads(id), messageId TEXT NOT NULL, prompt TEXT NOT NULL, status TEXT NOT NULL, createdAt TEXT NOT NULL, updatedAt TEXT NOT NULL, error TEXT);
       CREATE TABLE IF NOT EXISTS runs(id TEXT PRIMARY KEY, taskId TEXT NOT NULL REFERENCES tasks(id), agentId TEXT NOT NULL, status TEXT NOT NULL, checkpoint TEXT NOT NULL DEFAULT '[]', createdAt TEXT NOT NULL, updatedAt TEXT NOT NULL);
@@ -112,6 +114,29 @@ export class Store {
     return this.conversation(id);
   }
   projects() { return this.all("SELECT * FROM projects ORDER BY createdAt DESC"); }
+  goal(conversationId: string) {
+    this.conversation(conversationId);
+    return this.get("SELECT * FROM goals WHERE conversationId=? ORDER BY rowid DESC LIMIT 1", conversationId) ?? null;
+  }
+  createGoal(conversationId: string, objective: string) {
+    this.conversation(conversationId);
+    objective = objective.trim();
+    if (!objective || objective.length > 4000) throw new Error("Goal objective must contain 1–4000 characters");
+    if (this.get("SELECT id FROM goals WHERE conversationId=? AND status IN ('active','blocked')", conversationId)) throw new Error("An unfinished goal already exists in this conversation");
+    const date = now();
+    this.exec("INSERT INTO goals VALUES(?,?,?,'active','',?,?)", randomUUID(), conversationId, objective, date, date);
+    return this.goal(conversationId);
+  }
+  updateGoal(conversationId: string, id: string, status: string, evidence: string) {
+    const goal = this.goal(conversationId);
+    if (!goal || goal.id !== id) throw new Error("Goal is no longer current in this conversation");
+    if (goal.status === "complete") throw new Error("Completed goals are immutable; create a new goal for new work");
+    if (!["active", "blocked", "complete"].includes(status)) throw new Error("Invalid goal status");
+    evidence = evidence.trim();
+    if (!evidence || evidence.length > 4000) throw new Error("Explain the verified outcome, blocker or reason for resuming in 1–4000 characters");
+    this.exec("UPDATE goals SET status=?,evidence=?,updatedAt=? WHERE id=? AND conversationId=?", status, evidence, now(), id, conversationId);
+    return this.goal(conversationId);
+  }
   integrations(): MCPConnection[] { return JSON.parse(this.get("SELECT value FROM settings WHERE key='mcp'")?.value ?? "[]"); }
   saveIntegration(connection: MCPConnection) {
     const list = this.integrations().filter(c => c.id !== connection.id);
@@ -194,6 +219,7 @@ export class Store {
       agents: this.agents(),
       providers: this.providers(),
       projects: this.projects(),
+      goals: this.all("SELECT * FROM goals ORDER BY updatedAt DESC LIMIT 200"),
       integrations: this.integrations(),
       activeRuns: this.all("SELECT id,taskId,agentId,status FROM runs WHERE status IN ('running','awaiting_approval')"),
       conversations: this.conversations(),

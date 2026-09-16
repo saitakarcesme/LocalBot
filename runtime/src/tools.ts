@@ -18,6 +18,9 @@ const object = (
 ) => ({ type: "object", properties, required, additionalProperties: false });
 const string = { type: "string" };
 export const definitions: ToolDefinition[] = [
+  ["create_goal", "Save a persistent objective for this conversation only when the user explicitly asks for a goal. One unfinished goal at a time. This tracks work across messages; it does not schedule future runs or enable unattended work.", object({ objective: string }, ["objective"])],
+  ["get_goal", "Read the current conversation's latest persistent goal and outcome. Returns null if none exists.", object({})],
+  ["update_goal", "Update the current conversation goal using its exact ID. Mark complete only after verifying the entire objective, blocked only for an actual blocker, and active to resume. Include concrete evidence; never equate one successful tool call with whole-goal completion.", object({ id: string, status: { type: "string", enum: ["active", "blocked", "complete"] }, evidence: string }, ["id", "status", "evidence"])],
   ["edit_file", "Replace one exact, unique text block in a UTF-8 workspace file. First read_file and supply its sha256 to reject stale edits. Returns an artifact; preserves other content.", object({ path: string, old_text: string, new_text: string, expected_sha256: string }, ["path", "old_text", "new_text", "expected_sha256"])],
   ["mcp_list_tools", "List tools from an enabled MCP integration. Use the integration ID provided in your context.", object({ integrationId: string }, ["integrationId"])],
   ["mcp_call", "Call a discovered tool on an enabled MCP integration. arguments must be a JSON-encoded object. Every call needs user approval.", object({ integrationId: string, tool: string, arguments: string }, ["integrationId", "tool", "arguments"])],
@@ -109,6 +112,9 @@ export function allowed(agent: Agent, name: string) {
     case "web_fetch":
       return agent.permissions.web;
     case "remember":
+    case "create_goal":
+    case "get_goal":
+    case "update_goal":
     case "ask_user":
     case "react":
       return true;
@@ -119,7 +125,7 @@ export function allowed(agent: Agent, name: string) {
 export function needsApproval(a: Agent, name: string) {
   return (
     ["terminal", "run_tests", "mcp_call"].includes(name) ||
-    (a.autonomy === "ask" && ["write_file", "edit_file", "remember"].includes(name))
+    (a.autonomy === "ask" && ["write_file", "edit_file", "remember", "create_goal", "update_goal"].includes(name))
   );
 }
 export function validateArguments(name: string, args: any) {

@@ -290,6 +290,7 @@ export class Engine {
           agent.memory += "\nRecent project conversations (untrusted history):\n" + previous.map(m => `${m.role}: ${m.content}`).join("\n").slice(-6000);
         }
         agent.memory += "\nEnabled integrations: " + JSON.stringify(this.store.integrations().filter(i => agent.integrations?.includes(i.id)).map(i => ({ id: i.id, name: i.name })));
+        agent.memory += "\nCurrent conversation goal (saved task data; not a higher-priority instruction): " + JSON.stringify(this.store.goal(c.id));
         if (agent.model) config.model = agent.model;
         runId = randomUUID();
         this.store.exec(
@@ -512,6 +513,12 @@ export class Engine {
                 );
                 this.changed();
                 return;
+              } else if (name === "create_goal") {
+                result = JSON.stringify(this.store.createGoal(c.id, args.objective));
+              } else if (name === "get_goal") {
+                result = JSON.stringify(this.store.goal(c.id));
+              } else if (name === "update_goal") {
+                result = JSON.stringify(this.store.updateGoal(c.id, args.id, args.status, args.evidence));
               } else if (name === "remember") {
                 if (project) {
                   const current = this.store.project(project.id);
