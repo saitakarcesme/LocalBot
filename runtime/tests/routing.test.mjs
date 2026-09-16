@@ -543,3 +543,39 @@ if(result)process.stdout.write(JSON.stringify({jsonrpc:'2.0',id:m.id,result})+'\
   assert.equal(success.status,'completed');assert.deepEqual(JSON.parse(success.output),[]);
  }finally{await f.close();}
 });
+
+
+test('each model step receives current permissions while the run keeps its selected provider',async()=>{
+ let step=0;
+ const f=await setup(async(body,res)=>{
+  step++;
+  const names=body.tools.map(t=>t.function.name);
+  if(step===1){
+   assert(names.includes('write_file'));
+   const a=f.store.agent('coder');
+   f.store.saveProvider({...f.store.provider('local'),id:'next-provider',kind:'codex'});
+   f.store.saveAgent({...a,providerId:'next-provider',permissions:{...a.permissions,filesystem:'read',terminal:false,web:true}});
+   // A call generated just before revocation must still fail runtime enforcement.
+   reply(res,{content:'',tool_calls:[{function:{name:'write_file',arguments:{path:'revoked.txt',content:'must not write'}}}]});
+  }else if(step===2){
+   assert(!names.includes('write_file'));assert(!names.includes('terminal'));assert(names.includes('read_file'));
+   assert(!names.includes('web_search'));assert(!names.includes('view_image')); // The active local run cannot inherit Codex-only capabilities.
+   const a=f.store.agent('coder');f.store.saveAgent({...a,permissions:{...a.permissions,filesystem:'write'}});
+   reply(res,{content:'',tool_calls:[{function:{name:'current_time',arguments:{}}}]});
+  }else if(step===3){
+   assert(names.includes('write_file'));assert(!names.includes('terminal'));
+   reply(res,{content:'',tool_calls:[{function:{name:'write_file',arguments:{path:'restored.txt',content:'allowed now'}}}]});
+  }else reply(res,{content:'The revoked action failed; the newly allowed action succeeded.'});
+ });
+ try{
+  const a=f.store.agent('coder');f.store.saveAgent({...a,autonomy:'trusted'});
+  const c=f.store.createConversation('Live tools',['coder']);
+  const task=f.engine.enqueue(c.id,'Perform the permitted work');
+  await until(()=>f.store.task(task.id).status==='completed_with_errors');
+  assert.equal(step,4);
+  await assert.rejects(readFile(join(a.workspace,'revoked.txt')),e=>e.code==='ENOENT');
+  assert.equal(await readFile(join(a.workspace,'restored.txt'),'utf8'),'allowed now');
+  const actions=f.store.all('SELECT t.name,t.status FROM tool_calls t JOIN runs r ON r.id=t.runId WHERE r.taskId=? ORDER BY t.rowid',task.id);
+  assert.deepEqual(actions.map(a=>[a.name,a.status]),[['write_file','failed'],['current_time','completed'],['write_file','completed']]);
+ }finally{await f.close();}
+});
