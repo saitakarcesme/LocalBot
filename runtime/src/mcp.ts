@@ -102,7 +102,7 @@ export class MCPClient {
       throw new Error("Invalid MCP resource listing");
     if (result.nextCursor !== undefined && (typeof result.nextCursor !== "string" || result.nextCursor.length > 4096))
       throw new Error("Invalid MCP resource cursor");
-    if (JSON.stringify(result).length > 100_000) throw new Error("MCP resource page exceeds 100 KB");
+    if (Buffer.byteLength(JSON.stringify(result), "utf8") > 100_000) throw new Error("MCP resource page exceeds 100 KB");
     return result;
   }
   async readResource(uri: string, signal: AbortSignal) {
@@ -114,7 +114,7 @@ export class MCPClient {
     if (!Array.isArray(result.contents) || result.contents.some((item: any) => !item || typeof item.uri !== "string" || (typeof item.text !== "string" && typeof item.blob !== "string")))
       throw new Error("Invalid MCP resource contents");
     const output = JSON.stringify(result);
-    if (output.length > 100_000) throw new Error("MCP resource content exceeds 100 KB; request a smaller resource");
+    if (Buffer.byteLength(output, "utf8") > 100_000) throw new Error("MCP resource content exceeds 100 KB; request a smaller resource");
     return output;
   }
   async call(name: string, args: unknown, signal: AbortSignal) {

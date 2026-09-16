@@ -59,7 +59,7 @@ test("MCP resource-only servers expose paginated resources, templates and bounde
     if(m.method==='initialize')result={protocolVersion:'2025-11-25',capabilities:{resources:{}},serverInfo:{name:'resources',version:'1'}};
     if(m.method==='resources/list')result=m.params.cursor?{resources:[{name:'Second',uri:'notes://second'}]}:{resources:[{name:'First',uri:'notes://first'}],nextCursor:'next'};
     if(m.method==='resources/templates/list')result={resourceTemplates:[{name:'Note',uriTemplate:'notes://{id}'}]};
-    if(m.method==='resources/read')result=m.params.uri==='notes://invalid'?{contents:[{uri:'notes://invalid'}]}:{contents:[{uri:m.params.uri,text:m.params.uri==='notes://huge'?'x'.repeat(100001):'Merhaba dünya'}]};
+    if(m.method==='resources/read')result=m.params.uri==='notes://invalid'?{contents:[{uri:'notes://invalid'}]}:{contents:[{uri:m.params.uri,text:m.params.uri==='notes://huge'?'ü'.repeat(50001):'Merhaba dünya'}]};
     res.end(JSON.stringify({jsonrpc:'2.0',id:m.id,result}));
   });
   await new Promise(r=>server.listen(0,'127.0.0.1',r));
