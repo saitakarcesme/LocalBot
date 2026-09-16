@@ -33,6 +33,7 @@ export type ProviderConfig = {
   requiresAuth: boolean;
 };
 export type Chat = {
+  images?: { path: string; name: string }[];
   role: "system" | "user" | "assistant" | "tool";
   content: string;
   tool_calls?: ToolCall[];

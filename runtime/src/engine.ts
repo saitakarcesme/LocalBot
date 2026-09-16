@@ -252,6 +252,7 @@ export class Engine {
           ".jpg": "image/jpeg",
           ".jpeg": "image/jpeg",
           ".gif": "image/gif",
+          ".webp": "image/webp",
           ".pdf": "application/pdf",
         } as Record<string, string>
       )[extname(name).toLowerCase()] ?? "text/plain";
@@ -327,18 +328,24 @@ export class Engine {
         );
         let used = system.length;
         const recent: Chat[] = [];
+        const acceptsImages = provider(config, this.secrets.get(config.id)).capabilities().images;
+        let imageCount = 0;
         for (const m of [...history].reverse()) {
           let text = m.agentId
             ? `[${this.store.agent(m.agentId).name}] ${m.content}`
             : m.content;
+          const images: NonNullable<Chat["images"]> = [];
           for (const a of m.attachments) {
             text += `\nAttachment: ${a.name}`;
             if (a.mime === "text/plain" && a.size <= 50_000)
               text +=
                 "\n" + (await fs.readFile(a.path, "utf8")).slice(0, 12000);
-            else
-              text +=
-                " (binary attachment; this provider does not inspect images)";
+            else if (a.mime.startsWith("image/") && acceptsImages && imageCount < 4) {
+              images.push({ path: a.path, name: a.name }); imageCount++;
+              text += " (image supplied for visual inspection)";
+            } else text += acceptsImages
+              ? " (attachment not visually inspected: unsupported format or four-image context limit)"
+              : " (binary attachment; this provider does not inspect images)";
           }
           if (used + text.length > budget && recent.length > 0) break;
           used += text.length;
@@ -348,6 +355,7 @@ export class Engine {
                 ? "assistant"
                 : "user",
             content: text.slice(-budget),
+            ...(images.length ? { images } : {}),
           });
         }
         let messages: Chat[] = [{ role: "system", content: system }, ...recent];

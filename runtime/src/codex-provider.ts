@@ -1,3 +1,4 @@
+import { codexInput } from "./image-input.js";
 import { CodexRPC } from "./codex-rpc.js";
 import type { ModelProvider } from "./providers.js";
 import type { Chat, Generation, ProviderConfig, ToolDefinition } from "./types.js";
@@ -18,7 +19,7 @@ const responseSchema = {
 /** Codex supplies decisions; LocalBot remains the only tool executor. */
 export class CodexProvider implements ModelProvider {
   constructor(private config: ProviderConfig) {}
-  capabilities() { return { tools: true, streaming: false, images: false }; }
+  capabilities() { return { tools: true, streaming: false, images: true }; }
   async health(signal?: AbortSignal) {
     const rpc = new CodexRPC();
     try {
@@ -30,6 +31,8 @@ export class CodexProvider implements ModelProvider {
     } finally { rpc.close(); }
   }
   async generate(messages: Chat[], tools: ToolDefinition[], signal: AbortSignal): Promise<Generation> {
+    const input = await codexInput(messages, tools);
+    signal.throwIfAborted();
     const rpc = new CodexRPC();
     const deadline = AbortSignal.any([signal, AbortSignal.timeout(this.config.timeout * 1000)]);
     try {
@@ -65,7 +68,7 @@ export class CodexProvider implements ModelProvider {
       finished.catch(() => {});
       await rpc.request("turn/start", {
         threadId: thread.id, environments: [], outputSchema: responseSchema,
-        input: [{ type: "text", text: JSON.stringify({ messages, tools }), text_elements: [] }],
+        input,
       }, deadline);
       const result = JSON.parse(await finished);
       if (typeof result.content !== "string" || !Array.isArray(result.calls)) throw new Error("Invalid Codex response");
