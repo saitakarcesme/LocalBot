@@ -1,0 +1,1084 @@
+{
+  "capturedAt": "2026-09-16",
+  "scope": "Callable tools exposed through this Codex session's ALL_TOOLS registry; UI/orchestration wrappers are additional surfaces, not included in this count.",
+  "count": 269,
+  "target": "Track a verified LocalBot equivalent or an authenticated integration for every entry. Unimplemented and unavailable entries are not completion.",
+  "tools": [
+    {
+      "name": "apply_patch",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "clock__curr_time",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "create_goal",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "exec_command",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "get_goal",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "image_gen__imagegen",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "list_mcp_resource_templates",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "list_mcp_resources",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_app__automation_update",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_app__capture_screen_context",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_app__consume_usage_reset",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_app__create_sidebar_section",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_app__create_thread",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_app__delete_sidebar_section",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_app__end_realtime_voice_call",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_app__fork_thread",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_app__get_handoff_status",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_app__get_usage_limits",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_app__handoff_thread",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_app__list_archived_threads",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_app__list_projects",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_app__list_threads",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_app__load_workspace_dependencies",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_app__move_project_to_sidebar_section",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_app__move_thread_to_sidebar_section",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_app__navigate_to_codex_page",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_app__open_in_codex",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_app__read_thread",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_app__read_thread_terminal",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_app__rename_sidebar_section",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_app__reorder_section",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_app__reorder_sidebar_projects",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_app__reorder_sidebar_sections",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_app__send_message_to_thread",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_app__set_thread_archived",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_app__set_thread_title",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_app__share_thread",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_app__uninstall_plugin",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_app__wait_threads",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__codex_document_control_execute_document_command",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__codex_document_control_get_document_tool_schemas",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__codex_document_control_list_document_sessions",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__figma_add_code_connect_map",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__figma_create_generative_plugin",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__figma_create_new_file",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__figma_create_shader",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__figma_download_assets",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__figma_export_video",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__figma_generate_deck",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__figma_generate_diagram",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__figma_generate_figma_design",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__figma_get_code_connect_map",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__figma_get_code_connect_suggestions",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__figma_get_context_for_code_connect",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__figma_get_design_context",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__figma_get_figjam",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__figma_get_generative_plugin",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__figma_get_libraries",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__figma_get_metadata",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__figma_get_motion_context",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__figma_get_screenshot",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__figma_get_shader",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__figma_get_variable_defs",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__figma_list_file_components_for_code_connect",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__figma_list_file_shaders",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__figma_list_generative_plugins",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__figma_list_shaders",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__figma_search_design_system",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__figma_send_code_connect_mappings",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__figma_update_generative_plugin",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__figma_update_shader",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__figma_upload_assets",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__figma_use_figma",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__figma_weave_cancel_tool_run",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__figma_weave_get_tool_inputs",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__figma_weave_get_tool_run_output",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__figma_weave_list_tools",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__figma_weave_run_tool",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__figma_weave_upload_asset",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__figma_whoami",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_add_comment_to_issue",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_add_issue_assignees",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_add_issue_labels",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_add_reaction_to_issue_comment",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_add_reaction_to_pr",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_add_reaction_to_pr_review_comment",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_add_review_to_pr",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_compare_commits",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_convert_pull_request_to_draft",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_create_blob",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_create_branch",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_create_commit",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_create_file",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_create_issue",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_create_pull_request",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_create_tree",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_delete_file",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_dismiss_pull_request_review",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_download_user_content",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_download_workflow_artifact",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_enable_auto_merge",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_fetch",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_fetch_blob",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_fetch_commit",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_fetch_commit_workflow_runs",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_fetch_file",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_fetch_issue",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_fetch_issue_comments",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_fetch_pr",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_fetch_pr_comments",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_fetch_pr_file_patch",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_fetch_pr_patch",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_fetch_workflow_job_logs",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_fetch_workflow_job_steps",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_fetch_workflow_run_artifacts",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_fetch_workflow_run_jobs",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_get_commit_combined_status",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_get_issue_comment_reactions",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_get_pr_diff",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_get_pr_info",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_get_pr_reactions",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_get_pr_review_comment_reactions",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_get_profile",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_get_repo",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_get_repo_collaborator_permission",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_get_user_login",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_get_users_recent_prs_in_repo",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_label_pr",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_list_installations",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_list_installed_accounts",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_list_pr_changed_filenames",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_list_pull_request_review_threads",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_list_pull_request_reviews",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_list_recent_issues",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_list_repositories",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_list_repositories_by_affiliation",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_list_repositories_by_installation",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_list_user_org_memberships",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_list_user_orgs",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_lock_issue_conversation",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_mark_pull_request_ready_for_review",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_merge_pull_request",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_remove_issue_assignees",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_remove_issue_label",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_remove_pull_request_reviewers",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_remove_reaction_from_issue_comment",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_remove_reaction_from_pr",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_remove_reaction_from_pr_review_comment",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_reply_to_review_comment",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_request_pull_request_reviewers",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_rerun_failed_workflow_run_jobs",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_rerun_workflow_job",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_resolve_review_thread",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_search",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_search_branches",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_search_commits",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_search_installed_repositories_streaming",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_search_installed_repositories_v2",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_search_issues",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_search_prs",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_search_repositories",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_unlock_issue_conversation",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_unresolve_review_thread",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_update_file",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_update_issue",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_update_issue_comment",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_update_pull_request",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_update_ref",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__github_update_review_comment",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__gmail_apply_labels_to_emails",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__gmail_archive_emails",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__gmail_batch_modify_email",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__gmail_batch_read_email",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__gmail_batch_read_email_threads",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__gmail_bulk_label_matching_emails",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__gmail_create_draft",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__gmail_create_label",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__gmail_delete_emails",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__gmail_forward_emails",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__gmail_get_profile",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__gmail_list_drafts",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__gmail_list_labels",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__gmail_read_attachment",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__gmail_read_email",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__gmail_read_email_thread",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__gmail_search_email_ids",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__gmail_search_emails",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__gmail_send_draft",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__gmail_send_email",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__gmail_update_draft",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__hotline_get_local_hotline",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__hugging_face_dataset_search",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__hugging_face_hf_doc_fetch",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__hugging_face_hf_doc_search",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__hugging_face_hf_jobs",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__hugging_face_hf_whoami",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__hugging_face_hub_repo_details",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__hugging_face_model_search",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__hugging_face_paper_search",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__hugging_face_space_search",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__plugin_management_get_app_permissions",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__plugin_management_get_plugin_dependencies",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__plugin_management_search_plugins",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__plugin_management_suggest_plugins",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__plugin_management_uninstall_app",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__plugin_management_update_app_permissions",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__safety_settings_get_family_info",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__safety_settings_get_parental_controls",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__safety_settings_get_trusted_contact",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__safety_settings_prepare_parental_control_update",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__safety_settings_update_parental_control",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__sites_add_custom_domain",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__sites_change_site_slug",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__sites_create_site",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__sites_create_source_repository_write_credential",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__sites_deploy_private_site_version",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__sites_deploy_site_version",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__sites_generate_siwc_bypass_token",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__sites_get_deployment_status",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__sites_get_environment_variables",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__sites_get_site",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__sites_get_site_version",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__sites_get_site_worker_logs",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__sites_list_custom_domains",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__sites_list_site_versions",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__sites_list_sites",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__sites_read_database_overview",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__sites_read_database_table_rows",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__sites_refresh_custom_domain_status",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__sites_remove_custom_domain",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__sites_save_site_version",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__sites_update_environment_variables",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__sites_update_site_access",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__sites_update_site_metadata",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__vercel_add_toolbar_reaction",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__vercel_change_toolbar_thread_resolve_status",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__vercel_check_domain_availability_and_price",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__vercel_deploy_to_vercel",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__vercel_edit_toolbar_message",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__vercel_get_access_to_vercel_url",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__vercel_get_agent_run",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__vercel_get_agent_run_trace",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__vercel_get_deployment",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__vercel_get_deployment_build_logs",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__vercel_get_project",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__vercel_get_runtime_errors",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__vercel_get_runtime_logs",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__vercel_get_toolbar_thread",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__vercel_import_claude_design_from_url",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__vercel_list_agent_run_projects",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__vercel_list_agent_runs",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__vercel_list_deployments",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__vercel_list_projects",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__vercel_list_teams",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__vercel_list_toolbar_threads",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__vercel_reply_to_toolbar_thread",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__vercel_search_vercel_documentation",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__codex_apps__vercel_web_fetch_vercel_url",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__node_repl__js",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__node_repl__js_add_node_module_dir",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__node_repl__js_reset",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__openai_artifact_template_picker__choose_artifact_template",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "mcp__openai_artifact_template_picker__list_artifact_templates",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "read_mcp_resource",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "request_plugin_install",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "update_goal",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "view_image",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "web__run",
+      "status": "pending-assessment"
+    },
+    {
+      "name": "write_stdin",
+      "status": "pending-assessment"
+    }
+  ]
+}

@@ -19,6 +19,7 @@ import SwiftUI
     .commands {
       CommandGroup(replacing: .newItem) {
         Button("New Conversation") { model.showNew = true }.keyboardShortcut("n")
+        Button("New Project") { model.showProject = true }.keyboardShortcut("n", modifiers: [.command, .shift])
       }
       CommandGroup(replacing: .appSettings) {
         Button("Settings…") { model.showSettings = true }.keyboardShortcut(",")
@@ -49,6 +50,22 @@ struct Avatar: View {
     }.frame(width: size, height: size).accessibilityHidden(true)
   }
 }
+struct TypingDots: View {
+  @Environment(\.accessibilityReduceMotion) var reduceMotion
+  var body: some View {
+    TimelineView(.animation(minimumInterval: 0.15, paused: reduceMotion)) { timeline in
+      HStack(spacing: 4) {
+        ForEach(0..<3) { index in
+          let phase = timeline.date.timeIntervalSinceReferenceDate * 4 - Double(index) * 0.8
+          Circle().fill(.secondary.opacity(reduceMotion ? 0.6 : 0.35 + 0.5 * (sin(phase) + 1) / 2))
+            .frame(width: 6, height: 6)
+            .offset(y: reduceMotion ? 0 : -2 * max(0, sin(phase)))
+        }
+      }.padding(.horizontal, 13).padding(.vertical, 12)
+        .background(.quaternary, in: Capsule())
+    }
+  }
+}
 struct MainView: View {
   @EnvironmentObject var model: AppModel
   @FocusState var searchFocused: Bool
@@ -70,9 +87,7 @@ struct MainView: View {
         if model.search.isEmpty {
           List(selection: $model.selectedId) {
             ForEach(model.conversations) { c in
-              ConversationRow(conversation: c).tag(c.id).listRowBackground(
-                model.selectedId == c.id ? Color.blue : Color.clear
-              ).foregroundStyle(model.selectedId == c.id ? Color.white : Color.primary)
+              ConversationRow(conversation: c).tag(c.id)
                 .listRowInsets(EdgeInsets(top: 4, leading: 7, bottom: 4, trailing: 7))
                 .contextMenu {
                   Button("New conversation with these agents") {
@@ -125,6 +140,8 @@ struct MainView: View {
           } label: {
             Image(systemName: "square.and.pencil")
           }.help("New conversation (⌘N)")
+          Button { model.showProject = true } label: { Image(systemName: "folder.badge.plus") }
+            .help("New project")
         }
       }
     } detail: {
@@ -137,6 +154,7 @@ struct MainView: View {
       }
     }
     .sheet(isPresented: $model.showNew) { NewConversationView() }
+    .sheet(isPresented: $model.showProject) { NewProjectView() }
     .sheet(isPresented: $model.showSettings) { SettingsView() }
     .sheet(item: $model.editingAgent) { AgentEditor(agent: $0) }
     .alert(
@@ -204,12 +222,10 @@ struct ConversationView: View {
               ForEach(model.messages) { m in MessageBubble(message: m, group: members.count > 1) }
               if let t = model.activeTask {
                 HStack(spacing: 8) {
-                  ProgressView().controlSize(.mini)
-                  Text(
-                    t.status == "awaiting_approval"
-                      ? "Waiting for your approval…"
-                      : t.status == "queued" ? "Queued…" : "\(activeName) is working…"
-                  ).font(.caption).foregroundStyle(.secondary)
+                  Avatar(agent: members.first { $0.name == activeName }, size: 28)
+                  if t.status == "awaiting_approval" {
+                    Text("Waiting for your approval…").font(.caption).foregroundStyle(.secondary)
+                  } else { TypingDots().accessibilityLabel("\(activeName) is typing") }
                   Spacer()
                 }.padding(.horizontal, 28).padding(.top, 5)
               }
@@ -403,15 +419,6 @@ struct MessageBubble: View {
             Text(model.agent(message.agentId)?.name ?? "Agent").font(.system(size: 10))
               .foregroundStyle(.secondary).padding(.leading, 9)
           }
-          if !message.reactions.isEmpty {
-            HStack(spacing: 2) {
-              ForEach(message.reactions, id: \.actor) { r in
-                Text(r.emoji).font(.system(size: 14)).help(
-                  r.actor == "user" ? "You" : model.agent(r.actor)?.name ?? r.actor)
-              }
-            }.padding(.horizontal, 8).padding(.vertical, 3).background(.quaternary, in: Capsule())
-              .padding(.horizontal, 6)
-          }
           if !message.content.isEmpty {
             Text(message.content).font(.system(size: 14)).textSelection(.enabled).padding(
               .horizontal, 13
@@ -429,6 +436,15 @@ struct MessageBubble: View {
             } label: {
               ArtifactPreview(artifact: a)
             }.buttonStyle(.plain)
+          }
+          if !message.reactions.isEmpty {
+            HStack(spacing: 2) {
+              ForEach(message.reactions, id: \.actor) { r in
+                Text(r.emoji).font(.system(size: 14)).help(
+                  r.actor == "user" ? "You" : model.agent(r.actor)?.name ?? r.actor)
+              }
+            }.padding(.horizontal, 8).padding(.vertical, 3).background(.quaternary, in: Capsule())
+              .padding(.horizontal, 6)
           }
           HStack(spacing: 8) {
             Text(dateFrom(message.createdAt), style: .time).font(.system(size: 9)).foregroundStyle(

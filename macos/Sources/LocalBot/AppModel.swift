@@ -44,6 +44,8 @@ enum Keychain {
 @MainActor final class AppModel: ObservableObject {
   @Published var agents: [Agent] = []
   @Published var providers: [Provider] = []
+  @Published var projects: [Project] = []
+  @Published var showProject = false
   @Published var conversations: [Conversation] = []
   @Published var tasks: [AgentTask] = []
   @Published var approvals: [Approval] = []
@@ -183,6 +185,7 @@ enum Keychain {
       let first = lastRevision < 0
       agents = s.agents
       providers = s.providers
+      projects = s.projects ?? []
       conversations = s.conversations
       tasks = s.tasks
       approvals = s.approvals

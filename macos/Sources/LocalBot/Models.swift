@@ -50,6 +50,15 @@ struct Conversation: Codable, Identifiable {
   var createdAt: String
   var updatedAt: String
   var preview: String?
+  var projectId: String?
+  var automatic: Int?
+}
+struct Project: Codable, Identifiable {
+  var id: String
+  var name: String
+  var workspace: String
+  var memory: String
+  var createdAt: String
 }
 struct Reaction: Codable, Hashable {
   var actor: String
@@ -108,6 +117,7 @@ struct Activity: Codable, Identifiable {
   var createdAt: String
 }
 struct Snapshot: Codable {
+  var projects: [Project]?
   var agents: [Agent]
   var providers: [Provider]
   var conversations: [Conversation]

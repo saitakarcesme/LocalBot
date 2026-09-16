@@ -115,6 +115,8 @@ struct NewConversationView: View {
   @Environment(\.dismiss) var dismiss
   @State var title = ""
   @State var selected: Set<String> = []
+  @State var projectId = ""
+  @State var automatic = true
   var body: some View {
     VStack(alignment: .leading, spacing: 18) {
       HStack {
@@ -123,6 +125,13 @@ struct NewConversationView: View {
         Button("Cancel") { dismiss() }.keyboardShortcut(.cancelAction)
       }
       TextField("Conversation name", text: $title).textFieldStyle(.roundedBorder)
+      Picker("Project", selection: $projectId) {
+        Text("Direct conversation").tag("")
+        ForEach(model.projects) { p in Text(p.name).tag(p.id) }
+      }
+      if !projectId.isEmpty {
+        Toggle("Choose agents automatically for each request", isOn: $automatic)
+      }
       Text("Choose your contacts").font(.headline)
       ForEach(model.agents) { a in
         Toggle(
@@ -157,21 +166,57 @@ struct NewConversationView: View {
           Task {
             let name =
               title.isEmpty
-              ? model.agents.filter { selected.contains($0.id) }.map(\.name).joined(separator: ", ")
+              ? (projectId.isEmpty ? model.agents.filter { selected.contains($0.id) }.map(\.name).joined(separator: ", ") : "New project conversation")
               : title
             await model.post(
               "/conversations",
               [
                 "title": name,
                 "members": model.agents.filter { selected.contains($0.id) }.map(\.id),
+                "projectId": projectId.isEmpty ? NSNull() : projectId as Any,
+                "automatic": !projectId.isEmpty && automatic,
               ])
             model.selectedId = model.conversations.first?.id
             dismiss()
           }
-        }.buttonStyle(.borderedProminent).disabled(selected.isEmpty).keyboardShortcut(
+        }.buttonStyle(.borderedProminent).disabled(selected.isEmpty && (projectId.isEmpty || !automatic)).keyboardShortcut(
           .defaultAction)
       }
     }.padding(24).frame(width: 430)
+  }
+}
+struct NewProjectView: View {
+  @EnvironmentObject var model: AppModel
+  @Environment(\.dismiss) var dismiss
+  @State var name = ""
+  @State var workspace = ""
+  var body: some View {
+    VStack(alignment: .leading, spacing: 18) {
+      Text("New Project").font(.title2.bold())
+      TextField("Project name", text: $name).textFieldStyle(.roundedBorder)
+      Text("Conversations share this folder and project memory. Agents join according to the work you request.")
+        .font(.callout).foregroundStyle(.secondary)
+      HStack {
+        Text(workspace.isEmpty ? "Choose a project folder" : workspace).lineLimit(2)
+        Spacer()
+        Button("Choose…") {
+          let panel = NSOpenPanel()
+          panel.canChooseDirectories = true; panel.canChooseFiles = false
+          panel.canCreateDirectories = true
+          if panel.runModal() == .OK { workspace = panel.url?.path ?? "" }
+        }
+      }
+      HStack {
+        Button("Cancel") { dismiss() }
+        Spacer()
+        Button("Create Project") {
+          Task {
+            await model.post("/projects", ["name": name, "workspace": workspace])
+            if model.error == nil { dismiss(); model.showNew = true }
+          }
+        }.buttonStyle(.borderedProminent).disabled(name.trimmingCharacters(in: .whitespaces).isEmpty || workspace.isEmpty)
+      }
+    }.padding(24).frame(width: 460)
   }
 }
 struct AgentEditor: View {
