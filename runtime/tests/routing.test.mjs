@@ -10,7 +10,7 @@ async function until(fn) {
   for (let i=0;i<300;i++) { if(fn()) return; await new Promise(r=>setTimeout(r,10)); }
   throw new Error('Timed out');
 }
-async function setup(handler) {
+async function setup(handler, makeProvider) {
   const root=await mkdtemp(join(tmpdir(),'localbot-routing-'));
   const workspace=join(root,'workspace');await mkdir(workspace);
   const server=createServer(async(req,res)=>{
@@ -22,7 +22,7 @@ async function setup(handler) {
   const config=store.provider('local');config.endpoint=`http://127.0.0.1:${server.address().port}`;store.saveProvider(config);
   const project=store.createProject('Routing',workspace);
   const conversation=store.createConversation('New project',[],project.id,true);
-  const engine=new Engine(store);
+  const engine=new Engine(store,undefined,makeProvider);
   return {store,engine,conversation,async close(){engine.shutdown();await until(()=>!store.get("SELECT id FROM tasks WHERE status IN ('running','awaiting_approval')"));server.closeAllConnections();await new Promise(r=>server.close(r));store.db.close();}};
 }
 function reply(res,message){res.setHeader('Content-Type','application/x-ndjson');res.end(JSON.stringify({message,done:true})+'\n');}
@@ -369,5 +369,40 @@ test('message retries survive restart without duplicate tasks, attachment reuse 
   assert.equal(f.store.task(task.id).status,'awaiting_input');
   const next=f.engine.enqueue(c.id,'Next',[],fresh);assert.notEqual(next.id,task.id);
   await until(()=>f.store.task(next.id).status==='awaiting_input');assert.equal(f.store.task(task.id).status,'continued');
+ }finally{await f.close();}
+});
+
+
+test('direct title failures preserve actual work while routing failures and cancellation still stop',async()=>{
+ let mode='missing',organizing=false;
+ const makeProvider=()=>({capabilities:()=>({images:false,tools:true,streaming:false}),async generate(messages,tools,signal){
+  if(tools.some(t=>t.function.name==='organize')){
+   organizing=true;
+   if(mode==='cancel')return await new Promise((resolve,reject)=>signal.addEventListener('abort',()=>reject(signal.reason),{once:true}));
+   if(mode==='throw')throw new Error('Title service unavailable');
+   if(mode==='malformed')return{content:'',calls:[{id:'title',function:{name:'organize',arguments:'not-json'}}]};
+   return{content:'No title tool call',calls:[]};
+  }
+  if(messages.some(m=>m.role==='tool'))return{content:'Clock verified.',calls:[]};
+  return{content:'',calls:[{id:'clock',function:{name:'current_time',arguments:'{}'}}]};
+ }});
+ const f=await setup(async(body,res)=>reply(res,{content:'unused'}),makeProvider);
+ try{
+  f.store.saveProvider({...f.store.provider('local'),kind:'codex'});
+  for(const failure of ['missing','malformed','throw']){
+   mode=failure;
+   const c=f.store.createConversation('Mira',['researcher']);
+   const task=f.engine.enqueue(c.id,'Clock '+failure);
+   await until(()=>f.store.task(task.id).status==='completed');
+   assert.equal(f.store.conversation(c.id).title,'Mira · Clock '+failure);
+   assert.deepEqual(f.store.conversation(c.id).members,['researcher']);
+   const call=f.store.get('SELECT t.* FROM tool_calls t JOIN runs r ON r.id=t.runId WHERE r.taskId=?',task.id);
+   assert.equal(call.name,'current_time');assert.equal(call.status,'completed');
+  }
+  mode='missing';const automatic=f.engine.enqueue(f.conversation.id,'Choose a team');await until(()=>f.store.task(automatic.id).status==='failed');
+  assert.equal(f.store.all('SELECT * FROM runs WHERE taskId=?',automatic.id).length,0);
+  mode='cancel';organizing=false;const c=f.store.createConversation('Keep title',['researcher']);const task=f.engine.enqueue(c.id,'Cancelled title');
+  await until(()=>organizing);f.engine.cancel(task.id);await until(()=>f.store.task(task.id).status==='cancelled');
+  assert.equal(f.store.conversation(c.id).title,'Keep title');assert.equal(f.store.all('SELECT * FROM runs WHERE taskId=?',task.id).length,0);
  }finally{await f.close();}
 });
