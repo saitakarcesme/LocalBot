@@ -58,7 +58,7 @@
       "manual scrolling survives Activity width change",
       "last selected chat survives relaunch"
     ],
-    "checkpoint": "Paginated scoped agent history reads verified through real subscription Mira; 72 tests, 29 built-in tools",
-    "tests_passed": 72
+    "checkpoint": "Complete Unicode-safe history chunks tested and exact live source-message read verified; 73 tests",
+    "tests_passed": 73
   }
 }

@@ -146,3 +146,6 @@ Found the automatically injected sibling-project history lacked search_history's
 
 ### Paginated agent history checkpoint — 2026-09-16
 Added read_history to complement search_history: bounded chronological pages with source metadata and owned cursors, current/same-project scope, task-message cutoff and explicit long-message truncation. Test covers13 messages across3 pages, foreign/future cursor rejection and archived sources. Live Mira read2 messages from prior Focus Ledger summary and grounded its response in that tool output. Tests72/72, built-in tools29, app installed; full unbounded message/attachment reads remain outside this tool.
+
+### Complete history-message chunks checkpoint — 2026-09-16
+Closed read_history's long-message gap: bounded single-message chunks with Unicode offsets and nextOffset now allow complete historical text retrieval. Scope and task-time boundary are rechecked for every chunk. Three-chunk Unicode reconstruction and invalid cursor/offset cases tested; live subscription Mira source chunk matched persisted text exactly. Tests73/73; installed app;29 tools unchanged. Attachment bodies remain outside history retrieval.
