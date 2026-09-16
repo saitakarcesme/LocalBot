@@ -546,6 +546,7 @@ export class Engine {
                 );
                 result = res.output;
                 if (res.artifact) await this.artifact(res.artifact, runId);
+                for (const path of res.artifacts ?? []) await this.artifact(path, runId);
               }
             } catch (e) {
               if (signal.aborted) throw e;
