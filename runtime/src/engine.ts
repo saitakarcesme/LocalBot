@@ -3,7 +3,7 @@ import { promises as fs } from "node:fs";
 import { basename, extname, join } from "node:path";
 import { Store } from "./store.js";
 import { provider } from "./providers.js";
-import { MCPClient } from "./mcp.js";
+import { MCPClient, authorizedMCPConnection } from "./mcp.js";
 import {
   allowed,
   definitions,
@@ -457,6 +457,7 @@ export class Engine {
               const live = this.store.agent(agentId);
               if (!allowed(live, name))
                 throw new Error(`Permission denied: ${name}`);
+              if (name === "mcp_call" || name === "mcp_list_tools") authorizedMCPConnection(live.integrations, this.store.integrations(), args.integrationId);
               if (
                 needsApproval(live, name) &&
                 !(await this.approve(
@@ -479,9 +480,7 @@ export class Engine {
               );
               this.changed();
               if (name === "mcp_call" || name === "mcp_list_tools") {
-                if (!this.store.agent(agentId).integrations?.includes(args.integrationId)) throw new Error("Integration permission denied");
-                const integration = this.store.integrations().find(i => i.id === args.integrationId);
-                if (!integration) throw new Error("Integration no longer exists");
+                const integration = authorizedMCPConnection(this.store.agent(agentId).integrations, this.store.integrations(), args.integrationId);
                 const client = new MCPClient(integration, this.secrets.get("mcp:" + integration.id));
                 try {
                   await client.connect(signal);

@@ -1,6 +1,12 @@
 import { randomUUID } from "node:crypto";
 
 export type MCPConnection = { id: string; name: string; endpoint: string; requiresAuth: boolean };
+export function authorizedMCPConnection(enabled: string[] | undefined, connections: MCPConnection[], id: string) {
+  if (!enabled?.includes(id)) throw new Error("Integration permission denied");
+  const connection = connections.find(c => c.id === id);
+  if (!connection) throw new Error("Integration no longer exists");
+  return connection;
+}
 export function validateMCP(connection: MCPConnection) {
   const url = new URL(connection.endpoint);
   if (url.username || url.password || url.search || url.hash || !["https:", "http:"].includes(url.protocol)) throw new Error("Use a plain MCP HTTP(S) endpoint");

@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
-import { MCPClient, validateMCP } from "../dist/mcp.js";
+import { MCPClient, validateMCP, authorizedMCPConnection } from "../dist/mcp.js";
 import { allowed, needsApproval } from "../dist/tools.js";
 
 test("MCP negotiates a session, paginates tools, handles SSE results and closes session", async () => {
@@ -42,6 +42,8 @@ test("MCP permissions and endpoint protection fail closed", () => {
   assert.equal(allowed({ integrations: [] }, "mcp_call"), false);
   assert.equal(allowed({ integrations: ["test"] }, "mcp_call"), true);
   assert.equal(needsApproval({ autonomy: "trusted" }, "mcp_call"), true);
+  assert.throws(() => authorizedMCPConnection(["allowed"], [{ id: "private" }], "private"), /permission denied/);
+  assert.throws(() => authorizedMCPConnection([], [{ id: "allowed" }], "allowed"), /permission denied/);
   assert.throws(() => validateMCP({ endpoint: "http://remote.example/mcp", requiresAuth: true }), /HTTPS/);
   assert.throws(() => validateMCP({ endpoint: "https://remote.example/mcp", requiresAuth: false }), /authentication/);
 });
