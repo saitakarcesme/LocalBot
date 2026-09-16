@@ -12,12 +12,17 @@ import { lookup } from "node:dns/promises";
 import { isIP } from "node:net";
 import { Agent, ToolDefinition } from "./types.js";
 import { editFile, fileHash } from "./file-edit.js";
+import { processSessions } from "./process-sessions.js";
 const object = (
   properties: Record<string, unknown>,
   required: string[] = [],
 ) => ({ type: "object", properties, required, additionalProperties: false });
 const string = { type: "string" };
 export const definitions: ToolDefinition[] = [
+  ["process_start", "Start a sandboxed command with piped stdin and return a session ID immediately. No PTY or network. Sessions belong to this task and agent, last at most five minutes and stop when the task ends. Poll until exited before claiming success.", object({ command: string }, ["command"])],
+  ["process_poll", "Read new output and current exit status from your process session. Returns immediately; output is consumed once.", object({ session_id: string }, ["session_id"])],
+  ["process_input", "Send text to a running process session's stdin. Include a newline when required. Set end to true to close stdin. Requires approval.", object({ session_id: string, text: string, end: { type: "string", enum: ["true", "false"] } }, ["session_id", "text"])],
+  ["process_stop", "Stop your process session and its descendants. Poll afterwards for the final exit status.", object({ session_id: string }, ["session_id"])],
   ["create_goal", "Save a persistent objective for this conversation only when the user explicitly asks for a goal. One unfinished goal at a time. This tracks work across messages; it does not schedule future runs or enable unattended work.", object({ objective: string }, ["objective"])],
   ["get_goal", "Read the current conversation's latest persistent goal and outcome. Returns null if none exists.", object({})],
   ["update_goal", "Update the current conversation goal using its exact ID. Mark complete only after verifying the entire objective, blocked only for an actual blocker, and active to resume. Include concrete evidence; never equate one successful tool call with whole-goal completion.", object({ id: string, status: { type: "string", enum: ["active", "blocked", "complete"] }, evidence: string }, ["id", "status", "evidence"])],
@@ -106,6 +111,10 @@ export function allowed(agent: Agent, name: string) {
       return agent.permissions.filesystem === "write";
     case "terminal":
     case "run_tests":
+    case "process_start":
+    case "process_poll":
+    case "process_input":
+    case "process_stop":
       return agent.permissions.terminal;
     case "git":
       return agent.permissions.git && agent.permissions.filesystem !== "off";
@@ -124,7 +133,7 @@ export function allowed(agent: Agent, name: string) {
 }
 export function needsApproval(a: Agent, name: string) {
   return (
-    ["terminal", "run_tests", "mcp_call"].includes(name) ||
+    ["terminal", "run_tests", "process_start", "process_input", "mcp_call"].includes(name) ||
     (a.autonomy === "ask" && ["write_file", "edit_file", "remember", "create_goal", "update_goal"].includes(name))
   );
 }
@@ -212,19 +221,14 @@ function sandboxProfile(root: string, filesystem: string) {
   // Deny file data outside the workspace and OS/toolchain paths. Keep normal process IPC intact.
   return `(version 1) (allow default) (deny network*) (deny file-read-data (require-all (require-not (literal "/")) ${reads.map((p) => `(require-not (subpath ${q(p)}))`).join(" ")})) (deny file-write* (require-all (require-not (subpath ${q(join(root, ".localbot-tmp"))})) ${filesystem === "write" ? `(require-not (subpath ${q(root)}))` : ""} (require-not (literal "/dev/null")))) (deny file-read* file-write* (regex #"/\\.env($|[./])" #"/\\.ssh(/|$)" #"/\\.aws(/|$)" #"/\\.npmrc$"))`;
 }
-export async function executeProcess(
-  agent: Agent,
-  command: string,
-  signal: AbortSignal,
-) {
+export async function spawnSandbox(agent: Agent, command: string) {
   if (process.platform !== "darwin")
     throw new Error(
       "Terminal execution is disabled on this platform until a native sandbox is configured. Filesystem and model tools remain available.",
     );
   const root = await fs.realpath(agent.workspace);
   await fs.mkdir(join(root, ".localbot-tmp"), { recursive: true });
-  return new Promise<string>((resolveResult, reject) => {
-    const child = spawn(
+  return spawn(
       "/usr/bin/sandbox-exec",
       [
         "-p",
@@ -243,9 +247,19 @@ export async function executeProcess(
           LANG: "en_US.UTF-8",
           CI: "1",
         },
-        stdio: ["ignore", "pipe", "pipe"],
+        stdio: ["pipe", "pipe", "pipe"],
       },
     );
+}
+export async function executeProcess(
+  agent: Agent,
+  command: string,
+  signal: AbortSignal,
+) {
+  signal.throwIfAborted();
+  const child = await spawnSandbox(agent, command);
+  child.stdin.end();
+  return new Promise<string>((resolveResult, reject) => {
     let output = "",
       stopped = "";
     const kill = (why: string) => {
@@ -373,11 +387,25 @@ export async function executeTool(
   name: string,
   args: any,
   signal: AbortSignal,
+  taskId?: string,
 ): Promise<{ output: string; artifact?: string }> {
   if (!allowed(a, name)) throw new Error(`Permission denied: ${name}`);
   validateArguments(name, args);
   signal.throwIfAborted();
   switch (name) {
+    case "process_start":
+    case "process_poll":
+    case "process_input":
+    case "process_stop": {
+      if (!taskId) throw new Error("Process sessions require a task scope");
+      const owner = { taskId, agentId: a.id, workspace: await fs.realpath(a.workspace) };
+      let result;
+      if (name === "process_start") result = await processSessions.start(owner, () => spawnSandbox(a, args.command), signal);
+      else if (name === "process_input") result = await processSessions.input(owner, args.session_id, args.text, args.end === "true");
+      else if (name === "process_stop") result = processSessions.stop(owner, args.session_id);
+      else result = processSessions.poll(owner, args.session_id);
+      return { output: JSON.stringify(result) };
+    }
     case "list_files": {
       const p = await safePath(a.workspace, args.path ?? ".");
       const entries = await fs.readdir(p, { withFileTypes: true });

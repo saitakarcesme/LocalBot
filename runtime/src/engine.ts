@@ -3,6 +3,7 @@ import { promises as fs } from "node:fs";
 import { basename, extname, join } from "node:path";
 import { Store } from "./store.js";
 import { provider } from "./providers.js";
+import { processSessions } from "./process-sessions.js";
 import { MCPClient, authorizedMCPConnection } from "./mcp.js";
 import {
   allowed,
@@ -538,6 +539,7 @@ export class Engine {
                   name,
                   args,
                   signal,
+                  taskId,
                 );
                 result = res.output;
                 if (res.artifact) await this.artifact(res.artifact, runId);
@@ -629,6 +631,7 @@ export class Engine {
       }
       this.store.addMessage(task.conversationId, "system", text, { taskId });
     } finally {
+      processSessions.releaseTask(taskId);
       this.active.delete(taskId);
       this.changed();
     }
