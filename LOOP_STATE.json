@@ -34,7 +34,7 @@
   },
   "v0_2": {
     "status": "core_implemented_live_verified_tool_parity_in_progress",
-    "updated_at": "2026-09-16T11:45:53.527985+00:00",
+    "updated_at": "2026-09-16T11:57:04.294677+00:00",
     "runtime_tests_passed": 41,
     "real_subscription_agents_verified": 5,
     "real_project": "Focus Ledger",
@@ -55,8 +55,10 @@
       "header selection isolation",
       "last message visible on open",
       "reaction aggregation",
-      "MCP settings form"
+      "MCP settings form",
+      "manual scrolling survives Activity width change",
+      "last selected chat survives relaunch"
     ],
-    "checkpoint": "Multi-file patch verified through installed GPT; filesystem and native recovery artifacts checked"
+    "checkpoint": "Native scroll-follow intent and last selected conversation verified after installation"
   }
 }
