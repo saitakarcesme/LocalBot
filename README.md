@@ -73,7 +73,7 @@ This is a usable local development release, not a notarized public distribution.
 - [Native UI specification](docs/UI-SPEC.md)
 - [Verification results](docs/QA.md)
 
-The [269-entry Codex tool inventory](docs/CODEX-TOOL-INVENTORY.json) is a coverage target, not a claim that all Codex-hosted services are implemented. LocalBot currently exposes 26 built-in tool entries, including MCP discovery and invocation. External integrations require their own supported endpoint and authentication.
+The [269-entry Codex tool inventory](docs/CODEX-TOOL-INVENTORY.json) is a coverage target, not a claim that all Codex-hosted services are implemented. LocalBot currently exposes 27 built-in tool entries, including MCP discovery and invocation. External integrations require their own supported endpoint and authentication.
 
 For precise edits, read_file returns a SHA-256 fingerprint. edit_file replaces one unique old_text block using that fingerprint; stale or ambiguous edits fail without changing the target. It follows the contact’s filesystem permission and edit approval policy.
 
@@ -104,3 +104,5 @@ Incoming messages render native inline emphasis and code, with fenced code block
 `process_poll` waits for new output or process exit for up to `wait_ms` (decimal string, 0–60000; default 10000). Use 0 for an immediate snapshot. Pending waits end on task cancellation; output is consumed only once.
 
 Codex subscription agents can inspect attached PNG/JPEG/GIF/WebP images through CLI multimodal input: at most four recent context images, 5 MB per image and 12 MB total. Native attachment previews remain unchanged. PNG image understanding was live-tested; other formats have signature handling but have not been individually live-tested. HTTP providers currently receive an explicit unsupported-image note. The image adapter follows [Codex App Server input types](https://learn.chatgpt.com/docs/app-server).
+
+`view_image` lets an image-capable agent inspect a workspace picture with filesystem read permission. It rejects path escapes, symlinks and invalid/oversized images, retains an artifact copy and records the call in Activity. Current image-capable provider: Codex CLI. The same four-image/12 MB generation limits apply to attachments and image tools together.

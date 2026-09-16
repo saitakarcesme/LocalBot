@@ -11,7 +11,7 @@
 
 ## Scope still open
 
-The 269-entry Codex inventory is a target. Twenty-six built-in entries and MCP HTTP/stdio transports are implemented; all external vendor tools are **not** authenticated, implemented or verified. Interactive browser automation, full Codex desktop host equivalents and the remote 2×3090 hardware remain open. MCP supports the explicitly listed 2025 protocol revisions; modern 2026 MRTR and OAuth flows are not claimed.
+The 269-entry Codex inventory is a target. Twenty-seven built-in entries and MCP HTTP/stdio transports are implemented; all external vendor tools are **not** authenticated, implemented or verified. Interactive browser automation, full Codex desktop host equivalents and the remote 2×3090 hardware remain open. MCP supports the explicitly listed 2025 protocol revisions; modern 2026 MRTR and OAuth flows are not claimed.
 
 ---
 
@@ -116,3 +116,6 @@ Process wait continuation: previous turn was verified native-formatting progress
 
 
 Image attachment continuation: previous turn was verified process-wait progress. Added provider-independent image references and Codex app-server localImage inputs, confirmed against the installed generated protocol schema and official App Server docs. 55/55 runtime tests and native build passed. Four images maximum, 5 MB each / 12 MB total; signatures and file types checked before model invocation. Installed subscription-backed Mira read only a generated fixture and correctly returned 7419, one blue circle and two orange squares, with zero tool calls. Prompt and filename contained none of these answers. Native screenshot verified attachment and response. HTTP providers still explicitly lack image inspection; arbitrary workspace view_image tooling and image generation remain open.
+
+
+Workspace image tool: 56/56 tests and native build passed. view_image enforces filesystem-read permission and workspace/symlink confinement, validates image input limits, and supplies a retained artifact copy to the next model generation. Only image-capable providers advertise it. Live installed subscription Mira called view_image exactly once on a generated workspace fixture and correctly identified 7419, one blue circle and two orange squares. Native chat displayed the artifact and one action. The temporary workspace source was removed; the artifact remains. Initial test path expectation was corrected for macOS canonical /private/var paths. HTTP-provider vision and image generation remain open.

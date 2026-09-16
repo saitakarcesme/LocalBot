@@ -21,11 +21,11 @@ test('image input bounds and signatures reject invalid files before any model ca
 });
 
 test('view_image enforces filesystem scope and rejects non-image files',async()=>{
- const {executeTool}=await import('../dist/tools.js');const{symlink}=await import('node:fs/promises');
+ const {executeTool}=await import('../dist/tools.js');const{symlink,realpath}=await import('node:fs/promises');
  const dir=await mkdtemp(join(tmpdir(),'localbot-view-'));const agent={workspace:dir,permissions:{filesystem:'read'},autonomy:'high'};
  const signal=new AbortController().signal;
  try{await writeFile(join(dir,'sample.png'),png);await writeFile(join(dir,'plain.txt'),'not a picture');
- const result=await executeTool(agent,'view_image',{path:'sample.png'},signal);assert.equal(result.image,join(dir,'sample.png'));
+ const result=await executeTool(agent,'view_image',{path:'sample.png'},signal);assert.equal(result.image,await realpath(join(dir,'sample.png')));
  await assert.rejects(executeTool({...agent,permissions:{filesystem:'off'}},'view_image',{path:'sample.png'},signal),/Permission/);
  await assert.rejects(executeTool(agent,'view_image',{path:'../elsewhere.png'},signal),/outside/);
  await assert.rejects(executeTool(agent,'view_image',{path:'plain.txt'},signal),/invalid image/);
