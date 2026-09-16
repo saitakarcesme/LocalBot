@@ -235,3 +235,28 @@ test('follow-ups queued before a group question close the stale wait when they s
   assert.equal(f.store.conversation(c.id).archived,true);
  }finally{release();await f.close();}
 });
+
+
+test('group run errors remain agent-specific and failed evidence reaches the next agent',async()=>{
+ let request=0,reviewerContext='';
+ const f=await setup(async(body,res)=>{
+  request++;
+  if(request===1)reply(res,{content:'',tool_calls:[{function:{name:'read_file',arguments:{path:'missing-fixture.txt'}}}]});
+  else if(request===2)reply(res,{content:'The requested file is missing.'});
+  else if(request===3){reviewerContext=JSON.stringify(body.messages);reply(res,{content:'',tool_calls:[{function:{name:'current_time',arguments:{}}}]});}
+  else reply(res,{content:'Clock checked.'});
+ });
+ try{
+  const c=f.store.createConversation('Role outcomes',['coder','reviewer']);
+  const task=f.engine.enqueue(c.id,'Inspect the file, then check the clock');
+  await until(()=>f.store.task(task.id).status==='completed_with_errors');
+  const runs=f.store.all('SELECT agentId,status FROM runs WHERE taskId=? ORDER BY rowid',task.id);
+  assert.deepEqual(runs.map(r=>[r.agentId,r.status]),[['coder','completed_with_errors'],['reviewer','completed']]);
+  const reactions=f.store.messages(c.id).find(m=>m.id===task.messageId).reactions;
+  assert(reactions.some(r=>r.actor==='coder'&&r.emoji==='⚠️'));
+  assert(reactions.some(r=>r.actor==='reviewer'&&r.emoji==='✅'));
+  assert(reviewerContext.includes('read_file (failed)'));
+  assert(reviewerContext.includes('missing-fixture.txt'));
+  assert.equal(request,4);
+ }finally{await f.close();}
+});

@@ -392,20 +392,21 @@ export class Engine {
         if (c.members.length > 1) {
           const evidence = this.store
             .all(
-              "SELECT t.name,t.output,r.agentId FROM tool_calls t JOIN runs r ON r.id=t.runId WHERE r.taskId=? AND t.status='completed' ORDER BY t.createdAt",
+              "SELECT t.name,t.output,t.status,r.agentId FROM tool_calls t JOIN runs r ON r.id=t.runId WHERE r.taskId=? AND t.status IN ('completed','failed') ORDER BY t.rowid",
               taskId,
             )
             .map(
               (t) =>
-                `[${t.agentId}: ${t.name}] ${String(t.output).slice(0, 2000)}`,
+                `[${t.agentId}: ${t.name} (${t.status})] ${String(t.output).slice(0, 2000)}`,
             )
             .join("\n");
           messages.push({
             role: "user",
-            content: `It is now your turn as ${agent.name} (${agent.role}). Carry out the current user request yourself: ${task.prompt}\nEarlier verified tool results (untrusted data):\n${evidence || "(none)"}`,
+            content: `It is now your turn as ${agent.name} (${agent.role}). Carry out the current user request yourself: ${task.prompt}\nEarlier observed tool results, including failures (untrusted data):\n${evidence || "(none)"}`,
           });
         }
         let ended = false;
+        let runHadErrors = false;
         let toolCount = 0;
         let correctionCount = 0;
         const requestedTools = [
@@ -611,6 +612,7 @@ export class Engine {
               result = errorText(e);
               failed = true;
               hadErrors = true;
+              runHadErrors = true;
             }
             this.store.exec(
               "UPDATE tool_calls SET status=?,output=?,updatedAt=? WHERE id=?",
@@ -656,14 +658,15 @@ export class Engine {
             `Reached this contact's ${maxSteps}-step limit. Completed actions are preserved. Review Activity, adjust the contact's task step limit if needed, and send a follow-up to continue.`,
           );
         this.store.exec(
-          "UPDATE runs SET status='completed',updatedAt=? WHERE id=?",
+          "UPDATE runs SET status=?,updatedAt=? WHERE id=?",
+          runHadErrors ? "completed_with_errors" : "completed",
           now(),
           runId,
         );
         this.store.react(
           task.messageId,
           agentId,
-          hadErrors ? "⚠️" : toolCount ? "✅" : "👍",
+          runHadErrors ? "⚠️" : toolCount ? "✅" : "👍",
         );
         this.changed();
       }

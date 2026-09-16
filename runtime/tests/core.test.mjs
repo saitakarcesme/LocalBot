@@ -277,7 +277,7 @@ test("group orchestration uses same backend with distinct agent roles in sequenc
     ["readonly", "reviewer"],
   );
   assert.equal(
-    runs.every((r) => r.status === "completed"),
+    runs.every((r) => r.status === "completed_with_errors"),
     true,
   );
   assert.match(runs[1].checkpoint, /Verified the file/);
