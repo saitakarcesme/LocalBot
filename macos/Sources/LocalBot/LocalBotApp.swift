@@ -243,6 +243,9 @@ struct ConversationView: View {
                   following = false
                   Task {
                     if let anchor = await model.loadEarlierMessages() {
+                      // Wait for the prepended rows to enter the lazy layout.
+                      try? await Task.sleep(for: .milliseconds(80))
+                      guard model.selectedId == conversation.id else { return }
                       proxy.scrollTo(anchor, anchor: .top)
                     }
                   }
@@ -544,12 +547,12 @@ struct ScrollPositionObserver: ViewModifier {
           nearBottom: geometry.contentOffset.y + geometry.containerSize.height >= geometry.contentSize.height - 60)
       } action: { old, new in
         nearBottom = new.nearBottom
-        if userScrolling {
-          isAtBottom = new.nearBottom
-        } else if hasMessages && isAtBottom && (old.contentHeight != new.contentHeight || old.viewportSize != new.viewportSize) {
-          // Lazy rows and attachment previews can resolve after the first jump.
-          // Follow geometry changes only while the user intends to stay at the end.
+        if !userScrolling && hasMessages && isAtBottom && old.viewportSize != new.viewportSize {
+          // Width/height changes may reflow the transcript. Never treat lazy row
+          // measurements during history navigation as a request to jump to the end.
           scrollToBottom()
+        } else {
+          isAtBottom = new.nearBottom
         }
       }
       .onScrollPhaseChange { _, phase in
