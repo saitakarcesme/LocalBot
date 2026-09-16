@@ -58,7 +58,7 @@
       "manual scrolling survives Activity width change",
       "last selected chat survives relaunch"
     ],
-    "checkpoint": "Validated HTTPS redirects, UTF-8 preservation and live subscription Mira web fetch verified; 67 runtime tests",
-    "tests_passed": 67
+    "checkpoint": "Question answer/cancel lifecycle and stale reactions fixed; live subscription Mira plus archive round-trips verified; 68 tests",
+    "tests_passed": 68
   }
 }

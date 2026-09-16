@@ -134,3 +134,6 @@ Reversible archive/restore now organizes multiple direct-agent and project chats
 
 ### Public web redirect checkpoint — 2026-09-16
 Real research was unnecessarily blocked by all HTTP redirects being refused. Extracted a bounded HTTPS reader, revalidates and pins DNS on every hop, blocks special-use/transition IPs, caps redirects at five and total time at 20 seconds. Preserves split UTF-8 and plain-text angle brackets. 67 tests pass; installed Mira completed one actual redirected Wikipedia fetch through the Codex subscription bridge and produced a source-linked answer. Tool count stays 27; this improves web_fetch, not full web/browser parity.
+
+### Question lifecycle checkpoint — 2026-09-16
+Inspection found answered ask_user tasks stayed awaiting_input forever, preventing archiving. Follow-up enqueue now transactionally marks prior waiting tasks/runs continued and clears only their transient agent reactions; failed sends roll back. Waiting questions can be cancelled from the runtime and native Stop controls, with idempotent cancellation messages. Real subscription Mira answer/cancel/archive flows passed; native conversation observed, 68 runtime tests passed (18 core tests rerun after fixture cleanup). No replay of completed tool calls or in-place process resumption is claimed.
