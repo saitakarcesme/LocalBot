@@ -40,6 +40,7 @@ export class CodexProvider implements ModelProvider {
         model: this.config.model || null, ephemeral: true, environments: [],
         sandbox: "read-only", approvalPolicy: "never",
         config: { "features.shell_tool": false, "features.multi_agent": false,
+          "features.goals": false, "features.tool_suggest": false,
           "features.apps": false, "features.plugins": false, "features.remote_plugin": false,
           mcp_servers: {}, web_search: "disabled" },
         selectedCapabilityRoots: [],
