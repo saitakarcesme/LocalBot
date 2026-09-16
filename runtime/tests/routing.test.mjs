@@ -88,3 +88,38 @@ test('queued project run excludes later sibling prompts from automatic model con
   assert(!modelContext.includes('UNRELATED_PRIVATE_VALUE'));
  }finally{release();await f.close();}
 });
+
+
+test('automatic team selection receives bounded prior project context without unrelated or future messages',async()=>{
+ let routing;let release;const gate=new Promise(r=>release=r);let first=true;
+ const f=await setup(async(body,res)=>{
+  if(body.tools?.some(t=>t.function.name==='organize')){
+   const data=JSON.parse(body.messages.at(-1).content);
+   if(first){first=false;await gate;}else routing=data;
+   const members=data.project?.recentConversations.some(m=>m.excerpt.includes('IMPLEMENTATION_DECISION'))?['coder','tester']:['researcher'];
+   reply(res,{content:'',tool_calls:[{function:{name:'organize',arguments:{title:'Project implementation',members}}}]});
+  }else reply(res,{content:'Role completed.'});
+ });
+ try{
+  const projectId=f.store.conversation(f.conversation.id).projectId;
+  f.store.exec('UPDATE projects SET memory=? WHERE id=?','PROJECT_SHARED_NOTE '+ 'x'.repeat(5000),projectId);
+  const sibling=f.store.createConversation('Implementation plan',['researcher'],projectId);
+  const unrelated=f.store.createConversation('Private',['researcher']);
+  f.store.addMessage(unrelated.id,'user','PRIVATE_OTHER_CONVERSATION');
+  for(let i=0;i<12;i++)f.store.addMessage(sibling.id,'assistant','IMPLEMENTATION_DECISION '+ 'z'.repeat(1450));
+  const firstTask=f.engine.enqueue(f.conversation.id,'Prepare project');
+  await until(()=>!first);
+  const target=f.engine.enqueue(f.conversation.id,'Implement our agreed plan and test it');
+  f.store.addMessage(sibling.id,'user','FUTURE_PROJECT_MESSAGE');
+  release();await until(()=>f.store.task(target.id).status==='completed');
+  assert.equal(f.store.task(firstTask.id).status,'completed');
+  assert.equal(routing.project.name,'Routing');
+  assert(routing.project.memory.startsWith('PROJECT_SHARED_NOTE'));assert.equal(routing.project.memory.length,4000);
+  assert(routing.project.recentConversations.length>0);
+  assert(JSON.stringify(routing.project.recentConversations).length<=6000);
+  assert(routing.project.recentConversations.every(m=>m.conversationId===sibling.id&&m.conversationTitle==='Implementation plan'));
+  assert(!JSON.stringify(routing).includes('FUTURE_PROJECT_MESSAGE'));
+  assert(!JSON.stringify(routing).includes('PRIVATE_OTHER_CONVERSATION'));
+  assert.deepEqual(f.store.all('SELECT agentId FROM runs WHERE taskId=? ORDER BY rowid',target.id).map(r=>r.agentId),['coder','tester']);
+ }finally{release();await f.close();}
+});
