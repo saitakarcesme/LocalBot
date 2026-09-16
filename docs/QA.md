@@ -125,3 +125,11 @@ Local HTTP vision continuation: previous turn was verified workspace image inspe
 
 
 Configurable agent run limits: previous turn was verified local HTTP vision progress. Contacts now set maxSteps from 1 to 256, defaulting to the legacy 24. Bounds are enforced in HTTP configuration and runtime; each participant uses its own limit at run start. Exceeding the limit preserves actions/checkpoint and fails explicitly rather than reporting completion. 62/62 tests and native build passed; controlled model tests prove 3-step failure versus 5-step completion. Live subscription Mira executed a clock call at limit 1, stopped with the correct error, then completed a follow-up after restoring its prior limit. Native contact form showed restored 24 and the chat showed both outcomes. Inspection exposed a stale eyes reaction on failure; now failed runs set warning, covered by the final test suite. This does not add unattended scheduling, token budgets or automatic run resumption.
+
+## Conversation archives — 2026-09-16
+
+- Added reversible archive state in its own SQLite table; existing database schema/data remain readable. Snapshot and conversation endpoints expose a boolean `archived`; POST `/conversations/archive` accepts `{id, archived}`.
+- 63 runtime tests pass. Archive regression covers restart persistence, preserved messages/FTS/project association, strict boolean input, rejection while queued/running/awaiting approval/input, transactional rollback on invalid attachment, and automatic restoration on a successful follow-up enqueue.
+- Installed native app: right-clicked the existing Mira UTC conversation, archived it, observed selection move to another chat, opened Archived conversations and verified its original messages and action count, restored it, and observed the same conversation return to the main list. Test left that conversation restored.
+- Search continues across all conversations and labels archived results. Choosing a result switches to the matching archive view. Empty archived project sections are hidden. Search routing is implemented but was not separately exercised live in this checkpoint.
+- Final native build and installed ad-hoc signature verification passed. An intermediate build hit an iCloud/Finder extended-attribute signing error; the installed bundle was cleaned and signed, and the subsequent complete build passed.

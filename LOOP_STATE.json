@@ -58,6 +58,7 @@
       "manual scrolling survives Activity width change",
       "last selected chat survives relaunch"
     ],
-    "checkpoint": "Configurable run limits verified with live subscription failure/follow-up, native contact settings and failure reaction test"
+    "checkpoint": "Reversible conversation archives: native archive/restore round-trip, preserved history, protected active tasks, 63 runtime tests",
+    "tests_passed": 63
   }
 }
