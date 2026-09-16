@@ -141,7 +141,7 @@ const server = createServer(async (req, res) => {
       p = u.pathname,
       m = req.method;
     if (m === "GET" && p === "/health") {
-      json(res, 200, { ok: true, version: "0.1.0", pid: process.pid });
+      json(res, 200, { ok: true, version: "0.2.0", pid: process.pid });
       return;
     }
     if (m === "GET" && p === "/events") {

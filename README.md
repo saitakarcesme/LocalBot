@@ -15,6 +15,16 @@ Open `build/LocalBot.app` (or the installed `~/Applications/LocalBot.app`). Node
 
 The app never automatically switches to a cloud model. A larger local model is preferable for substantial engineering tasks; the 1.7B development model can make mistakes even when tools execute correctly.
 
+## Codex subscription and projects (v0.2)
+
+Choose **Codex subscription** in model settings to use the existing ChatGPT login in the installed Codex CLI. No OpenAI API key is used. Run `codex login` only if the CLI is not already signed in. Save & Test lists the models actually available to the account. Assign the connection to contacts. Local inference remains available independently.
+
+Use **File → New Project** to select a project folder. Each project has conversations, shared memory and bounded context from earlier project chats. With automatic routing enabled, the request selects a small ordered team by role. Conversation Details lets you rename the chat, change members or switch to manual selection. Direct chats receive descriptive topic titles after the first request.
+
+**LocalBot → Integrations** manages MCP Streamable HTTP connections (2025-11-25 and compatible earlier revisions). Tokens stay in Keychain. Enable each connection per contact; external calls require approval and appear in Activity. An MCP connection is not equivalent to having authenticated every service.
+
+`node scripts/subscription-smoke.mjs` performs actual subscription-backed agent and project work against the running app. It approves only its scoped test writes, memory note and restricted Node test commands. It creates real test files and conversations; do not run it merely to check connectivity.
+
 ## Examples
 
 - “Use list_files to inspect this workspace, then summarize what you found.”
@@ -56,9 +66,11 @@ To back up history, close the app, stop its runtime when no task is active, then
 
 ## Current limits
 
-This is a usable local development release, not a notarized public distribution. The 2×3090 machine and the requested 27B model have not been available for hardware validation. Cloud adapters have protocol tests, not live paid-provider tests. No MCP server launcher, interactive browser automation, vision inference, conversation branches or automatic crash replay is presented as a working feature. Shell execution is macOS-only until equivalent Windows/Linux sandboxing exists.
+This is a usable local development release, not a notarized public distribution. The 2×3090 machine and the requested 27B model have not been available for hardware validation. API adapters have protocol tests; the Codex ChatGPT subscription bridge has live agent and project tests. No arbitrary MCP stdio launcher, interactive browser automation, vision inference, conversation branches or automatic crash replay is presented as a working feature. Shell execution is macOS-only until equivalent Windows/Linux sandboxing exists.
 
 - [Architecture and security boundaries](docs/ARCHITECTURE.md)
 - [Remote PC setup](docs/REMOTE-MODELS.md)
 - [Native UI specification](docs/UI-SPEC.md)
 - [Verification results](docs/QA.md)
+
+The [269-entry Codex tool inventory](docs/CODEX-TOOL-INVENTORY.json) is a coverage target, not a claim that all Codex-hosted services are implemented. LocalBot currently exposes 13 built-in tool entries, including MCP discovery and invocation. External integrations require their own supported endpoint and authentication.
