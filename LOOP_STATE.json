@@ -3,12 +3,12 @@
     "repository": "https://github.com/saitakarcesme/LocalBot",
     "branch": "master",
     "updated_at": "2026-09-15T20:35:47.586418+00:00",
-    "status": "reviewed_snapshot_ready_to_push",
+    "status": "automation_paused_manual_microcommits",
     "files": [
       "README.md",
       "docs/QA.md"
     ],
-    "last_pushed_commit": "0909e170b0ff1b3c1a941930a33da6fe27926446",
+    "last_pushed_commit": "67d3d33398ecc0b30621d4b483ff61c7402c0430",
     "excluded_private_files": [
       "screenshots/messages-reference-dark.png"
     ]
@@ -30,6 +30,17 @@
       "Interactive browser automation not shipped",
       "No vision inference",
       "Not notarized for public distribution"
+    ]
+  },
+  "v0_2": {
+    "status": "in_progress",
+    "checkpoint": "Codex CLI stdio transport; ChatGPT authentication verified",
+    "remaining": [
+      "provider integration and permission tests",
+      "projects and routing",
+      "native UI refinements",
+      "tool coverage",
+      "clean-history real E2E"
     ]
   }
 }

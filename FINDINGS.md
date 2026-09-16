@@ -49,3 +49,11 @@
 - Final observed idle RSS: client about 82 MB, runtime about 25 MB; 47% system memory free, about 12 GiB disk available. Model unloaded after idle keep-alive.
 - Architecture, remote setup, UI measurements and honest test limits are in `docs/`. PC/27B hardware remains unverified.
 - Reviewed implementation verification report and README clarification for publication; no embedded credentials or private conversation data found. Test claims belong to the implementation task and were not rerun by synchronization task.
+- Verified remote master matches release verification documentation snapshot 67d3d33.
+
+## v0.2 — CLI subscription bridge
+
+- User approved implementation and micro commit + push workflow.
+- Paused previous GitHub heartbeat via Codex automation tool.
+- Installed Codex 0.144.6 app-server supports stdio JSON-RPC. account/read verified chatgpt authentication without reading credentials.
+- Added isolated transport with request IDs, cancellation, timeouts and child cleanup. Provider integration remains in progress.
