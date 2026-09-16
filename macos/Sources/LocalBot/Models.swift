@@ -21,6 +21,7 @@ struct Agent: Codable, Identifiable, Equatable {
   var autonomy: String
   var memory: String
   var integrations: [String]? = nil
+  var maxSteps: Int? = nil
   var tint: Color {
     switch color {
     case "purple": return .purple

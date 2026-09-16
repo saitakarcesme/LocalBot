@@ -337,6 +337,8 @@ struct AgentEditor: View {
             Text("Ask before changes").tag("ask")
             Text("Allow workspace edits").tag("trusted")
           }
+          Stepper("Task step limit: \(agent.maxSteps ?? 24)", value: Binding(get: { agent.maxSteps ?? 24 }, set: { agent.maxSteps = $0 }), in: 1...256)
+          Text("Each step is one model response, which may request several tools. Higher limits allow longer tasks and use more model capacity. Changes apply to the next task; permissions and cancellation still apply.").font(.caption).foregroundStyle(.secondary)
           Text(
             "Shell commands always require approval and run without network access. File tools stay within this workspace."
           ).font(.caption).foregroundStyle(.secondary)
