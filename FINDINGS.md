@@ -140,3 +140,6 @@ Inspection found answered ask_user tasks stayed awaiting_input forever, preventi
 
 ### Agent history retrieval checkpoint — 2026-09-16
 Agents previously saw bounded recent context without a retrieval tool. Added search_history using existing SQLite FTS, scoped to the task's conversation/project and strictly before its user message. Source-identified bounded excerpts let agents recover older project decisions without loading the entire transcript or accessing unrelated chats. Real Mira search of Focus Ledger returned seven matches and a source-named explanation. Tests70/70, built-in tools28, installed native app verified. This is not complete Codex read_thread parity.
+
+### Automatic project-context ordering checkpoint — 2026-09-16
+Found the automatically injected sibling-project history lacked search_history's task-message cutoff. Queued work could therefore receive a later sibling instruction as history. Added bounded source-identified excerpts before the task's message and whole-entry budgeting. Provider-boundary regression gates routing to reproduce the timing; earlier evidence arrives, future sibling requests and unrelated private chats do not. Tests71/71, built and installed, signature verified. Shared durable project memory is not versioned by this change.

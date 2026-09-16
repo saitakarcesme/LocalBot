@@ -58,7 +58,7 @@
       "manual scrolling survives Activity width change",
       "last selected chat survives relaunch"
     ],
-    "checkpoint": "Scoped agent history retrieval: older/archived history isolation tested and live Focus Ledger search verified; 70 tests, 28 tools",
-    "tests_passed": 70
+    "checkpoint": "Automatic project excerpts isolated from future sibling messages; actual model payload tested; 71 tests and installed build",
+    "tests_passed": 71
   }
 }
