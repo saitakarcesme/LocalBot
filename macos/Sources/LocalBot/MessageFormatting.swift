@@ -43,12 +43,12 @@ func messageSections(_ source: String) -> [MessageSection] {
 
 func inlineMessage(_ source: String) -> AttributedString {
   var text = (try? AttributedString(markdown: source, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace))) ?? AttributedString(source)
-  // Model-supplied custom URL schemes must not launch local apps or commands.
+  // Model-supplied custom schemes must not launch local apps; credentials must not travel in links.
   let links = text.runs.compactMap { run -> (Range<AttributedString.Index>, URL)? in
     guard let link = run.link else { return nil }
     return (run.range, link)
   }
-  for (range, link) in links where !["https", "http"].contains(link.scheme?.lowercased() ?? "") {
+  for (range, link) in links where !["https", "http"].contains(link.scheme?.lowercased() ?? "") || link.user != nil || link.password != nil {
     text[range].link = nil
   }
   return text

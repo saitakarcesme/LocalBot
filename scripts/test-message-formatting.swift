@@ -16,6 +16,15 @@ import Foundation
     precondition(!inlineMessage("[bad](file:///tmp/test)").runs.contains { $0.link != nil })
     precondition(inlineMessage("[web](https://example.com)").runs.contains { $0.link?.scheme == "https" })
     precondition(messagePreview(source) == "Before bold let x = `value` After")
+    let bare = inlineMessage("Türkçe 🚀 kaynak: https://www.sqlite.org/wal.html.")
+    precondition(bare.runs.contains { $0.link?.absoluteString == "https://www.sqlite.org/wal.html" })
+    precondition(String(bare.characters) == "Türkçe 🚀 kaynak: https://www.sqlite.org/wal.html.")
+    precondition(!inlineMessage("`https://example.com/code`").runs.contains { $0.link != nil })
+    let explicit = inlineMessage("[https://example.com/label](https://example.org/actual)")
+    precondition(explicit.runs.contains { $0.link?.absoluteString == "https://example.org/actual" })
+    precondition(!explicit.runs.contains { $0.link?.host == "example.com" })
+    precondition(!inlineMessage("file:///tmp/local user@example.com").runs.contains { $0.link != nil })
+    precondition(!inlineMessage("https://user:password@example.com/private").runs.contains { $0.link != nil })
     print("Message formatting checks passed")
   }
 }
