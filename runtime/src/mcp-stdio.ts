@@ -13,6 +13,8 @@ export function validateStdioServer(config: StdioServer) {
 
 /** One explicitly configured subprocess; never interprets a shell command or inherits secrets. */
 export class MCPStdioTransport {
+  private static active = new Set<MCPStdioTransport>();
+  static async shutdown() { await Promise.all([...this.active].map(client => client.close())); }
   private child?: ChildProcessWithoutNullStreams;
   private pending = new Map<string, { resolve: (value: unknown) => void; reject: (error: Error) => void }>();
   private failure?: Error;
@@ -25,6 +27,8 @@ export class MCPStdioTransport {
   private start() {
     if (this.failure) throw this.failure;
     if (this.child) return;
+    if (MCPStdioTransport.active.size >= 2) throw new Error("Local MCP process limit reached (2)");
+    MCPStdioTransport.active.add(this);
     const child = this.child = spawn(this.config.command, this.config.args, {
       cwd: this.config.cwd, shell: false, detached: process.platform !== "win32",
       env: { PATH: "/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/opt/homebrew/bin", LANG: "en_US.UTF-8" },
@@ -103,14 +107,14 @@ export class MCPStdioTransport {
     for (const entry of [...this.pending.values()]) entry.reject(this.failure);
     const child = this.child;
     this.closing = new Promise(resolve => {
-      if (!child?.pid) { resolve(); return; }
+      if (!child?.pid) { MCPStdioTransport.active.delete(this); resolve(); return; }
       const kill = (signal: NodeJS.Signals) => {
         try { if (process.platform !== "win32") process.kill(-child.pid!, signal); else child.kill(signal); } catch {}
       };
       child.stdin.destroy();
       kill("SIGTERM");
       // Also kill descendants if the parent exits first. PID is a dedicated process group.
-      const timer = setTimeout(() => { kill("SIGKILL"); child.stdout.destroy(); child.stderr.destroy(); resolve(); }, 500);
+      const timer = setTimeout(() => { kill("SIGKILL"); child.stdout.destroy(); child.stderr.destroy(); MCPStdioTransport.active.delete(this); resolve(); }, 500);
 
     });
     return this.closing;

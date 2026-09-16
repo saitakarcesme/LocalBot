@@ -460,14 +460,15 @@ export class Engine {
               const live = this.store.agent(agentId);
               if (!allowed(live, name))
                 throw new Error(`Permission denied: ${name}`);
-              if (["mcp_call", "mcp_list_tools", "mcp_list_resources", "mcp_list_resource_templates", "mcp_read_resource"].includes(name)) authorizedMCPConnection(live.integrations, this.store.integrations(), args.integrationId);
+              const mcpIntegration = ["mcp_call", "mcp_list_tools", "mcp_list_resources", "mcp_list_resource_templates", "mcp_read_resource"].includes(name)
+                ? authorizedMCPConnection(live.integrations, this.store.integrations(), args.integrationId) : undefined;
               if (
-                needsApproval(live, name) &&
+                (needsApproval(live, name) || mcpIntegration?.transport === "stdio") &&
                 !(await this.approve(
                   taskId,
                   runId,
                   callId,
-                  `${agent.name} · ${name}\n${JSON.stringify(args, null, 2)}`,
+                  `${agent.name} · ${name}\n${JSON.stringify(args, null, 2)}${mcpIntegration?.transport === "stdio" ? "\nLaunch local MCP server (user account access):\n" + JSON.stringify(mcpIntegration.process, null, 2) : ""}`,
                   signal,
                 ))
               )

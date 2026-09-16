@@ -40,3 +40,9 @@ test('stdio fails closed on malformed output, oversized messages and missing exe
  const c=new MCPStdioTransport({command:'/definitely-missing-localbot-executable',args:[],cwd:process.cwd()});
  try{await assert.rejects(c.rpc('wait',{},AbortSignal.timeout(5000)),/start|exited/);}finally{await c.close();}
 });
+test('stdio caps live servers and reclaims processes on shutdown',async()=>{
+ const source=`import {createInterface} from 'node:readline';createInterface({input:process.stdin}).on('line',l=>{const m=JSON.parse(l);process.stdout.write(JSON.stringify({jsonrpc:'2.0',id:m.id,result:{pid:process.pid}})+'\\n');});`;
+ const clients=Array.from({length:3},()=>new MCPStdioTransport(server(source)));
+ try {const s=AbortSignal.timeout(5000);const a=await clients[0].rpc('pid',{},s);const b=await clients[1].rpc('pid',{},s);await assert.rejects(clients[2].rpc('pid',{},s),/limit/);await MCPStdioTransport.shutdown();for(const pid of [a.pid,b.pid])assert.throws(()=>process.kill(pid,0));assert.equal(typeof(await clients[2].rpc('pid',{},s)).pid,'number');}
+ finally{await Promise.all(clients.map(c=>c.close()));}
+});

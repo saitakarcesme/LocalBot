@@ -138,11 +138,18 @@ struct AgentGoal: Codable, Identifiable {
   var createdAt: String
   var updatedAt: String
 }
+struct MCPProcess: Codable {
+  var command: String
+  var args: [String]
+  var cwd: String
+}
 struct MCPConnection: Codable, Identifiable {
   var id: String
   var name: String
   var endpoint: String
   var requiresAuth: Bool
+  var transport: String? = nil
+  var process: MCPProcess? = nil
 }
 struct ActiveRun: Codable, Identifiable {
   var id: String

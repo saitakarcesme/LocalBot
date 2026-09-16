@@ -1,3 +1,4 @@
+import { MCPStdioTransport } from "./mcp-stdio.js";
 import { processSessions } from "./process-sessions.js";
 import { createServer, IncomingMessage, ServerResponse } from "node:http";
 import { randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
@@ -8,7 +9,7 @@ import { join, resolve } from "node:path";
 import { Store } from "./store.js";
 import { Engine } from "./engine.js";
 import { provider, validateEndpoint } from "./providers.js";
-import { MCPClient, validateMCP } from "./mcp.js";
+import { MCPClient, validateMCP, type MCPConnection } from "./mcp.js";
 import { Agent, ProviderConfig, errorText } from "./types.js";
 const dir =
   process.env.LOCALBOT_DATA_DIR ??
@@ -350,7 +351,8 @@ const server = createServer(async (req, res) => {
     if (m === "POST" && p === "/integrations") {
       const b = await body(req);
       if (store.get("SELECT id FROM tasks WHERE status IN ('running','awaiting_approval')")) throw new Error("Wait for running tasks before changing integrations");
-      const config = { id: String(b.id ?? randomUUID()), name: String(b.name ?? "MCP").slice(0, 80), endpoint: String(b.endpoint), requiresAuth: b.requiresAuth === true };
+      const config: MCPConnection = { id: String(b.id ?? randomUUID()), name: String(b.name ?? "MCP").slice(0, 80), endpoint: String(b.endpoint ?? ""), requiresAuth: b.requiresAuth === true,
+        transport: b.transport ?? "http", ...(b.transport === "stdio" ? { process: b.process } : {}) };
       validateMCP(config);
       const old = store.integrations().find(i => i.id === config.id);
       if (old?.endpoint !== config.endpoint) engine.secrets.delete("mcp:" + config.id);
@@ -501,5 +503,5 @@ for (const sig of ["SIGTERM", "SIGINT"] as const)
   process.on(sig, () => {
     engine.shutdown();
     server.close();
-    setTimeout(() => process.exit(0), 500).unref();
+    void MCPStdioTransport.shutdown().finally(() => setTimeout(() => process.exit(0), 50).unref());
   });
