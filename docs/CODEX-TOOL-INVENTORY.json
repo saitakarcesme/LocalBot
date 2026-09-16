@@ -15,7 +15,8 @@
     },
     {
       "name": "create_goal",
-      "status": "not-yet-implemented"
+      "status": "partial-equivalent",
+      "route": "Persistent conversation-scoped goals with active/blocked/complete state and evidence; no token budgeting, usage accounting or autonomous scheduling yet."
     },
     {
       "name": "exec_command",
@@ -24,7 +25,8 @@
     },
     {
       "name": "get_goal",
-      "status": "not-yet-implemented"
+      "status": "partial-equivalent",
+      "route": "Persistent conversation-scoped goals with active/blocked/complete state and evidence; no token budgeting, usage accounting or autonomous scheduling yet."
     },
     {
       "name": "image_gen__imagegen",
@@ -1318,7 +1320,8 @@
     },
     {
       "name": "update_goal",
-      "status": "not-yet-implemented"
+      "status": "partial-equivalent",
+      "route": "Persistent conversation-scoped goals with active/blocked/complete state and evidence; no token budgeting, usage accounting or autonomous scheduling yet."
     },
     {
       "name": "view_image",
@@ -1348,7 +1351,10 @@
     "react",
     "mcp_list_tools",
     "mcp_call",
-    "edit_file"
+    "edit_file",
+    "create_goal",
+    "get_goal",
+    "update_goal"
   ],
   "verifiedIntegrationTransport": "MCP Streamable HTTP 2025-11-25 plus 2025-06-18/2025-03-26 negotiation"
 }

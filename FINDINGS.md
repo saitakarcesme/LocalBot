@@ -71,3 +71,9 @@
 Previous goal turn was progress (installed v0.2, live agent/project work, commits and verified UI). Added edit_file with SHA-256 stale-read detection, unique exact matching, atomic replacement and artifact integration. Tests verify permissions, cancellation, symlink refusal, ambiguous/stale input, preserved executable bits, unchanged hard-link aliases and temporary-file cleanup. A test path expectation was corrected for macOS canonical /private/var paths; both new tests passed, alongside the prior 26 tests. Full Codex patch syntax remains open.
 
 Live edit verification passed through the installed runtime using the ChatGPT subscription. Exact tool sequence: read_file, edit_file, read_file. Approval was scoped to the verification filename and exact replacement; disk content independently matched.
+
+## Tool coverage continuation — persistent goals
+
+Previous goal turn made verified progress: precise editing installed, live read/edit/read passed and changes pushed. Added create_goal/get_goal/update_goal with conversation isolation, one unfinished objective, immutable completed goals and exact-ID update guards. Goals and evidence survive restart and are visible in Activity. Goal mutations follow configured edit-approval policy. Codex native goals/tool suggestions are disabled in decision sessions so actions stay in the LocalBot pipeline. All 29 runtime tests and native build passed. Token budgets, usage accounting and autonomous scheduling are not implemented or claimed.
+
+Real GPT goal lifecycle passed: create_goal → run_tests (5/5) → update_goal complete → get_goal. Native Activity visibly shows the objective, completion state, evidence and action timeline. No unattended scheduling or budget accounting is implied.
