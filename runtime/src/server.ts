@@ -215,9 +215,6 @@ const server = createServer(async (req, res) => {
         "SELECT id FROM tasks WHERE conversationId=? AND status='awaiting_input'",
         b.conversationId,
       );
-      const conversation = store.conversation(b.conversationId);
-      if (conversation.automatic || (!conversation.titled && conversation.members.length && store.provider(store.agent(conversation.members[0]).providerId).kind === "codex"))
-        await engine.prepareConversation(b.conversationId, String(b.content ?? ""));
       const task = engine.enqueue(
         b.conversationId,
         String(b.content ?? ""),

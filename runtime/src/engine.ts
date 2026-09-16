@@ -18,7 +18,6 @@ export class Engine {
   private approvals = new Map<string, (allow: boolean) => void>();
   secrets = new Map<string, string>();
   private pumping = false;
-  private routing = Promise.resolve();
   private reservations = new Map<
     string,
     { providers: Set<string>; workspaces: string[] }
@@ -27,15 +26,11 @@ export class Engine {
     public store: Store,
     private changed: () => void = () => {},
   ) {}
-  prepareConversation(conversationId: string, prompt: string) {
-    const result = this.routing.then(() => this.organizeConversation(conversationId, prompt));
-    this.routing = result.catch(() => {});
-    return result;
-  }
-  private async organizeConversation(conversationId: string, prompt: string) {
-    const c = this.store.conversation(conversationId);
-    if (this.store.get("SELECT id FROM tasks WHERE conversationId=? AND status IN ('queued','running','awaiting_approval')", c.id)) return;
-    if (!c.automatic && c.titled) return;
+  private async organizeConversation(taskId: string, signal: AbortSignal) {
+    const task = this.store.task(taskId);
+    const c = this.store.conversation(task.conversationId);
+    const prompt = task.prompt;
+    if (!c.automatic && (c.titled || this.store.provider(this.store.agent(c.members[0]).providerId).kind !== "codex")) return;
     const candidates = this.store.agents();
     const lead = candidates.find(a => a.id === c.members[0]) ?? candidates[0];
     if (!lead) throw new Error("Create an agent first");
@@ -43,11 +38,13 @@ export class Engine {
     if (lead.model) config.model = lead.model;
     const response = await provider(config, this.secrets.get(config.id)).generate([
       { role: "system", content: "Organize a work conversation. Call organize with a short descriptive title in the user's language and the smallest useful ordered team of agent IDs. Select agents by their actual roles. Implementation precedes review and testing. For direct conversations keep the supplied members. Do not perform the task yet." },
-      { role: "user", content: JSON.stringify({ prompt, automatic: !!c.automatic, members: c.members, agents: candidates.map(a => ({ id: a.id, name: a.name, role: a.role })), recent: this.store.messages(c.id).slice(-6).map(m => m.content.slice(0, 1000)) }) },
-    ], [{ type: "function", function: { name: "organize", description: "Choose conversation title and team", parameters: { type: "object", properties: { title: { type: "string" }, members: { type: "array", items: { type: "string" } } }, required: ["title", "members"] } } }], AbortSignal.timeout(90_000));
+      { role: "user", content: JSON.stringify({ prompt, automatic: !!c.automatic, members: c.members, agents: candidates.map(a => ({ id: a.id, name: a.name, role: a.role })), recent: this.store.messages(c.id).filter(m => !m.taskId || this.store.get("SELECT rowid FROM tasks WHERE id=?", m.taskId)?.rowid <= this.store.get("SELECT rowid FROM tasks WHERE id=?", taskId).rowid).slice(-6).map(m => m.content.slice(0, 1000)) }) },
+    ], [{ type: "function", function: { name: "organize", description: "Choose conversation title and team", parameters: { type: "object", properties: { title: { type: "string" }, members: { type: "array", items: { type: "string" } } }, required: ["title", "members"] } } }], AbortSignal.any([signal, AbortSignal.timeout(90_000)]));
+    signal.throwIfAborted();
     const call = response.calls.find(c => c.function.name === "organize");
     if (!call) throw new Error("Could not organize this conversation. Please retry.");
     const result = JSON.parse(call.function.arguments);
+    if (!Array.isArray(result.members) || result.members.some((id: unknown) => typeof id !== "string")) throw new Error("Invalid routing team");
     const members = c.automatic ? [...new Set<string>(result.members)].filter(id => candidates.some(a => a.id === id)).slice(0, 8) : c.members;
     if (!members.length) throw new Error("No suitable agent selected");
     const topic = String(result.title ?? "").trim().slice(0, 80);
@@ -61,7 +58,7 @@ export class Engine {
   }
   enqueue(conversationId: string, prompt: string, attachments: string[] = []) {
     const c = this.store.conversation(conversationId);
-    if (!c.members.length) throw new Error("Conversation has no agents");
+    if (!c.members.length && !c.automatic) throw new Error("Conversation has no agents");
     for (const id of c.members) this.store.agent(id);
     if (!prompt.trim() && !attachments.length)
       throw new Error("Message is empty");
@@ -113,13 +110,14 @@ export class Engine {
           | { providers: Set<string>; workspaces: string[] }
           | undefined;
         for (const task of this.store.all(
-          "SELECT * FROM tasks WHERE status='queued' ORDER BY createdAt",
+          "SELECT * FROM tasks WHERE status='queued' ORDER BY rowid",
         )) {
-          const members = this.store
-            .conversation(task.conversationId)
-            .members.map((id: string) => this.store.agent(id)) as Agent[];
-          const providers = new Set(members.map((a) => a.providerId));
+          if ([...this.reservations.keys()].some(id => this.store.task(id).conversationId === task.conversationId)) continue;
           const conversation = this.store.conversation(task.conversationId);
+          // Reserve all eligible resources while an automatic team is undecided.
+          // This conservative reservation also covers any agents selected by routing.
+          const members: Agent[] = conversation.automatic ? this.store.agents() : conversation.members.map((id: string) => this.store.agent(id));
+          const providers = new Set(members.map((a: Agent) => a.providerId));
           const project = conversation.projectId ? this.store.project(conversation.projectId) : null;
           const workspaces = members.map((a) => project?.workspace ?? a.workspace);
           const busy = [...this.reservations.values()];
@@ -271,8 +269,8 @@ export class Engine {
   }
   private async run(taskId: string) {
     const task = this.store.task(taskId),
-      c = this.store.conversation(task.conversationId),
       controller = new AbortController();
+    let c = this.store.conversation(task.conversationId);
     this.active.set(taskId, controller);
     const signal = controller.signal;
     this.store.status(taskId, "running");
@@ -280,6 +278,9 @@ export class Engine {
     let runId: string | undefined;
     let hadErrors = false;
     try {
+      await this.organizeConversation(taskId, signal);
+      signal.throwIfAborted();
+      c = this.store.conversation(task.conversationId);
       for (const agentId of c.members) {
         signal.throwIfAborted();
         const agent = this.store.agent(agentId),
@@ -315,8 +316,8 @@ export class Engine {
           .filter(
             (m) =>
               !m.taskId ||
-              this.store.get("SELECT createdAt FROM tasks WHERE id=?", m.taskId)
-                ?.createdAt <= task.createdAt,
+              this.store.get("SELECT rowid FROM tasks WHERE id=?", m.taskId)
+                ?.rowid <= this.store.get("SELECT rowid FROM tasks WHERE id=?", task.id).rowid,
           )
           .slice(-30);
         // Bounded context based on configured window, reserving room for tools and generated output.
