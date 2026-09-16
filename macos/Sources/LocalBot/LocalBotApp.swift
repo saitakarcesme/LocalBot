@@ -103,7 +103,14 @@ struct MainView: View {
                   model.showNew = true
                 } label: { Label("New conversation", systemImage: "plus") }
                   .buttonStyle(.borderless).foregroundStyle(.secondary).font(.caption).selectionDisabled() }
-              } header: { Label(project.name, systemImage: "folder").selectionDisabled() }
+              } header: {
+                HStack {
+                  Label(project.name, systemImage: "folder")
+                  Spacer()
+                  Button { model.editingProject = project } label: { Image(systemName: "ellipsis.circle") }
+                    .buttonStyle(.plain).help("Project details").accessibilityLabel("Project details: " + project.name)
+                }.selectionDisabled()
+              }
             }
           }.listStyle(.sidebar)
         } else {
@@ -169,6 +176,7 @@ struct MainView: View {
     .sheet(isPresented: $model.showIntegrations) { IntegrationsView() }
     .sheet(isPresented: $model.showSettings) { SettingsView() }
     .sheet(item: $model.editingAgent) { AgentEditor(agent: $0) }
+    .sheet(item: $model.editingProject) { ProjectEditor(project: $0) }
     .sheet(item: $model.editingConversation) { ConversationEditor(conversation: $0) }
     .alert(
       "LocalBot",

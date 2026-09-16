@@ -233,6 +233,56 @@ struct ConversationEditor: View {
     }
   }
 }
+struct ProjectEditor: View {
+  @EnvironmentObject var model: AppModel
+  @Environment(\.dismiss) var dismiss
+  let project: Project
+  @State var name = ""
+  @State var workspace = ""
+  @State var memory = ""
+  @State var saving = false
+  @State var error: String?
+  var body: some View {
+    VStack(alignment: .leading, spacing: 16) {
+      Text("Project Details").font(.title2.bold())
+      TextField("Project name", text: $name).textFieldStyle(.roundedBorder)
+      Text("Workspace").font(.headline)
+      HStack {
+        Text(workspace).lineLimit(3).textSelection(.enabled)
+        Spacer()
+        Button("Choose…") {
+          let panel = NSOpenPanel()
+          panel.canChooseDirectories = true; panel.canChooseFiles = false
+          if panel.runModal() == .OK { workspace = panel.url?.path ?? workspace }
+        }
+      }
+      Text("Future work uses this folder. Existing files and attachments stay where they are.")
+        .font(.caption).foregroundStyle(.secondary)
+      Text("Shared project notes").font(.headline)
+      TextEditor(text: $memory).font(.body).frame(height: 160)
+        .overlay(RoundedRectangle(cornerRadius: 6).stroke(.quaternary))
+        .accessibilityLabel("Shared project notes")
+      Text("Shared with agents in this project. Do not include passwords or API keys.")
+        .font(.caption).foregroundStyle(.secondary)
+      if let error { Text(error).foregroundStyle(.red).font(.callout) }
+      HStack {
+        Button("Cancel") { dismiss() }.keyboardShortcut(.cancelAction)
+        Spacer()
+        Button(saving ? "Saving…" : "Save") {
+          saving = true
+          Task {
+            let saved = await model.post("/projects/update", ["id": project.id, "name": name, "workspace": workspace, "memory": memory,
+              "expected": ["name": project.name, "workspace": project.workspace, "memory": project.memory]])
+            saving = false
+            if saved { dismiss() } else { error = model.error; model.error = nil }
+          }
+        }.buttonStyle(.borderedProminent).keyboardShortcut(.defaultAction)
+          .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || name.count > 80 || memory.count > 12000)
+      }
+    }.padding(24).frame(width: 500).disabled(saving)
+      .onAppear { name = project.name; workspace = project.workspace; memory = project.memory }
+  }
+}
 struct NewProjectView: View {
   @EnvironmentObject var model: AppModel
   @Environment(\.dismiss) var dismiss
