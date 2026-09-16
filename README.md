@@ -124,3 +124,7 @@ Project details are available from the sidebar project heading and a project con
 Agents can use `list_agents` to inspect a paginated contact directory with roles, configured permissions and current-chat membership. It does not expose private memory, prompts or workspace paths, and does not delegate work or change membership.
 
 `read_activity` lets agents page through completed/failed actions in their current task and read full stored outputs in Unicode-safe chunks. It does not rerun commands, expose other tasks, or recursively include activity-reader outputs. This also recovers details omitted from bounded team handoffs.
+
+### Verify the packaged subscription runtime
+
+After `npm run app`, run `npm run test:packaged-subscription` with an existing Codex ChatGPT login. This launches the app bundle’s Node/server in a temporary workspace, checks authenticated HTTP access, runs a real clock-and-recorded-output task, restarts the server and verifies persisted history. It consumes normal subscription usage and stops its own server afterward. It does not launch or visually test the native UI, or modify your existing LocalBot data.

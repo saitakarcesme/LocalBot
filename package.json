@@ -11,7 +11,8 @@
     "start": "node runtime/dist/server.js",
     "test": "npm run build && node --test --test-concurrency=1 runtime/tests/*.test.mjs",
     "app": "bash scripts/build-app.sh",
-    "check": "npm test && swift build --package-path macos -j 1"
+    "check": "npm test && swift build --package-path macos -j 1",
+    "test:packaged-subscription": "node scripts/packaged-runtime-smoke.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

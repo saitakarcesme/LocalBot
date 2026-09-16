@@ -218,3 +218,7 @@ Disk-reopen regression verifies interrupted tasks/runs/pending calls, expired ap
 ### Recorded Activity retrieval — 2026-09-16
 
 `node scripts/read-activity-smoke.mjs` passed against authenticated Codex CLI: one current_time call, two read_activity calls, and exact equality between saved output and retrieved chunk.86 runtime tests and native build/signing passed. Stored output can be recovered without repeating its originating action; access is limited to the current task. Native installation/live UI checks remain pending.
+
+### App-bundled runtime verification — 2026-09-16
+
+`npm run test:packaged-subscription` launches the built app's bundled Node/server in isolated data/workspace directories. Verified HTTP401 without token,0600 connection metadata, one real subscription clock call and two saved Activity reads. After stopping/restarting that server, messages matched exactly and task/action state remained completed with no replay. Both test server processes exited. This does not verify launching or interacting with the native window; installed UI validation remains pending.
