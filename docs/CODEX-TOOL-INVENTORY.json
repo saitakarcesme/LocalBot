@@ -34,11 +34,13 @@
     },
     {
       "name": "list_mcp_resource_templates",
-      "status": "not-yet-implemented"
+      "status": "implemented-equivalent",
+      "route": "mcp_list_resource_templates: enabled connection and explicit cursor pagination."
     },
     {
       "name": "list_mcp_resources",
-      "status": "not-yet-implemented"
+      "status": "implemented-equivalent",
+      "route": "mcp_list_resources: enabled connection, explicit cursor pagination, bounded result validation."
     },
     {
       "name": "mcp__codex_app__automation_update",
@@ -1312,7 +1314,8 @@
     },
     {
       "name": "read_mcp_resource",
-      "status": "not-yet-implemented"
+      "status": "implemented-equivalent",
+      "route": "mcp_read_resource: per-read approval and integration permission checks; server-mediated URI reads, validated bounded text/base64 contents."
     },
     {
       "name": "request_plugin_install",

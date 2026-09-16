@@ -73,7 +73,7 @@ This is a usable local development release, not a notarized public distribution.
 - [Native UI specification](docs/UI-SPEC.md)
 - [Verification results](docs/QA.md)
 
-The [269-entry Codex tool inventory](docs/CODEX-TOOL-INVENTORY.json) is a coverage target, not a claim that all Codex-hosted services are implemented. LocalBot currently exposes 21 built-in tool entries, including MCP discovery and invocation. External integrations require their own supported endpoint and authentication.
+The [269-entry Codex tool inventory](docs/CODEX-TOOL-INVENTORY.json) is a coverage target, not a claim that all Codex-hosted services are implemented. LocalBot currently exposes 24 built-in tool entries, including MCP discovery and invocation. External integrations require their own supported endpoint and authentication.
 
 For precise edits, read_file returns a SHA-256 fingerprint. edit_file replaces one unique old_text block using that fingerprint; stale or ambiguous edits fail without changing the target. It follows the contact’s filesystem permission and edit approval policy.
 
@@ -84,3 +84,5 @@ Agents can explicitly create, read and update conversation goals. Goals survive 
 Agents can start a sandboxed process, poll output, send stdin and stop it. Starting and sending input require approval. Sessions are scoped to their task, agent and workspace, limited to two per task/four total, 100 KB output and five minutes. Task completion/cancellation or agent configuration changes terminate running sessions. This is piped input/output, not a PTY; sessions do not survive runtime restart.
 
 Project messages enter the persistent task queue immediately, including while the team is being selected. Stop cancels routing as well as execution. Each queued request selects its own team; project messages retain their sender names and avatars when that team changes.
+
+MCP integrations can expose tools, resources or both. Agents can list resource pages and URI templates, then request an approved resource read. Resource contents are treated as untrusted data and bounded to 100 KB; binary contents remain base64. Save & Test displays discovered resources/templates as well as tools. Protocol reference: [MCP resources](https://modelcontextprotocol.io/specification/2025-11-25/server/resources).
