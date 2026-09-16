@@ -230,3 +230,7 @@ Swift cursor regression covers initial/update/unchanged, same-revision new-insta
 ### Retry-safe native submission — 2026-09-16
 
 Swift pending-send checks and88 runtime tests pass. Packaged real subscription test sends the same request ID immediately and again after a server restart: both return the original task, with one clock action, two Activity reads and unchanged persisted messages. Conflicting payload reuse, attachment consumption, question-state preservation and failed-enqueue rollback have runtime coverage. Native UI send interaction remains unverified pending automation access.
+
+### Direct title fallback — 2026-09-16
+
+89 tests pass. Controlled provider failures (missing organize call, invalid JSON and thrown error) no longer prevent direct-agent clock execution; automatic routing and cancellation still prevent agent starts. Native build/signing and actual subscription packaged regression passed. The live regression covers normal provider operation; title failures were injected, and installed UI remains unverified.

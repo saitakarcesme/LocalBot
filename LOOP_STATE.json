@@ -58,7 +58,7 @@
       "manual scrolling survives Activity width change",
       "last selected chat survives relaunch"
     ],
-    "checkpoint": "Direct-chat metadata failure falls back to request preview while actual work proceeds; automatic routing/cancel remain strict; 89 tests pass; native/package verification running",
+    "checkpoint": "Direct-chat metadata failure falls back to request preview while actual work proceeds; automatic routing/cancel remain strict; 89 tests pass; native build and real subscription packaged regression passed; installed UI pending",
     "tests_passed": 89,
     "packaged_runtime_subscription_verified": true
   }
