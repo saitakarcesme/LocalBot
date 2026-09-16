@@ -164,7 +164,7 @@ const server = createServer(async (req, res) => {
       json(
         res,
         200,
-        store.messages(u.searchParams.get("conversationId") ?? "", u.searchParams.get("before") ?? undefined),
+        store.messages(u.searchParams.get("conversationId") ?? "", u.searchParams.get("before") ?? undefined, u.searchParams.get("through") ?? undefined),
       );
       return;
     }

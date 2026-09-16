@@ -179,12 +179,13 @@ export class Store {
     );
     return id;
   }
-  messages(id: string, before?: string): Message[] {
+  messages(id: string, before?: string, through?: string): Message[] {
+    if (before && through) throw new Error("Use only one message cursor");
     let cursor: number | undefined;
-    if (before) {
-      const message = this.get("SELECT rowid FROM messages WHERE id=? AND conversationId=?", before, id);
+    if (before || through) {
+      const message = this.get("SELECT rowid FROM messages WHERE id=? AND conversationId=?", before ?? through, id);
       if (!message) throw new Error("Message cursor does not belong to this conversation");
-      cursor = message.rowid;
+      cursor = message.rowid + (through ? 1 : 0);
     }
     return this.all(
       "SELECT * FROM (SELECT rowid,* FROM messages WHERE conversationId=? AND (? IS NULL OR rowid<?) ORDER BY rowid DESC LIMIT 300) ORDER BY rowid",
