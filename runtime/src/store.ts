@@ -339,7 +339,9 @@ export class Store {
       integrations: this.integrations(),
       activeRuns: this.all("SELECT id,taskId,agentId,status FROM runs WHERE status IN ('running','awaiting_approval')"),
       conversations: this.conversations(),
-      tasks: this.all("SELECT * FROM tasks ORDER BY createdAt DESC LIMIT 200"),
+      tasks: this.all(`SELECT * FROM tasks WHERE status IN ('queued','running','awaiting_approval','awaiting_input')
+        UNION ALL SELECT * FROM (SELECT * FROM tasks WHERE status NOT IN ('queued','running','awaiting_approval','awaiting_input')
+        ORDER BY rowid DESC LIMIT 200) ORDER BY createdAt DESC`),
       approvals: this.all("SELECT * FROM approvals WHERE status='pending'"),
       revision: this.get("SELECT total_changes() n").n,
     };

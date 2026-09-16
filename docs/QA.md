@@ -238,3 +238,7 @@ Swift pending-send checks and88 runtime tests pass. Packaged real subscription t
 ### Native work-indicator state checks — 2026-09-16
 
 Swift checks verify running/approval tasks outrank newer queued messages, queued-only selection, question inactivity, preparation without a run, matching-run typing, approval waiting and sending/hidden states. Final native build/signing passed after extracting the status row. Runtime unchanged from89 passing tests. Actual sidebar switching, Stop clicks and indicator appearance remain pending native UI automation; no visual verification is claimed.
+
+### Long task-queue visibility — 2026-09-16
+
+90 tests pass. A495-task fixture keeps all244 unfinished tasks plus200 recent terminal tasks in snapshots, including older running/approval/input states. It verifies uniqueness and that active runs still have matching task entries, both before and after reopening SQLite. Native build/signing passed; actual installed-window controls remain unverified.
