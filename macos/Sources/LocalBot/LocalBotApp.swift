@@ -238,8 +238,21 @@ struct ConversationView: View {
             LazyVStack(spacing: 13) {
               Text("LocalBot").font(.system(size: 11, weight: .semibold)).foregroundStyle(.tertiary)
                 .padding(.top, 20)
+              if model.hasEarlierMessages {
+                Button {
+                  following = false
+                  Task {
+                    if let anchor = await model.loadEarlierMessages() {
+                      proxy.scrollTo(anchor, anchor: .top)
+                    }
+                  }
+                } label: {
+                  if model.loadingEarlierMessages { ProgressView().controlSize(.small) }
+                  else { Text("Load earlier messages") }
+                }.buttonStyle(.borderless).disabled(model.loadingEarlierMessages)
+              }
               if model.messages.isEmpty { emptyConversation }
-              ForEach(model.messages) { m in MessageBubble(message: m, group: conversation.projectId != nil || members.count > 1) }
+              ForEach(model.messages) { m in MessageBubble(message: m, group: conversation.projectId != nil || members.count > 1).id(m.id) }
               if model.activeTask != nil || model.sending {
                 HStack(spacing: 8) {
                   Avatar(agent: members.first { $0.name == activeName } ?? model.agent("assistant"), size: 28)

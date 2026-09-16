@@ -54,12 +54,16 @@ enum Keychain {
   @Published var tasks: [AgentTask] = []
   @Published var approvals: [Approval] = []
   @Published var messages: [ChatMessage] = []
+  @Published var hasEarlierMessages = false
+  @Published var loadingEarlierMessages = false
   @Published var activity: [Activity] = []
   @Published var selectedId: String? {
     didSet {
       if selectedId != oldValue {
         UserDefaults.standard.set(selectedId, forKey: "selectedConversation")
         messages = []
+        hasEarlierMessages = false
+        loadingEarlierMessages = false
         activity = []
         Task { await refreshConversation() }
       }
@@ -227,9 +231,30 @@ enum Keychain {
       let a = try JSONDecoder().decode(
         [Activity].self, from: await request("/activity?conversationId=\(id)"))
       guard selectedId == id else { return }
-      messages = m
+      if messages.isEmpty {
+        messages = m
+        hasEarlierMessages = m.count == 300
+      } else {
+        // Keep explicitly loaded older pages; refresh overlapping recent messages.
+        let newestIDs = Set(m.map(\.id))
+        messages = messages.filter { !newestIDs.contains($0.id) } + m
+      }
       activity = a
     } catch { self.error = error.localizedDescription }
+  }
+  func loadEarlierMessages() async -> String? {
+    guard let id = selectedId, let first = messages.first, hasEarlierMessages, !loadingEarlierMessages else { return nil }
+    loadingEarlierMessages = true
+    defer { if selectedId == id { loadingEarlierMessages = false } }
+    do {
+      let page = try JSONDecoder().decode([ChatMessage].self,
+        from: await request("/messages?conversationId=\(id)&before=\(first.id)"))
+      guard selectedId == id else { return nil }
+      let known = Set(messages.map(\.id))
+      messages.insert(contentsOf: page.filter { !known.contains($0.id) }, at: 0)
+      hasEarlierMessages = page.count == 300
+      return first.id
+    } catch { if selectedId == id { self.error = error.localizedDescription }; return nil }
   }
   func send(_ content: String, attachments: [Artifact]) async -> Bool {
     guard let id = selectedId, !sending else { return false }
