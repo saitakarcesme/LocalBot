@@ -13,6 +13,7 @@ import { isIP } from "node:net";
 import { Agent, ToolDefinition } from "./types.js";
 import { editFile, fileHash } from "./file-edit.js";
 import { applyPatch } from "./patch.js";
+import { currentTime } from "./clock.js";
 import { processSessions } from "./process-sessions.js";
 const object = (
   properties: Record<string, unknown>,
@@ -20,6 +21,7 @@ const object = (
 ) => ({ type: "object", properties, required, additionalProperties: false });
 const string = { type: "string" };
 export const definitions: ToolDefinition[] = [
+  ["current_time", "Read the runtime system clock. Returns UTC, Unix milliseconds and local date/time with UTC offset. Optional time_zone is an IANA zone (for example Europe/Luxembourg); defaults to UTC. Use this for current-time questions instead of guessing from conversation timestamps.", object({ time_zone: string })],
   ["apply_patch", "Apply a multi-file UTF-8 patch. Format: *** Begin Patch, *** Add File: path (each content line prefixed +), *** Update File: path (optional *** Move to: path, then @@ hunks with space=context, -=remove, +=add), *** Delete File: path, *** End Patch. Optional @@ exact anchor and *** End of File are supported. Matching is exact and unique. expected_hashes is a JSON object mapping every existing source path to sha256 from read_file. All changes require approval; preimages are retained in a recovery artifact. Up to 32 operations/200 KB per file.", object({ patch: string, expected_hashes: string }, ["patch", "expected_hashes"])],
   ["mcp_list_resources", "List one page of resources on an enabled MCP integration. Pass the returned nextCursor as cursor for further pages.", object({ integrationId: string, cursor: string }, ["integrationId"])],
   ["mcp_list_resource_templates", "Discover one page of parameterized resource URI templates from an enabled MCP integration. Use nextCursor for pagination.", object({ integrationId: string, cursor: string }, ["integrationId"])],
@@ -129,6 +131,7 @@ export function allowed(agent: Agent, name: string) {
       return agent.permissions.git && agent.permissions.filesystem !== "off";
     case "web_fetch":
       return agent.permissions.web;
+    case "current_time":
     case "remember":
     case "create_goal":
     case "get_goal":
@@ -402,6 +405,7 @@ export async function executeTool(
   validateArguments(name, args);
   signal.throwIfAborted();
   switch (name) {
+    case "current_time": return { output: JSON.stringify(currentTime(args.time_zone)) };
     case "process_start":
     case "process_poll":
     case "process_input":
