@@ -58,7 +58,7 @@
       "manual scrolling survives Activity width change",
       "last selected chat survives relaunch"
     ],
-    "checkpoint": "Task-scoped SQL history prevents future-message leakage/eviction while retaining team handoffs; 81 tests and native build pass; real subscription regression in progress; UI installation pending",
+    "checkpoint": "Task-scoped SQL history prevents future-message leakage/eviction while retaining team handoffs; 81 tests and native build pass; real subscription coder/reviewer regression passed; UI installation pending",
     "tests_passed": 81
   }
 }
