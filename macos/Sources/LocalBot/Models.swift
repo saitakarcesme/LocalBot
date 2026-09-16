@@ -54,6 +54,7 @@ struct Conversation: Codable, Identifiable {
   var updatedAt: String
   var preview: String?
   var projectId: String?
+  var archived: Bool? = nil
   var automatic: Int?
 }
 struct Project: Codable, Identifiable {

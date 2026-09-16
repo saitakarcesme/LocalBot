@@ -51,6 +51,7 @@ enum Keychain {
   @Published var showIntegrations = false
   @Published var integrations: [MCPConnection] = []
   @Published var conversations: [Conversation] = []
+  @Published var showingArchived = false
   @Published var tasks: [AgentTask] = []
   @Published var approvals: [Approval] = []
   @Published var messages: [ChatMessage] = []
@@ -89,6 +90,7 @@ enum Keychain {
   let dataDir = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(
     "Library/Application Support/LocalBot")
   var selected: Conversation? { conversations.first { $0.id == selectedId } }
+  var visibleConversations: [Conversation] { conversations.filter { ($0.archived == true) == showingArchived } }
   var currentTasks: [AgentTask] { tasks.filter { $0.conversationId == selectedId } }
   var activeTask: AgentTask? { currentTasks.first { $0.active } }
   func agent(_ id: String?) -> Agent? { agents.first { $0.id == id } }
@@ -220,8 +222,12 @@ enum Keychain {
       }
       if selectedId == nil || !conversations.contains(where: { $0.id == selectedId }) {
         let saved = UserDefaults.standard.string(forKey: "selectedConversation")
-        selectedId = conversations.first(where: { $0.id == saved })?.id ?? conversations.first?.id
+        if first, let restored = conversations.first(where: { $0.id == saved }) {
+          showingArchived = restored.archived == true
+          selectedId = restored.id
+        } else { selectedId = visibleConversations.first?.id }
       }
+      if let selected { showingArchived = selected.archived == true }
       await refreshConversation()
     } catch { connected = false }
   }
@@ -247,6 +253,7 @@ enum Keychain {
     } catch { self.error = error.localizedDescription }
   }
   func openSearchResult(_ message: ChatMessage) async {
+    showingArchived = conversations.first { $0.id == message.conversationId }?.archived == true
     selectedId = message.conversationId
     searchFocusId = message.id
     messages = []
@@ -309,6 +316,19 @@ enum Keychain {
     } catch {
       self.error = error.localizedDescription
       return false
+    }
+  }
+  func toggleArchiveList() {
+    showingArchived.toggle()
+    search = ""
+    selectedId = visibleConversations.first?.id
+  }
+  func archiveConversation(_ conversation: Conversation) async {
+    let wasSelected = selectedId == conversation.id
+    let previousMode = showingArchived
+    if await post("/conversations/archive", ["id": conversation.id, "archived": conversation.archived != true]) {
+      showingArchived = previousMode
+      if wasSelected { selectedId = visibleConversations.first?.id }
     }
   }
   func runSearch() async {

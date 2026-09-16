@@ -87,17 +87,17 @@ struct MainView: View {
           .padding(.horizontal, 12).padding(.bottom, 8)
         if model.search.isEmpty {
           List(selection: $model.selectedId) {
-            Section("Conversations") {
-              conversationRows(model.conversations.filter { $0.projectId == nil })
+            Section(model.showingArchived ? "Archived conversations" : "Conversations") {
+              conversationRows(model.visibleConversations.filter { $0.projectId == nil })
             }
             ForEach(model.projects) { project in
               Section {
-                conversationRows(model.conversations.filter { $0.projectId == project.id })
-                Button {
+                conversationRows(model.visibleConversations.filter { $0.projectId == project.id })
+                if !model.showingArchived { Button {
                   model.newConversationProjectId = project.id
                   model.showNew = true
                 } label: { Label("New conversation", systemImage: "plus") }
-                  .buttonStyle(.borderless).foregroundStyle(.secondary).font(.caption).selectionDisabled()
+                  .buttonStyle(.borderless).foregroundStyle(.secondary).font(.caption).selectionDisabled() }
               } header: { Label(project.name, systemImage: "folder").selectionDisabled() }
             }
           }.listStyle(.sidebar)
@@ -110,6 +110,9 @@ struct MainView: View {
                 Text(
                   model.conversations.first { $0.id == m.conversationId }?.title ?? "Conversation"
                 ).font(.headline)
+                if model.conversations.first(where: { $0.id == m.conversationId })?.archived == true {
+                  Label("Archived", systemImage: "archivebox").font(.caption).foregroundStyle(.secondary)
+                }
                 Text(messagePreview(m.content)).font(.caption).lineLimit(3).foregroundStyle(.secondary)
               }.frame(maxWidth: .infinity, alignment: .leading)
             }.buttonStyle(.plain)
@@ -123,6 +126,11 @@ struct MainView: View {
           Text(model.connected ? "Local runtime" : "Connecting…").font(.caption).foregroundStyle(
             .secondary)
           Spacer()
+          Button { model.toggleArchiveList() } label: {
+            Image(systemName: model.showingArchived ? "bubble.left.and.bubble.right" : "archivebox")
+          }.buttonStyle(.plain)
+            .help(model.showingArchived ? "Show conversations" : "Show archived conversations")
+            .accessibilityLabel(model.showingArchived ? "Show conversations" : "Show archived conversations")
           Button {
             model.showSettings = true
           } label: {
@@ -178,6 +186,9 @@ struct MainView: View {
               ConversationRow(conversation: c).tag(c.id)
                 .listRowInsets(EdgeInsets(top: 4, leading: 7, bottom: 4, trailing: 7))
                 .contextMenu {
+                  Button(c.archived == true ? "Restore Conversation" : "Archive Conversation") {
+                    Task { await model.archiveConversation(c) }
+                  }.disabled(model.tasks.contains { $0.conversationId == c.id && ($0.active || $0.status == "awaiting_input") })
                   Button("Conversation Details…") { model.editingConversation = c }
                   Button("New conversation with these agents") {
                     Task {
