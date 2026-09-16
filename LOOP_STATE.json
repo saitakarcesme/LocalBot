@@ -33,14 +33,14 @@
   },
   "v0_2": {
     "status": "core_implemented_live_verified_tool_parity_in_progress",
-    "updated_at": "2026-09-16T12:25:07.553570+00:00",
-    "runtime_tests_passed": 49,
+    "updated_at": "2026-09-16T12:28:38.356471+00:00",
+    "runtime_tests_passed": 51,
     "real_subscription_agents_verified": 5,
     "real_project": "Focus Ledger",
     "project_tests_passed": 5,
     "cross_conversation_project_context_verified": true,
     "tool_inventory_target": 269,
-    "localbot_builtin_tools": 25,
+    "localbot_builtin_tools": 26,
     "remaining": [
       "External vendor adapters and authenticated per-tool validation",
       "Codex-host-specific tool counterparts",
@@ -58,6 +58,6 @@
       "manual scrolling survives Activity width change",
       "last selected chat survives relaunch"
     ],
-    "checkpoint": "Local stdio MCP installed, approved GPT resource workflow and native form verified"
+    "checkpoint": "Timezone-aware clock verified with live subscription GPT and native conversation"
   }
 }

@@ -11,7 +11,7 @@
 
 ## Scope still open
 
-The 269-entry Codex inventory is a target. Twenty-five built-in entries and MCP HTTP/stdio transports are implemented; all external vendor tools are **not** authenticated, implemented or verified. Interactive browser automation, full Codex desktop host equivalents and the remote 2×3090 hardware remain open. MCP supports the explicitly listed 2025 protocol revisions; modern 2026 MRTR and OAuth flows are not claimed.
+The 269-entry Codex inventory is a target. Twenty-six built-in entries and MCP HTTP/stdio transports are implemented; all external vendor tools are **not** authenticated, implemented or verified. Interactive browser automation, full Codex desktop host equivalents and the remote 2×3090 hardware remain open. MCP supports the explicitly listed 2025 protocol revisions; modern 2026 MRTR and OAuth flows are not claimed.
 
 ---
 
@@ -104,3 +104,6 @@ Search navigation: 43/43 runtime tests and native build passed. In the installed
 
 
 Local MCP stdio: 49/49 runtime tests and native app build passed. Installed GPT subscription Mira executed three approved stdio actions: resource discovery, template discovery and reading the brief. The actual child returned Cedar/seven sample records; native conversation showed the result and three actions. Temporary server files, integration and agent grant were removed. Tests cover protocol negotiation, tool/resource calls, concurrent response correlation, UTF-8, missing executable, malformed/oversized output, environment isolation, cancellation, process cap and shutdown. Native Integrations form exposes executable/args/cwd and explains user-account access. OAuth, explicit environment-secret injection and third-party vendor validation remain open.
+
+
+Runtime clock: 51/51 tests and native build passed. current_time provides UTC, Unix milliseconds and optional IANA local time/offset without filesystem, terminal or network access. Tests cover daylight-saving transition, previous-day conversion, invalid zones and cancellation. Installed subscription-backed Mira called the tool with Europe/Luxembourg and accurately reported 2026-09-16 14:28:01 +02:00. The recorded timestamp was independently bounded by smoke-test start/end times; the native conversation was inspected. Built-in tools: 26.

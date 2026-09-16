@@ -11,7 +11,8 @@
     },
     {
       "name": "clock__curr_time",
-      "status": "not-yet-implemented"
+      "status": "implemented-equivalent",
+      "route": "current_time reads the runtime system clock and returns ISO UTC, Unix milliseconds, IANA zone local time and UTC offset; defaults to UTC."
     },
     {
       "name": "create_goal",

@@ -73,7 +73,7 @@ This is a usable local development release, not a notarized public distribution.
 - [Native UI specification](docs/UI-SPEC.md)
 - [Verification results](docs/QA.md)
 
-The [269-entry Codex tool inventory](docs/CODEX-TOOL-INVENTORY.json) is a coverage target, not a claim that all Codex-hosted services are implemented. LocalBot currently exposes 25 built-in tool entries, including MCP discovery and invocation. External integrations require their own supported endpoint and authentication.
+The [269-entry Codex tool inventory](docs/CODEX-TOOL-INVENTORY.json) is a coverage target, not a claim that all Codex-hosted services are implemented. LocalBot currently exposes 26 built-in tool entries, including MCP discovery and invocation. External integrations require their own supported endpoint and authentication.
 
 For precise edits, read_file returns a SHA-256 fingerprint. edit_file replaces one unique old_text block using that fingerprint; stale or ambiguous edits fail without changing the target. It follows the contact’s filesystem permission and edit approval policy.
 
@@ -96,3 +96,5 @@ Long conversations initially load the latest 300 messages. Scroll to the top and
 Search results open and highlight the matching message, including older history. Choose **Latest messages** to return to the current conversation. TypeScript builds cache locked compiler dependencies in `~/Library/Caches/LocalBot/RuntimeBuild` to avoid iCloud Documents dependency stalls.
 
 Local MCP processes use an absolute executable, JSON argument array and absolute working directory in Integrations. Save & Test launches the configured server with user account access; use trusted installed executables. Agent launches always require approval showing the process configuration. No shell expansion, inherited environment credentials or token injection is provided. Two processes maximum, bounded messages/session output and cancellation/shutdown cleanup keep the client lightweight. These integration processes are not the workspace-sandboxed terminal tool.
+
+`current_time` reads the runtime clock, returning UTC plus an optional IANA time zone (for example `Europe/Luxembourg`). It requires no filesystem, terminal or network permission and records its result in Activity.
