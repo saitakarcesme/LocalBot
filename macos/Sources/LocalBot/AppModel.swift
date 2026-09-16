@@ -68,6 +68,7 @@ enum Keychain {
   @Published var search = ""
   @Published var searchResults: [ChatMessage] = []
   @Published var showNew = false
+  var newConversationProjectId = ""
   @Published var showSettings = false
   @Published var showActivity = false
   @Published var editingAgent: Agent?

@@ -87,21 +87,18 @@ struct MainView: View {
           .padding(.horizontal, 12).padding(.bottom, 8)
         if model.search.isEmpty {
           List(selection: $model.selectedId) {
-            ForEach(model.conversations) { c in
-              ConversationRow(conversation: c).tag(c.id)
-                .listRowInsets(EdgeInsets(top: 4, leading: 7, bottom: 4, trailing: 7))
-                .contextMenu {
-                  Button("Conversation Details…") { model.editingConversation = c }
-                  Button("New conversation with these agents") {
-                    Task {
-                      await model.post("/conversations", ["title": c.title, "members": c.members])
-                      model.selectedId = model.conversations.first?.id
-                    }
-                  }
-                  if c.members.count == 1, let agent = model.agent(c.members[0]) {
-                    Button("Contact Details…") { model.editingAgent = agent }
-                  }
-                }
+            Section("Conversations") {
+              conversationRows(model.conversations.filter { $0.projectId == nil })
+            }
+            ForEach(model.projects) { project in
+              Section {
+                conversationRows(model.conversations.filter { $0.projectId == project.id })
+                Button {
+                  model.newConversationProjectId = project.id
+                  model.showNew = true
+                } label: { Label("New conversation", systemImage: "plus") }
+                  .buttonStyle(.plain).foregroundStyle(.secondary).font(.caption)
+              } header: { Label(project.name, systemImage: "folder") }
             }
           }.listStyle(.sidebar)
         } else {
@@ -176,6 +173,24 @@ struct MainView: View {
     .onReceive(NotificationCenter.default.publisher(for: .init("FocusSearch"))) { _ in
       searchFocused = true
     }
+  }
+  @ViewBuilder func conversationRows(_ conversations: [Conversation]) -> some View {
+            ForEach(conversations) { c in
+              ConversationRow(conversation: c).tag(c.id)
+                .listRowInsets(EdgeInsets(top: 4, leading: 7, bottom: 4, trailing: 7))
+                .contextMenu {
+                  Button("Conversation Details…") { model.editingConversation = c }
+                  Button("New conversation with these agents") {
+                    Task {
+                      await model.post("/conversations", ["title": c.title, "members": c.members])
+                      model.selectedId = model.conversations.first?.id
+                    }
+                  }
+                  if c.members.count == 1, let agent = model.agent(c.members[0]) {
+                    Button("Contact Details…") { model.editingAgent = agent }
+                  }
+                }
+            }
   }
 }
 struct ConversationRow: View {

@@ -182,7 +182,10 @@ struct NewConversationView: View {
         }.buttonStyle(.borderedProminent).disabled(selected.isEmpty && (projectId.isEmpty || !automatic)).keyboardShortcut(
           .defaultAction)
       }
-    }.padding(24).frame(width: 430)
+    }.padding(24).frame(width: 430).onAppear {
+      projectId = model.newConversationProjectId
+      model.newConversationProjectId = ""
+    }
   }
 }
 struct ConversationEditor: View {
@@ -242,7 +245,10 @@ struct NewProjectView: View {
         Button("Create Project") {
           Task {
             await model.post("/projects", ["name": name, "workspace": workspace])
-            if model.error == nil { dismiss(); model.showNew = true }
+            if model.error == nil {
+              model.newConversationProjectId = model.projects.first?.id ?? ""
+              dismiss(); model.showNew = true
+            }
           }
         }.buttonStyle(.borderedProminent).disabled(name.trimmingCharacters(in: .whitespaces).isEmpty || workspace.isEmpty)
       }
