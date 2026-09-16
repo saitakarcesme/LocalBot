@@ -178,3 +178,30 @@ test('future messages cannot evict task history and current team handoffs remain
   assert(history.some(m=>m.content==='EARLIER_CONTEXT_KEEP'));
  }finally{release();await f.close();}
 });
+
+test('contact directory paginates public role data and runs without filesystem or network access',async()=>{
+ const f=await setup(async(body,res)=>{
+  if(body.messages.some(m=>m.role==='tool'))reply(res,{content:'Ekip listelendi.'});
+  else reply(res,{content:'',tool_calls:[{function:{name:'list_agents',arguments:{}}}]});
+ });
+ try{
+  const contact=f.store.agent('researcher');
+  contact.memory='PRIVATE_MEMORY';contact.systemPrompt='PRIVATE_SYSTEM_PROMPT';contact.permissions={filesystem:'off',terminal:false,git:false,web:false};f.store.saveAgent(contact);
+  for(let i=0;i<22;i++)f.store.saveAgent({...contact,id:'extra-'+String(i).padStart(2,'0'),name:'Extra '+i});
+  const c=f.store.createConversation('Directory',['researcher']);
+  const task=f.engine.enqueue(c.id,'List the team');await until(()=>f.store.task(task.id).status==='completed');
+  const calls=f.store.all('SELECT t.* FROM tool_calls t JOIN runs r ON r.id=t.runId WHERE r.taskId=?',task.id);
+  assert.equal(calls.length,1);assert.equal(calls[0].name,'list_agents');assert.equal(calls[0].status,'completed');
+  const first=JSON.parse(calls[0].output);assert.equal(first.agents.length,20);assert(first.nextAfter);
+  const second=f.store.agentDirectory(task.id,first.nextAfter);assert.equal(second.agents.length,7);assert.equal(second.nextAfter,null);
+  const all=[...first.agents,...second.agents];assert.equal(new Set(all.map(a=>a.id)).size,27);
+  assert.deepEqual(all.filter(a=>a.inConversation).map(a=>a.id),['researcher']);
+  const data=JSON.stringify(all);assert(!data.includes('PRIVATE_MEMORY'));assert(!data.includes('PRIVATE_SYSTEM_PROMPT'));assert(!data.includes(contact.workspace));
+  assert(all.every(a=>Object.keys(a).sort().join(',')==='id,inConversation,name,permissions,role'));
+  assert.throws(()=>f.store.agentDirectory(task.id,''),/cursor/);
+  assert.throws(()=>f.store.agentDirectory(task.id,'x'.repeat(201)),/cursor/);
+  const changed=f.store.agent('coder');changed.permissions.terminal=false;f.store.saveAgent(changed);
+  assert.equal(f.store.agentDirectory(task.id).agents.find(a=>a.id==='coder').permissions.terminal,false);
+  assert.deepEqual(f.store.conversation(c.id).members,['researcher']);
+ }finally{await f.close();}
+});

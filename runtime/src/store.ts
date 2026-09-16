@@ -214,6 +214,19 @@ export class Store {
       id, cursor ?? null, cursor ?? null,
     ));
   }
+  agentDirectory(taskId: string, after?: string) {
+    const task = this.task(taskId), conversation = this.conversation(task.conversationId);
+    if (after !== undefined && (typeof after !== "string" || !after || after.length > 200)) throw new Error("Invalid contact cursor");
+    const rows = this.all("SELECT id,data FROM agents WHERE (? IS NULL OR id>?) ORDER BY id LIMIT 21", after ?? null, after ?? null);
+    const agents = rows.slice(0, 20).map(row => {
+      const a: Agent = JSON.parse(row.data);
+      return { id: row.id, name: a.name.slice(0, 160), role: a.role.slice(0, 200),
+        permissions: { filesystem: a.permissions.filesystem, terminal: a.permissions.terminal, git: a.permissions.git, web: a.permissions.web },
+        inConversation: conversation.members.includes(row.id) };
+    });
+    return { agents, nextAfter: rows.length > 20 ? agents.at(-1)!.id : null,
+      notice: "Contact directory only; no work started. Configured permissions are not a guarantee of provider or integration availability." };
+  }
   taskMessages(taskId: string): Message[] {
     const task = this.task(taskId);
     const cutoff = this.get("SELECT rowid FROM messages WHERE id=? AND conversationId=?", task.messageId, task.conversationId)?.rowid;

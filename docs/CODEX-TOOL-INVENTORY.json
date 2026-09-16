@@ -1344,6 +1344,26 @@
     }
   ],
   "localbotBuiltins": [
+    "list_agents",
+    "web_search",
+    "read_history",
+    "search_history",
+    "view_image",
+    "current_time",
+    "apply_patch",
+    "mcp_list_resources",
+    "mcp_list_resource_templates",
+    "mcp_read_resource",
+    "process_start",
+    "process_poll",
+    "process_input",
+    "process_stop",
+    "create_goal",
+    "get_goal",
+    "update_goal",
+    "edit_file",
+    "mcp_list_tools",
+    "mcp_call",
     "list_files",
     "read_file",
     "write_file",
@@ -1354,13 +1374,7 @@
     "web_fetch",
     "remember",
     "ask_user",
-    "react",
-    "mcp_list_tools",
-    "mcp_call",
-    "edit_file",
-    "create_goal",
-    "get_goal",
-    "update_goal"
+    "react"
   ],
   "verifiedIntegrationTransport": "MCP Streamable HTTP 2025-11-25 plus 2025-06-18/2025-03-26 negotiation"
 }
