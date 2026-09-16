@@ -255,10 +255,17 @@ struct ConversationView: View {
           .defaultScrollAnchor(.bottom)
           .modifier(ScrollPositionObserver(isAtBottom: $following))
           .onChange(of: model.messages.count) { _, _ in
-            if following || initialScroll {
-              initialScroll = model.messages.isEmpty
+            if following && !initialScroll {
               withAnimation(.easeOut(duration: 0.18)) { proxy.scrollTo("bottom", anchor: .bottom) }
             }
+          }
+          .task(id: model.messages.last?.id) {
+            guard initialScroll && !model.messages.isEmpty else { return }
+            // Let the lazy transcript resolve its row heights before the first jump.
+            try? await Task.sleep(for: .milliseconds(80))
+            guard !Task.isCancelled else { return }
+            proxy.scrollTo("bottom", anchor: .bottom)
+            initialScroll = false
           }
           .overlay(alignment: .bottomTrailing) {
             if !following && !model.messages.isEmpty {
