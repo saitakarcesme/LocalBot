@@ -57,3 +57,11 @@
 - Paused previous GitHub heartbeat via Codex automation tool.
 - Installed Codex 0.144.6 app-server supports stdio JSON-RPC. account/read verified chatgpt authentication without reading credentials.
 - Added isolated transport with request IDs, cancellation, timeouts and child cleanup. Provider integration remains in progress.
+
+## v0.2 live checkpoint
+
+- Subscription-backed GPT completed all five agent-specific tasks and automatically selected a three-agent team for Focus Ledger. Real files and 5/5 project tests independently verified.
+- Native client created a second project conversation without manual membership; automatic routing and prior project context worked.
+- Runtime suite: 26 passing tests. MCP HTTP transport and per-agent connection controls shipped; vendor access is not implied by transport support.
+- 269 Codex registry entries tracked honestly; 13 LocalBot built-ins. Full parity remains open.
+- GitHub heartbeat is paused; this task commits and pushes each checkpoint.

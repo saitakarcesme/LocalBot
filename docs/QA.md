@@ -1,3 +1,20 @@
+# v0.2 verification — 2026-09-16
+
+- 26 automated runtime tests passed, including CLI cancellation/disconnect, project workspace isolation and MCP HTTP/SSE discovery/invocation/permission checks.
+- Native Swift build passed using one job. Build cache moved outside the iCloud-synced repository after stale module files blocked reads.
+- Real Codex CLI 0.144.6 returned ChatGPT account authentication and available models without reading credential files. Live GPT generation and LocalBot tool decisions succeeded.
+- Cleared old conversation/execution history after a private local SQLite backup; retained contacts, provider settings and workspace files. Five contacts now use the subscription connection.
+- Alex wrote two files and ran two tests; Mira fetched example.com; Robin read and reviewed the actual file; Sam ran the two tests; Personal Assistant saved the requested preference. All five runs completed with recorded successful tools.
+- Focus Ledger automatically selected coder → reviewer → tester, created three real files, reviewed them and passed 5/5 tests. Independently running `node focus.cjs 25 50` returned `75`; its tests also passed outside the agent runtime.
+- Native UI created a second project conversation with no manually selected agents. The next request automatically chose Mira, read the existing project files and correctly summarized the prior work in two sentences.
+- Observed selected sidebar row, grouped project conversations, file artifacts, reactions below bubbles and Activity in the installed app. WhatsApp reference was inspected without sending messages; private reference content was not saved to the repository.
+
+## Scope still open
+
+The 269-entry Codex inventory is a target. Thirteen built-in entries and MCP transport are implemented; all external vendor tools are **not** authenticated, implemented or verified. Interactive browser automation, arbitrary MCP stdio launching, full Codex desktop host equivalents and the remote 2×3090 hardware remain open. MCP supports the explicitly listed 2025 protocol revisions; modern 2026 MRTR and OAuth flows are not claimed.
+
+---
+
 # Verification — 2026-09-15
 
 ## Environment

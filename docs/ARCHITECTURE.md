@@ -54,3 +54,11 @@ Provider keys live in macOS Keychain. The native client restores them to runtime
 - Anthropic: optional `/models` and streaming `/messages`, with Keychain-managed key. No cloud provider is selected automatically.
 
 OpenAI/Anthropic protocol handling is covered by local contract fixtures; only Ollama has been tested against a real model in this environment. Images are attached, previewable and preserved, but not sent to a vision model. Text attachments up to 50 KB enter the bounded context. Binary/large attachments are identified by name; the UI must not imply image understanding.
+
+## v0.2 additions
+
+Codex subscription is a separate provider behind the existing model interface. It launches the installed `codex app-server` over private stdio, verifies ChatGPT authentication, requests constrained decisions, and closes each ephemeral session. Native shell, app/plugin tools and web search are disabled for these decision sessions; all requested actions return through LocalBot's permission and activity pipeline. Credentials remain owned by Codex. The supported protocol reference is https://learn.chatgpt.com/docs/app-server .
+
+Projects own a workspace and shared memory; conversations retain their own identity and task history. Automatic routing chooses a minimal ordered team before enqueueing work. A bounded excerpt of other project conversations accompanies shared memory. Changing a contact does not change a project's workspace. Router requests are serialized on this lightweight client.
+
+MCP HTTP connections are explicitly configured and enabled per contact. Calls require approval, recheck the exact connection grant, use endpoint-scoped Keychain credentials, reject redirects and cap response sizes. Transport references: https://modelcontextprotocol.io/specification/2025-11-25/basic/transports . External service permissions belong to that service; LocalBot workspace sandboxing does not sandbox a remote MCP server.

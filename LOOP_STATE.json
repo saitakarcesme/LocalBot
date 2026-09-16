@@ -33,14 +33,21 @@
     ]
   },
   "v0_2": {
-    "status": "in_progress",
-    "checkpoint": "Codex CLI stdio transport; ChatGPT authentication verified",
+    "status": "core_implemented_live_verified_tool_parity_in_progress",
+    "updated_at": "2026-09-16T10:59:56.827603+00:00",
+    "runtime_tests_passed": 26,
+    "real_subscription_agents_verified": 5,
+    "real_project": "Focus Ledger",
+    "project_tests_passed": 5,
+    "cross_conversation_project_context_verified": true,
+    "tool_inventory_target": 269,
+    "localbot_builtin_tools": 13,
     "remaining": [
-      "provider integration and permission tests",
-      "projects and routing",
-      "native UI refinements",
-      "tool coverage",
-      "clean-history real E2E"
+      "External vendor adapters and authenticated per-tool validation",
+      "Codex-host-specific tool counterparts",
+      "Interactive browser automation",
+      "MCP stdio and newer protocol revisions",
+      "Remote 3090 hardware validation"
     ]
   }
 }
