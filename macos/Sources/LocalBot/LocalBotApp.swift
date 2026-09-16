@@ -89,8 +89,13 @@ struct MainView: View {
           List(selection: $model.selectedId) {
             Section(model.showingArchived ? "Archived conversations" : "Conversations") {
               conversationRows(model.visibleConversations.filter { $0.projectId == nil })
+              if model.showingArchived && model.visibleConversations.isEmpty {
+                Text("No archived conversations").foregroundStyle(.secondary).selectionDisabled()
+              }
             }
-            ForEach(model.projects) { project in
+            ForEach(model.projects.filter { project in
+              !model.showingArchived || model.visibleConversations.contains { $0.projectId == project.id }
+            }) { project in
               Section {
                 conversationRows(model.visibleConversations.filter { $0.projectId == project.id })
                 if !model.showingArchived { Button {

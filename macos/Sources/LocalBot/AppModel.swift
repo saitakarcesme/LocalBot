@@ -62,6 +62,9 @@ enum Keychain {
   @Published var selectedId: String? {
     didSet {
       if selectedId != oldValue {
+        if let conversation = conversations.first(where: { $0.id == selectedId }) {
+          showingArchived = conversation.archived == true
+        }
         UserDefaults.standard.set(selectedId, forKey: "selectedConversation")
         messages = []
         searchFocusId = nil
