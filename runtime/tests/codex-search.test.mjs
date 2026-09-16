@@ -1,0 +1,23 @@
+import test from 'node:test';import assert from 'node:assert/strict';import{codexSearch}from'../dist/codex-search.js';import{allowed}from'../dist/tools.js';import{provider}from'../dist/providers.js';
+function fixture(mode='ok'){
+ const calls=[];const rpc={closed:false,initialize:async()=>{},close(){this.closed=true;},async request(method,params){calls.push({method,params});if(method==='account/read')return{account:{type:mode==='api'?'apiKey':'chatgpt'}};if(method==='thread/start')return{thread:{id:'search'}};if(method==='turn/start'){queueMicrotask(()=>{
+  const emit=(method,item)=>rpc.onNotification(method,{threadId:'search',item});
+  if(mode==='forbidden'){emit('item/started',{type:'commandExecution'});return;}
+  if(mode==='many'){for(let i=0;i<9;i++)emit('item/started',{type:'webSearch'});return;}
+  if(mode==='wait')return;
+  if(mode!=='no-search')emit('item/completed',{type:'webSearch',query:'SQLite WAL',action:{type:'search',query:'SQLite WAL'}});
+  emit('item/completed',{type:'agentMessage',text:JSON.stringify({summary:'Write-ahead logging.',sources:[{title:'SQLite',url:mode==='bad-url'?'javascript:alert(1)':'https://sqlite.org/wal.html'}]})});
+  rpc.onNotification('turn/completed',{threadId:'search',turn:{status:'completed'}});
+ });return{};}}};return{rpc,calls};
+}
+test('subscription search enables only its isolated web capability and records actual events',async()=>{
+ const f=fixture();const r=await codexSearch({model:'test',timeout:1},'SQLite WAL',new AbortController().signal,()=>f.rpc);
+ assert.equal(r.actions.length,1);assert.equal(r.sources[0].url,'https://sqlite.org/wal.html');assert(f.rpc.closed);
+ const start=f.calls.find(c=>c.method==='thread/start').params;assert.equal(start.config.web_search,'live');assert.equal(start.config['features.shell_tool'],false);assert.equal(start.config['features.multi_agent'],false);assert.deepEqual(start.config.mcp_servers,{});assert.equal(start.ephemeral,true);
+ assert.equal(allowed({permissions:{web:false}},'web_search'),false);assert.equal(allowed({permissions:{web:true}},'web_search'),true);
+ assert.equal(provider({kind:'ollama',endpoint:'http://127.0.0.1:11434'}).search,undefined);
+});
+test('search rejects non-subscription auth, missing activity, unsafe URLs and forbidden actions',async()=>{
+ for(const mode of ['api','no-search','bad-url','forbidden','many']){const f=fixture(mode);await assert.rejects(codexSearch({model:'test',timeout:1},'query',new AbortController().signal,()=>f.rpc));assert(f.rpc.closed);}
+ const f=fixture('wait');const c=new AbortController();const pending=codexSearch({model:'test',timeout:1},'query',c.signal,()=>f.rpc);setTimeout(()=>c.abort(),10);await assert.rejects(pending,/abort/i);assert(f.rpc.closed);
+});

@@ -1,3 +1,4 @@
+import { codexSearch } from "./codex-search.js";
 import { codexInput } from "./image-input.js";
 import { CodexRPC } from "./codex-rpc.js";
 import type { ModelProvider } from "./providers.js";
@@ -20,6 +21,7 @@ const responseSchema = {
 export class CodexProvider implements ModelProvider {
   constructor(private config: ProviderConfig) {}
   capabilities() { return { tools: true, streaming: false, images: true }; }
+  search(query: string, signal: AbortSignal) { return codexSearch(this.config, query, signal); }
   async health(signal?: AbortSignal) {
     const rpc = new CodexRPC();
     try {
