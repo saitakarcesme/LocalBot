@@ -179,10 +179,16 @@ export class Store {
     );
     return id;
   }
-  messages(id: string): Message[] {
+  messages(id: string, before?: string): Message[] {
+    let cursor: number | undefined;
+    if (before) {
+      const message = this.get("SELECT rowid FROM messages WHERE id=? AND conversationId=?", before, id);
+      if (!message) throw new Error("Message cursor does not belong to this conversation");
+      cursor = message.rowid;
+    }
     return this.all(
-      "SELECT * FROM (SELECT rowid,* FROM messages WHERE conversationId=? ORDER BY rowid DESC LIMIT 300) ORDER BY rowid",
-      id,
+      "SELECT * FROM (SELECT rowid,* FROM messages WHERE conversationId=? AND (? IS NULL OR rowid<?) ORDER BY rowid DESC LIMIT 300) ORDER BY rowid",
+      id, cursor ?? null, cursor ?? null,
     ).map((m) => ({
       ...m,
       reactions: this.all(
