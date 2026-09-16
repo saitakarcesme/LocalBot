@@ -289,6 +289,28 @@ test("ask_user pauses cleanly and does not invent an answer", async () => {
   const t = e.enqueue(c.id, "Needs clarification");
   await wait(() => store.task(t.id).status === "awaiting_input");
   assert.equal(store.messages(c.id).at(-1).content, "Which file?");
+  e.pump = async () => {};
+  assert.throws(() => e.enqueue(c.id, "Answer", ["missing"]), /Attachment/);
+  assert.equal(store.task(t.id).status, "awaiting_input");
+  const followup = e.enqueue(c.id, "Use example.txt");
+  e.cancel(followup.id);
+  assert.equal(store.task(t.id).status, "continued");
+  assert.equal(store.get("SELECT status FROM runs WHERE taskId=?", t.id).status, "continued");
+  assert.equal(store.messages(c.id).find(m => m.id === t.messageId).reactions.length, 0);
+  mode = "tools";
+});
+test("waiting questions can be cancelled once and then archived", async () => {
+  mode = "question";
+  const c = store.createConversation("Stop question", ["coder"]);
+  const e = new Engine(store);
+  const t = e.enqueue(c.id, "Needs clarification");
+  await wait(() => store.task(t.id).status === "awaiting_input");
+  e.cancel(t.id); e.cancel(t.id);
+  assert.equal(store.task(t.id).status, "cancelled");
+  assert.equal(store.get("SELECT status FROM runs WHERE taskId=?", t.id).status, "cancelled");
+  assert.equal(store.messages(c.id).find(m => m.id === t.messageId).reactions.length, 0);
+  assert.equal(store.messages(c.id).filter(m => m.role === "system" && m.content.includes("Task cancelled")).length, 1);
+  assert.equal(store.setConversationArchived(c.id, true).archived, true);
   mode = "tools";
 });
 test("cancellation stops pending approval without executing the action", async () => {
@@ -304,6 +326,7 @@ test("cancellation stops pending approval without executing the action", async (
       "cancelled",
   );
   assert.equal(store.task(t.id).status, "cancelled");
+  assert.equal(store.messages(c.id).find(m => m.id === t.messageId).reactions.length, 0);
   assert.equal(
     store.get(
       "SELECT count(*) n FROM approvals WHERE taskId=? AND status='pending'",

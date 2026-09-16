@@ -217,6 +217,18 @@ export class Store {
       emoji,
     );
   }
+  clearPendingTaskReactions(taskId: string) {
+    this.exec(`DELETE FROM reactions WHERE messageId=(SELECT messageId FROM tasks WHERE id=?)
+      AND emoji IN ('👀','⚠️') AND actor IN
+      (SELECT agentId FROM runs WHERE taskId=? AND status IN ('running','awaiting_approval','awaiting_input','cancelled'))`, taskId, taskId);
+  }
+  continueQuestions(conversationId: string) {
+    for (const task of this.all("SELECT id FROM tasks WHERE conversationId=? AND status='awaiting_input'", conversationId)) {
+      this.clearPendingTaskReactions(task.id);
+      this.status(task.id, "continued");
+      this.exec("UPDATE runs SET status='continued',updatedAt=? WHERE taskId=? AND status='awaiting_input'", now(), task.id);
+    }
+  }
   task(id: string): TaskRow {
     const t = this.get("SELECT * FROM tasks WHERE id=?", id);
     if (!t) throw new Error("Task not found");

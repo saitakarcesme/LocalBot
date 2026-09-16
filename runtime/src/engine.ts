@@ -70,6 +70,7 @@ export class Engine {
       date = now();
     this.store.transaction(() => {
       this.store.setConversationArchived(conversationId, false);
+      this.store.continueQuestions(conversationId);
       const messageId = this.store.addMessage(conversationId, "user", prompt, {
         taskId: id,
       });
@@ -160,7 +161,12 @@ export class Engine {
   }
   cancel(taskId: string) {
     const t = this.store.task(taskId);
-    if (!["queued", "running", "awaiting_approval"].includes(t.status)) return;
+    if (!["queued", "running", "awaiting_approval", "awaiting_input"].includes(t.status)) return;
+    this.store.clearPendingTaskReactions(taskId);
+    if (t.status === "awaiting_input") {
+      this.store.exec("UPDATE runs SET status='cancelled',updatedAt=? WHERE taskId=? AND status='awaiting_input'", now(), taskId);
+      this.store.addMessage(t.conversationId, "system", "Task cancelled. Completed actions are preserved.", { taskId });
+    }
     this.store.status(taskId, "cancelled");
     this.active.get(taskId)?.abort();
     for (const a of this.store.all(
@@ -636,6 +642,7 @@ export class Engine {
       );
     } catch (e) {
       const cancelled = signal.aborted;
+      if (cancelled) this.store.clearPendingTaskReactions(taskId);
       const text = cancelled
         ? "Task cancelled. Completed actions are preserved."
         : errorText(e);
