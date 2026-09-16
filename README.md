@@ -98,3 +98,5 @@ Search results open and highlight the matching message, including older history.
 Local MCP processes use an absolute executable, JSON argument array and absolute working directory in Integrations. Save & Test launches the configured server with user account access; use trusted installed executables. Agent launches always require approval showing the process configuration. No shell expansion, inherited environment credentials or token injection is provided. Two processes maximum, bounded messages/session output and cancellation/shutdown cleanup keep the client lightweight. These integration processes are not the workspace-sandboxed terminal tool.
 
 `current_time` reads the runtime clock, returning UTC plus an optional IANA time zone (for example `Europe/Luxembourg`). It requires no filesystem, terminal or network permission and records its result in Activity.
+
+Incoming messages render native inline emphasis and code, with fenced code blocks and Copy code. User messages remain literal. Sidebar/search previews use readable text. Whole-message Copy preserves the original message. Tables and heading layout are not rendered as full Markdown documents.

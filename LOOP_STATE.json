@@ -33,7 +33,7 @@
   },
   "v0_2": {
     "status": "core_implemented_live_verified_tool_parity_in_progress",
-    "updated_at": "2026-09-16T12:28:38.356471+00:00",
+    "updated_at": "2026-09-16T12:34:02.088855+00:00",
     "runtime_tests_passed": 51,
     "real_subscription_agents_verified": 5,
     "real_project": "Focus Ledger",
@@ -58,6 +58,6 @@
       "manual scrolling survives Activity width change",
       "last selected chat survives relaunch"
     ],
-    "checkpoint": "Timezone-aware clock verified with live subscription GPT and native conversation"
+    "checkpoint": "Native inline/code rendering and copy verified with live Alex response; readable sidebar/search previews"
   }
 }
