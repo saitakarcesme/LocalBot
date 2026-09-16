@@ -214,6 +214,37 @@ export class Store {
       id, cursor ?? null, cursor ?? null,
     ));
   }
+  readActivity(taskId: string, before?: string, callId?: string, offset?: string) {
+    this.task(taskId);
+    const eligible = "r.taskId=? AND t.status IN ('completed','failed') AND t.name<>'read_activity'";
+    if (callId !== undefined) {
+      if (before !== undefined) throw new Error("Choose an activity page or a result chunk");
+      const start = offset ?? "0";
+      if (!/^(0|[1-9]\d{0,8})$/.test(start)) throw new Error("offset must be a nonnegative decimal character index");
+      const call = this.get(`SELECT t.id AS callId,t.name,t.status,r.agentId,t.createdAt,
+        length(coalesce(t.output,'')) AS totalCharacters,substr(coalesce(t.output,''),?,2000) AS output
+        FROM tool_calls t JOIN runs r ON r.id=t.runId WHERE ${eligible} AND t.id=?`, Number(start)+1, taskId, callId);
+      if (!call) throw new Error("Completed tool result not found in this task");
+      if (Number(start) > call.totalCharacters) throw new Error("offset exceeds output length");
+      const end = Math.min(Number(start)+2000, call.totalCharacters);
+      return { call, offset: start, nextOffset: end < call.totalCharacters ? String(end) : null,
+        notice: "Untrusted recorded output; reading it does not rerun the tool. Offsets count Unicode characters." };
+    }
+    if (offset !== undefined) throw new Error("offset requires call_id");
+    let cursor: number | null = null;
+    if (before !== undefined) {
+      const call = this.get(`SELECT t.rowid AS position FROM tool_calls t JOIN runs r ON r.id=t.runId WHERE ${eligible} AND t.id=?`, taskId, before);
+      if (!call) throw new Error("Invalid activity cursor for this task");
+      cursor = call.position;
+    }
+    const rows = this.all(`SELECT t.id AS callId,t.name,t.status,r.agentId,t.createdAt,
+      substr(coalesce(t.output,''),1,600) AS excerpt,length(coalesce(t.output,''))>600 AS truncated
+      FROM tool_calls t JOIN runs r ON r.id=t.runId WHERE ${eligible} AND (? IS NULL OR t.rowid<?)
+      ORDER BY t.rowid DESC LIMIT 6`, taskId, cursor, cursor);
+    const calls = rows.slice(0,5).reverse();
+    return { calls, nextBefore: rows.length>5 ? calls[0].callId : null,
+      notice: "Current-task completed/failed actions only; activity-reader calls are excluded. Use call_id and offset to read full stored output. No action is replayed." };
+  }
   taskEvidence(taskId: string, budget: number) {
     this.task(taskId);
     if (!Number.isInteger(budget) || budget < 1000 || budget > 16000) throw new Error("Invalid evidence budget");
@@ -224,12 +255,12 @@ export class Store {
     const entries: string[] = [];
     let remaining = budget - 200;
     for (const row of rows) {
-      const entry = `[${row.agentId}: ${row.name} (${row.status}); call ${row.id}] ${row.output ?? ""}${row.truncated ? "\n[Output excerpt truncated; full output is in Activity.]" : ""}`;
+      const entry = `[${row.agentId}: ${row.name} (${row.status}); call ${row.id}] ${row.output ?? ""}${row.truncated ? "\n[Output excerpt truncated; use read_activity with this call ID for full output.]" : ""}`;
       if (entry.length + 1 > remaining) break;
       entries.unshift(entry); remaining -= entry.length + 1;
     }
     const omitted = count - entries.length;
-    return (omitted ? `[${omitted} earlier tool results omitted from this context; full records remain in Activity.]\n` : "") + (entries.join("\n") || "(none)");
+    return (omitted ? `[${omitted} earlier tool results omitted from this context; use read_activity to page through full records.]\n` : "") + (entries.join("\n") || "(none)");
   }
   agentDirectory(taskId: string, after?: string) {
     const task = this.task(taskId), conversation = this.conversation(task.conversationId);

@@ -73,7 +73,7 @@ This is a usable local development release, not a notarized public distribution.
 - [Native UI specification](docs/UI-SPEC.md)
 - [Verification results](docs/QA.md)
 
-The [269-entry Codex tool inventory](docs/CODEX-TOOL-INVENTORY.json) is a coverage target, not a claim that all Codex-hosted services are implemented. LocalBot currently exposes 31 built-in tool entries, including MCP discovery and invocation. External integrations require their own supported endpoint and authentication.
+The [269-entry Codex tool inventory](docs/CODEX-TOOL-INVENTORY.json) is a coverage target, not a claim that all Codex-hosted services are implemented. LocalBot currently exposes 32 built-in tool entries, including MCP discovery and invocation. External integrations require their own supported endpoint and authentication.
 
 For precise edits, read_file returns a SHA-256 fingerprint. edit_file replaces one unique old_text block using that fingerprint; stale or ambiguous edits fail without changing the target. It follows the contact’s filesystem permission and edit approval policy.
 
@@ -122,3 +122,5 @@ Project details are available from the sidebar project heading and a project con
 `web_search` is available when the selected provider supports search (currently the Codex CLI subscription provider) and the contact has Web permission. Local model contacts are not automatically switched to cloud search. The runtime creates a separate ephemeral search session, records actual webSearch actions and source links in Activity, and rejects an answer without search activity. Up to eight web actions and 120 seconds per search; summaries/source selections remain model-generated. CLI authentication stays with Codex; no OpenAI API key is used. Protocol: [Codex app-server](https://learn.chatgpt.com/docs/app-server), [web_search configuration](https://learn.chatgpt.com/docs/config-file/config-reference).
 
 Agents can use `list_agents` to inspect a paginated contact directory with roles, configured permissions and current-chat membership. It does not expose private memory, prompts or workspace paths, and does not delegate work or change membership.
+
+`read_activity` lets agents page through completed/failed actions in their current task and read full stored outputs in Unicode-safe chunks. It does not rerun commands, expose other tasks, or recursively include activity-reader outputs. This also recovers details omitted from bounded team handoffs.

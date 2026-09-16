@@ -279,3 +279,40 @@ test('team evidence has a total budget, recent failure visibility and explicit o
   assert.equal(f.store.get('SELECT length(output) AS n FROM tool_calls WHERE id=?','evidence-39').n,40009);
  }finally{await f.close();}
 });
+
+test('activity retrieval pages and reconstructs recorded outputs without replay or cross-task access',async()=>{
+ let requests=0;
+ const f=await setup(async(body,res)=>{
+  requests++;
+  let name,args;
+  if(requests===1){name='current_time';args={};}
+  else if(requests===2){name='read_activity';args={};}
+  else if(requests===3){const page=JSON.parse(body.messages.filter(m=>m.role==='tool').at(-1).content);name='read_activity';args={call_id:page.calls[0].callId,offset:'0'};}
+  else {reply(res,{content:'Recorded result verified.'});return;}
+  reply(res,{content:'',tool_calls:[{function:{name,arguments:args}}]});
+ });
+ try{
+  const agent=f.store.agent('coder');agent.permissions={filesystem:'off',terminal:false,git:false,web:false};f.store.saveAgent(agent);
+  const c=f.store.createConversation('Activity',['coder']);
+  const task=f.engine.enqueue(c.id,'Inspect the clock result without rerunning it');await until(()=>f.store.task(task.id).status==='completed');
+  const run=f.store.get('SELECT id FROM runs WHERE taskId=?',task.id).id;
+  const calls=f.store.all('SELECT * FROM tool_calls WHERE runId=? ORDER BY rowid',run);
+  assert.deepEqual(calls.map(c=>c.name),['current_time','read_activity','read_activity']);assert(calls.every(c=>c.status==='completed'));
+  assert.equal(JSON.parse(calls[2].output).call.output,calls[0].output);
+  const text='🚀İstanbul '.repeat(600);
+  for(let i=0;i<7;i++)f.store.exec('INSERT INTO tool_calls VALUES(?,?,?,?,?,?,?,?)','chunk-'+i,run,'read_file','{}',i===6?'failed':'completed',text,'2026-01-01','2026-01-01');
+  const page=f.store.readActivity(task.id);assert.equal(page.calls.length,5);assert(page.nextBefore);assert(page.calls.every(c=>c.truncated));
+  const older=f.store.readActivity(task.id,page.nextBefore);assert.equal(older.calls.length,3);assert.equal(older.nextBefore,null);
+  const ids=[...older.calls,...page.calls].map(c=>c.callId);assert.equal(new Set(ids).size,8);assert(!ids.includes(calls[1].id));
+  let result='',offset='0',chunks=0;
+  do {const part=f.store.readActivity(task.id,undefined,'chunk-6',offset);result+=part.call.output;offset=part.nextOffset;chunks++;assert.equal(part.call.status,'failed');}while(offset!==null);
+  assert.equal(result,text);assert(chunks>1);
+  assert.throws(()=>f.store.readActivity(task.id,undefined,calls[1].id),/not found/);
+  assert.throws(()=>f.store.readActivity(task.id,undefined,'chunk-6','99999999'),/length/);
+  assert.throws(()=>f.store.readActivity(task.id,'chunk-6','chunk-6'),/Choose/);
+  assert.throws(()=>f.store.readActivity(task.id,undefined,undefined,'1'),/requires/);
+  const other=f.store.createConversation('Other',['coder']);const second=f.engine.enqueue(other.id,'Nothing');await until(()=>f.store.task(second.id).status==='completed');
+  assert.throws(()=>f.store.readActivity(second.id,undefined,'chunk-6'),/not found/);
+  assert.throws(()=>f.store.readActivity(second.id,'chunk-6'),/cursor/);
+ }finally{await f.close();}
+});
