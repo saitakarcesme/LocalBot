@@ -65,3 +65,26 @@ test('cancelling routing stops the request without changing the team or running 
     assert.equal(f.store.messages(f.conversation.id).find(m=>m.role==='user').content,'Research cancellation');
   }finally{await f.close();}
 });
+
+test('queued project run excludes later sibling prompts from automatic model context',async()=>{
+ let release,started=false,modelContext='';const gate=new Promise(r=>release=r);
+ const f=await setup(async(body,res)=>{
+  if(body.tools?.some(t=>t.function.name==='organize')){started=true;await gate;reply(res,{content:'',tool_calls:[{function:{name:'organize',arguments:{title:'Context isolation',members:['researcher']}}}]});}
+  else {modelContext=JSON.stringify(body.messages);reply(res,{content:'Earlier decision reviewed.'});}
+ });
+ try{
+  const projectId=f.store.conversation(f.conversation.id).projectId;
+  const sibling=f.store.createConversation('Earlier source',['researcher'],projectId);
+  const other=f.store.createConversation('Unrelated private chat',['researcher']);
+  f.store.addMessage(sibling.id,'assistant','EARLIER_PROJECT_DECISION');
+  f.store.addMessage(other.id,'user','UNRELATED_PRIVATE_VALUE');
+  const task=f.engine.enqueue(f.conversation.id,'Review our prior decision');
+  await until(()=>started);
+  f.store.addMessage(sibling.id,'user','FUTURE_SIBLING_REQUEST');
+  release();await until(()=>f.store.task(task.id).status==='completed');
+  assert(modelContext.includes('EARLIER_PROJECT_DECISION'));
+  assert(modelContext.includes('Earlier source'));
+  assert(!modelContext.includes('FUTURE_SIBLING_REQUEST'));
+  assert(!modelContext.includes('UNRELATED_PRIVATE_VALUE'));
+ }finally{release();await f.close();}
+});

@@ -257,6 +257,18 @@ export class Store {
       revision: this.get("SELECT total_changes() n").n,
     };
   }
+  recentProjectHistory(taskId: string) {
+    const task = this.task(taskId), conversation = this.conversation(task.conversationId);
+    if (!conversation.projectId) return [];
+    const cutoff = this.get("SELECT rowid FROM messages WHERE id=? AND conversationId=?", task.messageId, conversation.id)?.rowid;
+    if (!cutoff) throw new Error("Task message not found");
+    return this.all(`SELECT m.id AS messageId,m.conversationId,c.title AS conversationTitle,m.agentId,m.role,
+      substr(m.content,1,1500) AS excerpt,m.createdAt
+      FROM messages m JOIN conversation_context ctx ON ctx.conversationId=m.conversationId
+      JOIN conversations c ON c.id=m.conversationId
+      WHERE ctx.projectId=? AND m.conversationId<>? AND m.rowid<?
+      ORDER BY m.rowid DESC LIMIT 12`, conversation.projectId, conversation.id, cutoff).reverse();
+  }
   searchHistory(taskId: string, query: string, scope = "conversation") {
     const task = this.task(taskId), conversation = this.conversation(task.conversationId);
     if (typeof query !== "string" || !query.trim() || query.length > 200) throw new Error("Search query must contain 1–200 characters");
