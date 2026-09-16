@@ -18,7 +18,7 @@ test('configured limits stop incomplete runs without claiming completion and per
  const agent=store.agent('coder');agent.maxSteps=3;store.saveAgent(agent);
  const c=store.createConversation('Bounded work',['coder']);
  async function finished(id){for(let i=0;i<300;i++){const task=store.task(id);if(!['queued','running','awaiting_approval'].includes(task.status))return task;await new Promise(r=>setTimeout(r,10));}throw new Error('Timed out');}
- try{const first=engine.enqueue(c.id,'Read the clock four times');const stopped=await finished(first.id);assert.equal(stopped.status,'failed');assert.match(stopped.error,/3-step limit/);assert.equal(requests,3);
+ try{const first=engine.enqueue(c.id,'Read the clock four times');const stopped=await finished(first.id);assert.equal(stopped.status,'failed');assert.match(stopped.error,/3-step limit/);assert.equal(requests,3);assert(store.messages(c.id).find(m=>m.id===first.messageId).reactions.some(r=>r.emoji==='⚠️'));
  assert.equal(store.get('SELECT count(*) n FROM tool_calls WHERE runId IN (SELECT id FROM runs WHERE taskId=?)',first.id).n,3);
  agent.maxSteps=5;store.saveAgent(agent);requests=0;const second=engine.enqueue(c.id,'Read the clock four times now');assert.equal((await finished(second.id)).status,'completed');assert.equal(requests,5);
  }finally{engine.shutdown();server.closeAllConnections();await new Promise(r=>server.close(r));store.db.close();await rm(root,{recursive:true,force:true});}

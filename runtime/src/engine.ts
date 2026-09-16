@@ -640,6 +640,8 @@ export class Engine {
         : errorText(e);
       this.store.status(taskId, cancelled ? "cancelled" : "failed", text);
       if (runId) {
+        const failedAgent = this.store.get("SELECT agentId FROM runs WHERE id=?", runId)?.agentId;
+        if (!cancelled && failedAgent) this.store.react(task.messageId, failedAgent, "⚠️");
         this.store.exec(
           "UPDATE runs SET status=?,updatedAt=? WHERE id=?",
           cancelled ? "cancelled" : "failed",
