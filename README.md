@@ -73,7 +73,7 @@ This is a usable local development release, not a notarized public distribution.
 - [Native UI specification](docs/UI-SPEC.md)
 - [Verification results](docs/QA.md)
 
-The [269-entry Codex tool inventory](docs/CODEX-TOOL-INVENTORY.json) is a coverage target, not a claim that all Codex-hosted services are implemented. LocalBot currently exposes 29 built-in tool entries, including MCP discovery and invocation. External integrations require their own supported endpoint and authentication.
+The [269-entry Codex tool inventory](docs/CODEX-TOOL-INVENTORY.json) is a coverage target, not a claim that all Codex-hosted services are implemented. LocalBot currently exposes 30 built-in tool entries, including MCP discovery and invocation. External integrations require their own supported endpoint and authentication.
 
 For precise edits, read_file returns a SHA-256 fingerprint. edit_file replaces one unique old_text block using that fingerprint; stale or ambiguous edits fail without changing the target. It follows the contact’s filesystem permission and edit approval policy.
 
@@ -117,3 +117,6 @@ Agents can use `search_history` to retrieve older messages from their current co
 `read_history` reads a source conversation in pages of five messages using `nextBefore`; it shares search_history’s project and task boundaries. Messages longer than 2,000 characters are explicitly marked `truncated`. Supply `message_id` and `offset: "0"` to read that message in chunks, following `nextOffset` until null; offsets count Unicode characters. It does not read attachment bodies or provide unrestricted access to unrelated chats.
 
 Project details are available from the sidebar project heading and a project conversation’s context menu. Edit the name, workspace or shared notes; workspace changes affect future work and do not move existing files. Finish or stop unfinished project tasks first. Saving rejects a stale form if another update changed the project while it was open.
+
+
+`web_search` is available when the selected provider supports search (currently the Codex CLI subscription provider) and the contact has Web permission. Local model contacts are not automatically switched to cloud search. The runtime creates a separate ephemeral search session, records actual webSearch actions and source links in Activity, and rejects an answer without search activity. Up to eight web actions and 120 seconds per search; summaries/source selections remain model-generated. CLI authentication stays with Codex; no OpenAI API key is used. Protocol: [Codex app-server](https://learn.chatgpt.com/docs/app-server), [web_search configuration](https://learn.chatgpt.com/docs/config-file/config-reference).

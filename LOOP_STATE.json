@@ -40,7 +40,7 @@
     "project_tests_passed": 5,
     "cross_conversation_project_context_verified": true,
     "tool_inventory_target": 269,
-    "localbot_builtin_tools": 29,
+    "localbot_builtin_tools": 30,
     "remaining": [
       "External vendor adapters and authenticated per-tool validation",
       "Codex-host-specific tool counterparts",
@@ -58,7 +58,7 @@
       "manual scrolling survives Activity width change",
       "last selected chat survives relaunch"
     ],
-    "checkpoint": "Shared credential-path policy enforced and tested in real macOS sandbox; 76 tests, installed/signature verified",
-    "tests_passed": 76
+    "checkpoint": "Actual subscription web search verified through CLI events and native Mira response; 78 tests, 30 tools",
+    "tests_passed": 78
   }
 }

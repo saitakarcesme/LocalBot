@@ -62,3 +62,8 @@ Codex subscription is a separate provider behind the existing model interface. I
 Projects own a workspace and shared memory; conversations retain their own identity and task history. Automatic routing chooses a minimal ordered team before enqueueing work. A bounded excerpt of other project conversations accompanies shared memory. Changing a contact does not change a project's workspace. Router requests are serialized on this lightweight client.
 
 MCP HTTP connections are explicitly configured and enabled per contact. Calls require approval, recheck the exact connection grant, use endpoint-scoped Keychain credentials, reject redirects and cap response sizes. Transport references: https://modelcontextprotocol.io/specification/2025-11-25/basic/transports . External service permissions belong to that service; LocalBot workspace sandboxing does not sandbox a remote MCP server.
+
+
+### Provider-backed web search
+
+ModelProvider has an optional search capability. The LocalBot web_search tool is advertised only for a supporting selected provider and enforced by the contact Web permission. Codex implements it in a separate ephemeral, read-only app-server session with web_search=live; decision sessions retain disabled native tools. Search sessions disable shell, multi-agent, apps/plugins and MCP, reject unexpected execution events/server requests, and require actual completed webSearch events before returning a result. Search queries (not the entire LocalBot transcript) are sent to this worker. Activity retains the query, observed actions, source URLs and model-produced summary. No implicit local-to-cloud fallback. Browser interaction and non-Codex search services remain separate future capabilities.

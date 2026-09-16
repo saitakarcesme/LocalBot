@@ -1335,7 +1335,7 @@
     {
       "name": "web__run",
       "status": "partial-equivalent",
-      "route": "web_fetch: bounded public HTTPS text retrieval, up to five revalidated redirects, pinned DNS, final source URL and UTF-8 text. Search, finance, weather and browser actions are not implemented."
+      "route": "web_fetch provides bounded public HTTPS retrieval with validated redirects. web_search uses an explicitly selected Codex CLI subscription provider, Web permission and verified native search events with source links. No local-provider cloud fallback. Interactive browser, finance, weather and other web categories remain incomplete."
     },
     {
       "name": "write_stdin",
