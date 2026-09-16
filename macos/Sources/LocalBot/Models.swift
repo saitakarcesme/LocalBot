@@ -43,6 +43,7 @@ struct Provider: Codable, Identifiable, Equatable {
   var temperature: Double
   var maxTokens: Int
   var requiresAuth: Bool
+  var imageInput: Bool? = nil
 }
 struct Conversation: Codable, Identifiable {
   var id: String

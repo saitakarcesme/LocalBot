@@ -480,6 +480,10 @@ struct SettingsView: View {
           in: 0...2, step: 0.1)
         Text(String(format: "%.1f", editing?.temperature ?? 0.3)).font(.caption.monospacedDigit())
       }
+      if editing?.kind == "ollama" || editing?.kind == "openai" {
+        Toggle("Model supports image input", isOn: Binding(get: { editing?.imageInput ?? false }, set: { editing?.imageInput = $0 }))
+        Text("Enable only for a vision-capable model. Images are sent to this endpoint; up to four images, 5 MB each and 12 MB total.").font(.caption2).foregroundStyle(.secondary)
+      }
       Stepper(
         "Concurrent tasks: \(editing?.concurrency ?? 1)", value: numberField(\.concurrency),
         in: 1...4)

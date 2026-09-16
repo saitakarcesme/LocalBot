@@ -94,3 +94,14 @@ test("duplicate runtime never mutates active task state", async () => {
   assert.equal(exit, 0);
   assert.equal((await request("/health")).data.ok, true);
 });
+
+test('provider image capability opt-in persists through HTTP settings',async()=>{
+ const snapshot=(await request('/snapshot')).data;
+ const local=snapshot.providers.find(p=>p.kind==='ollama');assert(local);
+ try {
+  const saved=await request('/providers',{...local,imageInput:true});assert.equal(saved.status,200);
+  assert.equal((await request('/snapshot')).data.providers.find(p=>p.id===local.id).imageInput,true);
+  await request('/providers',{...local,imageInput:false});
+  assert.equal((await request('/snapshot')).data.providers.find(p=>p.id===local.id).imageInput,false);
+ }finally{await request('/providers',local);}
+});
