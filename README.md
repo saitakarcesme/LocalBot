@@ -73,7 +73,7 @@ This is a usable local development release, not a notarized public distribution.
 - [Native UI specification](docs/UI-SPEC.md)
 - [Verification results](docs/QA.md)
 
-The [269-entry Codex tool inventory](docs/CODEX-TOOL-INVENTORY.json) is a coverage target, not a claim that all Codex-hosted services are implemented. LocalBot currently exposes 32 built-in tool entries, including MCP discovery and invocation. External integrations require their own supported endpoint and authentication.
+The [269-entry Codex tool inventory](docs/CODEX-TOOL-INVENTORY.json) is a coverage target, not a claim that all Codex-hosted services are implemented. LocalBot currently exposes 33 built-in tool entries, including MCP discovery and invocation. External integrations require their own supported endpoint and authentication.
 
 For precise edits, read_file returns a SHA-256 fingerprint. edit_file replaces one unique old_text block using that fingerprint; stale or ambiguous edits fail without changing the target. It follows the contact’s filesystem permission and edit approval policy.
 
@@ -130,3 +130,5 @@ Agents can use `list_agents` to inspect a paginated contact directory with roles
 After `npm run app`, run `npm run test:packaged-subscription` with an existing Codex ChatGPT login. This launches the app bundle’s Node/server in a temporary workspace, checks authenticated HTTP access, runs a real clock-and-recorded-output task, restarts the server and verifies persisted history. It consumes normal subscription usage and stops its own server afterward. It does not launch or visually test the native UI, or modify your existing LocalBot data.
 
 Native message retries reuse a saved request ID until the send is acknowledged. The runtime returns the original task for an identical retry, including after its restart, so a lost HTTP reply does not create duplicate work. Changed content receives a new ID. Older clients that omit request IDs retain their existing behavior.
+
+`list_tasks` gives agents five-task pages of recorded conversation/project work with status, source IDs and bounded prompt excerpts. Its active filter includes queued, running and approval/input waits. It includes the requesting task and earlier work only; it neither changes tasks nor reveals other projects.

@@ -406,3 +406,38 @@ test('direct title failures preserve actual work while routing failures and canc
   assert.equal(f.store.conversation(c.id).title,'Keep title');assert.equal(f.store.all('SELECT * FROM runs WHERE taskId=?',task.id).length,0);
  }finally{await f.close();}
 });
+
+test('task listing uses persisted project states, paginates and excludes future/private work',async()=>{
+ const f=await setup(async(body,res)=>{
+  if(body.messages.some(m=>m.role==='tool'))reply(res,{content:'Project states inspected.'});
+  else reply(res,{content:'',tool_calls:[{function:{name:'list_tasks',arguments:{scope:'project',state:'active'}}}]});
+ });
+ try{
+  const project=f.store.conversation(f.conversation.id).projectId;
+  const source=f.store.createConversation('Source tasks',['researcher'],project);
+  const privateChat=f.store.createConversation('Private',['researcher']);
+  const add=(id,conversation,status)=>{
+   const message=f.store.addMessage(conversation,'user',id+' '+ 'x'.repeat(500),{taskId:id});
+   f.store.exec('INSERT INTO tasks VALUES(?,?,?,?,?,?,?,?,?)',id,conversation,conversation,message,id+' '+ 'x'.repeat(500),status,'2026-01-01','2026-01-01',null);
+  };
+  for(let i=0;i<12;i++)add('prior-'+i,source.id,i===11?'awaiting_input':'completed');
+  add('private-task',privateChat.id,'failed');
+  const c=f.store.createConversation('Status',['researcher'],project);
+  const task=f.engine.enqueue(c.id,'Inspect project work');await until(()=>f.store.task(task.id).status==='completed');
+  const call=f.store.get('SELECT t.* FROM tool_calls t JOIN runs r ON r.id=t.runId WHERE r.taskId=?',task.id);
+  assert.equal(call.name,'list_tasks');assert.equal(call.status,'completed');
+  const actual=JSON.parse(call.output);assert.deepEqual(actual.tasks.map(t=>t.id),[task.id,'prior-11']);
+  assert.equal(actual.tasks[0].status,'running');assert.equal(actual.tasks[1].status,'awaiting_input');
+  add('future-task',source.id,'failed');
+  let before;const ids=[];
+  do{const page=f.store.listTasks(task.id,'project','all',before);ids.push(...page.tasks.map(t=>t.id));assert(page.tasks.every(t=>t.promptExcerpt.length<=240));before=page.nextBefore;}while(before);
+  assert.equal(ids.length,13);assert.equal(new Set(ids).size,13);assert(!ids.includes('private-task'));assert(!ids.includes('future-task'));
+  assert.equal(f.store.listTasks(task.id).tasks.length,1);
+  assert.throws(()=>f.store.listTasks(task.id,'project','all','private-task'),/cursor/);
+  assert.throws(()=>f.store.listTasks(task.id,'project','all','future-task'),/cursor/);
+  assert.throws(()=>f.store.listTasks(task.id,'conversation','all','prior-1'),/cursor/);
+  assert.throws(()=>f.store.listTasks('private-task','project'),/no project/);
+  assert.throws(()=>f.store.listTasks(task.id,'everything'),/scope/);
+  assert.equal(f.store.task('prior-11').status,'awaiting_input');
+ }finally{await f.close();}
+});

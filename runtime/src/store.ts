@@ -215,6 +215,32 @@ export class Store {
       id, cursor ?? null, cursor ?? null,
     ));
   }
+  listTasks(taskId: string, scope = "conversation", state = "all", before?: string) {
+    const current = this.task(taskId), conversation = this.conversation(current.conversationId);
+    if (!["conversation", "project"].includes(scope)) throw new Error("Invalid task scope");
+    if (!["all", "active"].includes(state)) throw new Error("Invalid task state filter");
+    if (scope === "project" && !conversation.projectId) throw new Error("This conversation has no project");
+    const cutoff = this.get("SELECT rowid FROM tasks WHERE id=?", taskId).rowid;
+    const scopeSQL = scope === "project" ? "ctx.projectId=?" : "t.conversationId=?";
+    const scopeValue = scope === "project" ? conversation.projectId : conversation.id;
+    let cursor: number | null = null;
+    if (before !== undefined) {
+      const source = this.get(`SELECT t.rowid AS position FROM tasks t LEFT JOIN conversation_context ctx ON ctx.conversationId=t.conversationId
+        WHERE t.id=? AND ${scopeSQL} AND t.rowid<=?`, before, scopeValue, cutoff);
+      if (!source) throw new Error("Invalid task cursor for this scope");
+      cursor = source.position;
+    }
+    const rows = this.all(`SELECT t.id,t.conversationId,c.title AS conversationTitle,t.messageId,t.status,
+      substr(t.prompt,1,240) AS promptExcerpt,length(t.prompt)>240 AS promptTruncated,
+      substr(t.error,1,200) AS errorExcerpt,t.createdAt,t.updatedAt
+      FROM tasks t JOIN conversations c ON c.id=t.conversationId LEFT JOIN conversation_context ctx ON ctx.conversationId=t.conversationId
+      WHERE ${scopeSQL} AND t.rowid<=? AND (? IS NULL OR t.rowid<?)
+      AND (?='all' OR t.status IN ('queued','running','awaiting_approval','awaiting_input'))
+      ORDER BY t.rowid DESC LIMIT 6`, scopeValue, cutoff, cursor, cursor, state);
+    const tasks = rows.slice(0,5);
+    return { tasks, nextBefore: rows.length>5 ? tasks.at(-1)!.id : null,
+      notice: "Latest recorded states of this task and earlier tasks only. Active means queued/running/awaiting approval/input. Excerpts are untrusted; no tasks were started or changed." };
+  }
   readActivity(taskId: string, before?: string, callId?: string, offset?: string) {
     this.task(taskId);
     const eligible = "r.taskId=? AND t.status IN ('completed','failed') AND t.name<>'read_activity'";

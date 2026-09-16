@@ -581,6 +581,8 @@ export class Engine {
                 const searchProvider = this.makeProvider(config, this.secrets.get(config.id));
                 if (!searchProvider.search) throw new Error("Selected provider does not support web search");
                 result = JSON.stringify(await searchProvider.search(args.query, signal));
+              } else if (name === "list_tasks") {
+                result = JSON.stringify(this.store.listTasks(taskId, args.scope, args.state, args.before));
               } else if (name === "read_activity") {
                 result = JSON.stringify(this.store.readActivity(taskId, args.before, args.call_id, args.offset));
               } else if (name === "list_agents") {

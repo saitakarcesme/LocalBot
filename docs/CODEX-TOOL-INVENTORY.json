@@ -1344,6 +1344,7 @@
     }
   ],
   "localbotBuiltins": [
+    "list_tasks",
     "read_activity",
     "list_agents",
     "web_search",

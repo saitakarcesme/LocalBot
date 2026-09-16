@@ -242,3 +242,7 @@ Swift checks verify running/approval tasks outrank newer queued messages, queued
 ### Long task-queue visibility — 2026-09-16
 
 90 tests pass. A495-task fixture keeps all244 unfinished tasks plus200 recent terminal tasks in snapshots, including older running/approval/input states. It verifies uniqueness and that active runs still have matching task entries, both before and after reopening SQLite. Native build/signing passed; actual installed-window controls remain unverified.
+
+### Agent task listing — 2026-09-16
+
+91 tests pass, including project pagination, state filtering, source metadata, foreign/future task exclusion and unchanged waiting tasks. `node scripts/list-tasks-smoke.mjs` verified an actual Codex subscription call: one list_tasks action returned the current task as running, which Mira reported. Native build/signing passed; no installed UI test was performed.

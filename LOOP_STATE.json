@@ -33,14 +33,14 @@
   },
   "v0_2": {
     "status": "core_implemented_live_verified_tool_parity_in_progress",
-    "updated_at": "2026-09-16T16:51:32.314268+00:00",
-    "runtime_tests_passed": 90,
+    "updated_at": "2026-09-16T16:55:47.863429+00:00",
+    "runtime_tests_passed": 91,
     "real_subscription_agents_verified": 5,
     "real_project": "Focus Ledger",
     "project_tests_passed": 5,
     "cross_conversation_project_context_verified": true,
     "tool_inventory_target": 269,
-    "localbot_builtin_tools": 32,
+    "localbot_builtin_tools": 33,
     "remaining": [
       "External vendor adapters and authenticated per-tool validation",
       "Codex-host-specific tool counterparts",
@@ -58,8 +58,8 @@
       "manual scrolling survives Activity width change",
       "last selected chat survives relaunch"
     ],
-    "checkpoint": "Snapshots retain unfinished work outside the 200-terminal-task history cap; 90 tests and native build pass; native installation/live UI pending",
-    "tests_passed": 90,
+    "checkpoint": "list_tasks enables scoped paginated project status inspection; 91 tests, real subscription tool use and native build pass; installed native UI pending",
+    "tests_passed": 91,
     "packaged_runtime_subscription_verified": true
   }
 }
