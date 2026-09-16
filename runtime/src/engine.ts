@@ -548,7 +548,7 @@ export class Engine {
               } else if (name === "create_goal") {
                 result = JSON.stringify(this.store.createGoal(c.id, args.objective));
               } else if (name === "read_history") {
-                result = JSON.stringify(this.store.readHistory(taskId, args.conversation_id, args.before));
+                result = JSON.stringify(this.store.readHistory(taskId, args.conversation_id, args.before, args.message_id, args.offset));
               } else if (name === "search_history") {
                 result = JSON.stringify(this.store.searchHistory(taskId, args.query, args.scope));
               } else if (name === "get_goal") {

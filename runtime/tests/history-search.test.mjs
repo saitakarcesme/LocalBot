@@ -40,3 +40,19 @@ test('history pages retain chronological order with owned cursors and task bound
  assert.equal(store.readHistory(task.id).messages.length,0);
  }finally{e.shutdown();store.db.close();await rm(root,{recursive:true,force:true});}
 });
+
+test('long historical messages are recoverable in bounded Unicode-safe chunks',async()=>{
+ const root=await mkdtemp(join(tmpdir(),'localbot-history-chunks-'));const store=new Store(root);store.seed(root);const e=new Engine(store);e.pump=async()=>{};
+ try{const c=store.createConversation('Long text',['coder']);const other=store.createConversation('Other',['coder']);
+ const text='a'.repeat(1999)+'🚀'+'İstanbul '.repeat(400)+'\nDecision: preserve tests.';
+ const messageId=store.addMessage(c.id,'user',text);const secret=store.addMessage(other.id,'user','secret');const empty=store.addMessage(c.id,'user','');const task=e.enqueue(c.id,'Read earlier details');const future=store.addMessage(c.id,'user','future');
+ let offset='0',result='';let chunks=0;
+ do{const page=store.readHistory(task.id,c.id,undefined,messageId,offset);assert([...page.message.content].length<=2000);assert.equal(page.message.totalCharacters,[...text].length);result+=page.message.content;offset=page.nextOffset;chunks++;}while(offset!==null);
+ assert.equal(result,text);assert(chunks>2);assert.equal(store.readHistory(task.id,c.id,undefined,empty).nextOffset,null);
+ for(const bad of ['-1','1.5','NaN','01','1000000000'])assert.throws(()=>store.readHistory(task.id,c.id,undefined,messageId,bad),/offset/);
+ assert.throws(()=>store.readHistory(task.id,c.id,undefined,messageId,'99999999'),/exceeds/);
+ for(const id of [secret,future,task.messageId,'missing'])assert.throws(()=>store.readHistory(task.id,c.id,undefined,id),/scope/);
+ assert.throws(()=>store.readHistory(task.id,c.id,messageId,messageId),/not both/);
+ assert.throws(()=>store.readHistory(task.id,c.id,undefined,undefined,'0'),/requires/);
+ }finally{e.shutdown();store.db.close();await rm(root,{recursive:true,force:true});}
+});
