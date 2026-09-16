@@ -58,7 +58,7 @@
       "manual scrolling survives Activity width change",
       "last selected chat survives relaunch"
     ],
-    "checkpoint": "Search event integrity: actual search required, validated bounded actions, 78 tests and real subscription search passed; native package build pending; installation/live source click pending UI tool availability",
+    "checkpoint": "Search event integrity: actual search required, validated bounded actions, 78 tests and real subscription search passed; native package build and signing passed; installation/live source click pending UI tool availability",
     "tests_passed": 78
   }
 }
