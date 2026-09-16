@@ -196,3 +196,11 @@ Configurable agent run limits: previous turn was verified local HTTP vision prog
 - 78/78 runtime tests pass. Controlled RPC tests cover configuration, permission gating, no local-provider fallback, non-subscription authentication, missing search activity, invalid source schemes, unexpected capability events, action limit and cancellation.
 - Direct live CLI probe found the official SQLite WAL page with a real search action. Installed-app `scripts/web-search-smoke.mjs` then exercised Mira end-to-end: one successful web_search tool, recorded action type search, official sqlite.org source, completed task and short Turkish response. Native conversation “Mira · SQLite WAL Resmi Dokümantasyonu” displays that response with its source URL and success reaction. Build and installation succeeded.
 - Tool count30. This is provider-backed public search, not an interactive browser, finance/weather API parity, or an independent local search service. Absent CLI login, managed restrictions or search service failures remain explicit failures, not fabricated results.
+
+## Native source-link regression checks — 2026-09-16
+
+- Compared the previous formatter with the proposed implementation: Foundation already detects bare HTTP(S) URLs, including trailing punctuation. Removed the redundant second detector instead of shipping duplicate parsing.
+- Kept a specific fix: URLs containing a username/password lose their link attribute, including Markdown-generated links. Plain text is preserved. Existing custom-scheme filtering remains.
+- Swift formatting executable passes checks for Turkish/emoji preceding a URL, punctuation, verbatim displayed text, inline code exclusion, existing Markdown link destinations, file/mail schemes, credential-bearing URLs and earlier fenced-code behavior.
+- The native UI control tool was unavailable in this continuation. No live click/browser-navigation or installed-app update is claimed for this checkpoint. Runtime code is unchanged; last full runtime result remains 78/78.
+- Final frozen-source app build completed successfully (26.07 seconds) and produced build/LocalBot.app. An earlier build correctly rejected a source file changed during compilation; that failed artifact was not installed.

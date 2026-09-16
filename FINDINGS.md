@@ -158,3 +158,6 @@ Found direct file tools and shell sandbox disagreed on protected credential path
 
 ### Subscription-backed web search checkpoint — 2026-09-16
 Added the previously missing actual web search through an optional provider capability, currently Codex CLI subscription only. Separate ephemeral search worker returns observed webSearch actions plus model summary/source links through LocalBot Activity and Web permission enforcement. No API key or silent local-to-cloud fallback. Real CLI and installed Mira search both returned SQLite official documentation; native response verified.78 tests pass,30 built-in tools; interactive browser and other web categories remain incomplete.
+
+### Source-link verification correction — 2026-09-16
+Baseline comparison disproved the assumption that bare URLs lacked native detection: Foundation already links them. Removed redundant NSDataDetector code and retained only credential-bearing URL link suppression plus focused formatting regressions. Swift checks pass; runtime unchanged. Native UI automation unavailable this continuation, so installed-app replacement/live click verification remains pending rather than claimed complete.

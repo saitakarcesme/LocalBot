@@ -58,7 +58,7 @@
       "manual scrolling survives Activity width change",
       "last selected chat survives relaunch"
     ],
-    "checkpoint": "Actual subscription web search verified through CLI events and native Mira response; 78 tests, 30 tools",
+    "checkpoint": "Foundation bare-link baseline verified; credential URL link suppression and Swift formatting regressions pass; native install/live click check pending UI tool availability",
     "tests_passed": 78
   }
 }
