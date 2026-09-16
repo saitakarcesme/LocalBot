@@ -58,7 +58,7 @@
       "manual scrolling survives Activity width change",
       "last selected chat survives relaunch"
     ],
-    "checkpoint": "Project context supplied to automatic team routing; 79 runtime tests and native build passed; real subscription scenario in progress; native installation pending UI tool availability",
+    "checkpoint": "Project-aware automatic routing: 79 tests, native build and real subscription coder/reviewer file workflow passed; native installation pending UI tool availability",
     "tests_passed": 79
   }
 }

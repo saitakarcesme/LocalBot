@@ -204,3 +204,9 @@ Configurable agent run limits: previous turn was verified local HTTP vision prog
 - Swift formatting executable passes checks for Turkish/emoji preceding a URL, punctuation, verbatim displayed text, inline code exclusion, existing Markdown link destinations, file/mail schemes, credential-bearing URLs and earlier fenced-code behavior.
 - The native UI control tool was unavailable in this continuation. No live click/browser-navigation or installed-app update is claimed for this checkpoint. Runtime code is unchanged; last full runtime result remains 78/78.
 - Final frozen-source app build completed successfully (26.07 seconds) and produced build/LocalBot.app. An earlier build correctly rejected a source file changed during compilation; that failed artifact was not installed.
+
+### Project-context routing verification — 2026-09-16
+
+- Full runtime suite:79/79 passed. Queued routing receives bounded earlier same-project decisions and shared notes, excluding unrelated chats and later sibling messages.
+- `node scripts/project-routing-context-smoke.mjs`: actual authenticated Codex subscription, isolated temporary project. A generic Turkish follow-up selected coder then reviewer from the earlier project decision. Observed write_file and reviewer read_file completed; independent JSON assertion confirmed `focus.json` contains exactly `{"dailyMinutes":25}`.
+- Native package build/signing passed. The installed app has not been replaced or clicked in this checkpoint because native UI automation is unavailable.
