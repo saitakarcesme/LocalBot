@@ -14,7 +14,7 @@ struct IntegrationsView: View {
         Spacer()
         Button("Done") { dismiss() }
       }
-      Text("Connect an MCP server, test its real tools, then enable it in a contact's permissions.")
+      Text("Connect an MCP server, discover its tools and resources, then enable it in a contact's permissions.")
         .font(.callout).foregroundStyle(.secondary)
       HStack {
         Menu("Saved connections") {
@@ -69,7 +69,14 @@ struct IntegrationsView: View {
       let response = try await model.request("/integrations/test", body: ["id": connection.id])
       let object = try JSONSerialization.jsonObject(with: response) as? [String: Any]
       let tools = object?["tools"] as? [[String: Any]] ?? []
-      result = "\(tools.count) tools discovered\n\n" + tools.compactMap { $0["name"] as? String }.joined(separator: "\n")
+      let resourcePage = object?["resources"] as? [String: Any] ?? [:]
+      let templatePage = object?["templates"] as? [String: Any] ?? [:]
+      let resources = resourcePage["resources"] as? [[String: Any]] ?? []
+      let templates = templatePage["resourceTemplates"] as? [[String: Any]] ?? []
+      let more = resourcePage["nextCursor"] != nil || templatePage["nextCursor"] != nil
+      result = "\(tools.count) tools · \(resources.count) resources · \(templates.count) templates\n"
+        + (more ? "More resource pages are available to agents.\n" : "")
+        + "\n" + (tools + resources + templates).compactMap { $0["name"] as? String }.joined(separator: "\n")
       await model.refresh()
     } catch { result = error.localizedDescription }
   }
