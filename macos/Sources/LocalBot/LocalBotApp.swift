@@ -135,7 +135,7 @@ struct MainView: View {
       }
       .navigationSplitViewColumnWidth(min: 250, ideal: 300, max: 380)
       .toolbar {
-        ToolbarItem {
+        ToolbarItemGroup {
           Button {
             model.showNew = true
           } label: {

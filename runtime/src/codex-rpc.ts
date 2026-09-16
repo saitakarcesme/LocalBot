@@ -11,6 +11,7 @@ export class CodexRPC {
   private closed = false;
   private pending = new Map<number, { resolve: (value: any) => void; reject: (error: Error) => void; cleanup: () => void }>();
   onNotification: (method: string, params: any) => void = () => {};
+  onClose: (error: Error) => void = () => {};
   onRequest: (method: string, params: any) => Promise<unknown> = async () => { throw new Error("Unsupported server request"); };
 
   constructor(binary = CodexRPC.binary(), args = ["app-server", "--listen", "stdio://"]) {
@@ -22,6 +23,7 @@ export class CodexRPC {
     this.child.stdin.on("error", () => this.fail(new Error("Codex CLI input closed")));
     const lines = createInterface({ input: this.child.stdout });
     lines.on("line", (line) => {
+      if (line.length > 4_000_000) { this.close(); return; }
       let message: any;
       try { message = JSON.parse(line); } catch { this.close(); return; }
       if (message.method && message.id !== undefined) {
@@ -66,13 +68,18 @@ export class CodexRPC {
     });
   }
   private fail(error: Error) {
+    if (this.closed) return;
     this.closed = true;
     for (const pending of this.pending.values()) { pending.cleanup(); pending.reject(error); }
     this.pending.clear();
+    this.onClose(error);
   }
   close() {
     this.fail(new Error("Codex CLI connection closed"));
     this.child.stdin.end();
     this.child.kill("SIGTERM");
+    const force = setTimeout(() => this.child.kill("SIGKILL"), 1500);
+    force.unref();
+    this.child.once("exit", () => clearTimeout(force));
   }
 }

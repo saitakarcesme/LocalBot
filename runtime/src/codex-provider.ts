@@ -47,6 +47,7 @@ export class CodexProvider implements ModelProvider {
         let answer = "";
         const abort = () => { reject(deadline.reason); rpc.close(); };
         deadline.addEventListener("abort", abort, { once: true });
+        rpc.onClose = error => { deadline.removeEventListener("abort", abort); reject(error); };
         rpc.onNotification = (method, params) => {
           if (params.threadId !== thread.id) return;
           if (method === "item/completed" && params.item?.type === "agentMessage") answer = params.item.text;
