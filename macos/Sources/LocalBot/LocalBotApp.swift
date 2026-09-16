@@ -182,7 +182,7 @@ struct MainView: View {
                   Button("Conversation Details…") { model.editingConversation = c }
                   Button("New conversation with these agents") {
                     Task {
-                      await model.post("/conversations", ["title": c.title, "members": c.members])
+                      await model.post("/conversations", ["title": c.title, "members": c.members, "projectId": c.projectId as Any? ?? NSNull(), "automatic": c.automatic == 1])
                       model.selectedId = model.conversations.first?.id
                     }
                   }

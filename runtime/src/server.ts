@@ -337,6 +337,17 @@ const server = createServer(async (req, res) => {
       json(res, 200, config);
       return;
     }
+    if (m === "POST" && p === "/integrations/delete") {
+      const b = await body(req);
+      if (store.get("SELECT id FROM tasks WHERE status IN ('running','awaiting_approval')")) throw new Error("Wait for running tasks before removing integrations");
+      store.transaction(() => {
+        store.exec("INSERT INTO settings VALUES('mcp',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value", JSON.stringify(store.integrations().filter(i => i.id !== b.id)));
+        for (const agent of store.agents()) if (agent.integrations?.includes(b.id)) {
+          agent.integrations = agent.integrations.filter(id => id !== b.id); store.saveAgent(agent);
+        }
+      });
+      engine.secrets.delete("mcp:" + b.id); change(); json(res, 200, { ok: true }); return;
+    }
     if (m === "POST" && p === "/integrations") {
       const b = await body(req);
       if (store.get("SELECT id FROM tasks WHERE status IN ('running','awaiting_approval')")) throw new Error("Wait for running tasks before changing integrations");

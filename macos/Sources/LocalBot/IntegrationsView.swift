@@ -36,6 +36,19 @@ struct IntegrationsView: View {
         Button("Save & Test") { Task { await testConnection() } }
           .buttonStyle(.borderedProminent).disabled(busy || connection.name.isEmpty)
         if busy { ProgressView().controlSize(.small) }
+        Spacer()
+        if model.integrations.contains(where: { $0.id == connection.id }) {
+          Button("Remove") {
+            Task {
+              await model.post("/integrations/delete", ["id": connection.id])
+              if model.error == nil {
+                try? Keychain.save("", id: "mcp:" + connection.id + "@" + connection.endpoint)
+                connection = MCPConnection(id: UUID().uuidString, name: "", endpoint: "http://127.0.0.1:3000/mcp", requiresAuth: false)
+                secret = ""; result = ""
+              }
+            }
+          }.disabled(busy)
+        }
       }
       ScrollView { Text(result).font(.system(.caption, design: .monospaced)).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading) }
         .frame(minHeight: 160)
