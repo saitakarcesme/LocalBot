@@ -2,6 +2,7 @@
 // Requires an existing Codex ChatGPT login; never reads or exports its credentials.
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
+import {randomUUID} from 'node:crypto';
 import {mkdtemp,readFile,stat} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
@@ -45,7 +46,9 @@ try{
  const local=initial.providers.find(p=>p.id==='local');
  await api('/providers',{...local,kind:'codex',name:'Subscription package verification',model:'gpt-5.6-sol',contextLength:16000,timeout:90});
  const c=await api('/conversations',{title:'Paket doğrulaması',members:['researcher']});
- const task=await api('/messages',{conversationId:c.id,content:'current_time aracını yalnızca bir kez çağır. Sonra read_activity ile bu çağrıyı bul ve call_id ile kaydedilen çıktıyı oku. Saati tekrar sorgulama. Kısa Türkçe yanıtla.'});
+ const message={requestId:randomUUID(),conversationId:c.id,content:'current_time aracını yalnızca bir kez çağır. Sonra read_activity ile bu çağrıyı bul ve call_id ile kaydedilen çıktıyı oku. Saati tekrar sorgulama. Kısa Türkçe yanıtla.'};
+ const task=await api('/messages',message);
+ assert.equal((await api('/messages',message)).id,task.id);
  const deadline=Date.now()+180000;let done=false;
  while(Date.now()<deadline){
   const state=await api('/snapshot');const current=state.tasks.find(t=>t.id===task.id);
@@ -60,9 +63,10 @@ try{
  const messages=await api('/messages?conversationId='+c.id);
  const final=messages.filter(m=>m.role==='assistant').at(-1);assert(final?.content);
  await stop();await start();
+ assert.equal((await api('/messages',message)).id,task.id);
  const after=await api('/messages?conversationId='+c.id);
  assert.deepEqual(after,messages);
  assert.equal((await api('/snapshot')).tasks.find(t=>t.id===task.id).status,'completed');
  assert.equal((await api('/activity?conversationId='+c.id)).length,actions.length);
- console.log(JSON.stringify({verified:true,bundle,packagedNode:true,authenticatedRPC:true,clockCalls:clocks.length,activityReads:reads.length,restartPreservedHistory:true,sameRevisionRestartIdentified:true,answer:final.content}));
+ console.log(JSON.stringify({verified:true,bundle,packagedNode:true,authenticatedRPC:true,clockCalls:clocks.length,activityReads:reads.length,restartPreservedHistory:true,sameRevisionRestartIdentified:true,messageRetryDeduplicated:true,answer:final.content}));
 }finally{await stop();}

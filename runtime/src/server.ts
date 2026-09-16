@@ -215,22 +215,12 @@ const server = createServer(async (req, res) => {
     }
     if (m === "POST" && p === "/messages") {
       const b = await body(req);
-      const waiting = store.all(
-        "SELECT id FROM tasks WHERE conversationId=? AND status='awaiting_input'",
-        b.conversationId,
-      );
       const task = engine.enqueue(
         b.conversationId,
         String(b.content ?? ""),
         Array.isArray(b.attachments) ? b.attachments : [],
+        b.requestId,
       );
-      for (const t of waiting) {
-        store.status(t.id, "continued");
-        store.exec(
-          "UPDATE runs SET status='continued' WHERE taskId=? AND status='awaiting_input'",
-          t.id,
-        );
-      }
       json(res, 201, task);
       return;
     }

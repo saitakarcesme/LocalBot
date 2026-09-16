@@ -1,6 +1,6 @@
 import { agentStepLimit } from "./run-limits.js";
 import { codexInput } from "./image-input.js";
-import { randomUUID } from "node:crypto";
+import { randomUUID, createHash } from "node:crypto";
 import { promises as fs } from "node:fs";
 import { basename, extname, join } from "node:path";
 import { Store } from "./store.js";
@@ -84,7 +84,7 @@ export class Engine {
     });
     this.changed();
   }
-  enqueue(conversationId: string, prompt: string, attachments: string[] = []) {
+  enqueue(conversationId: string, prompt: string, attachments: string[] = [], requestId?: string) {
     const c = this.store.conversation(conversationId);
     if (!c.members.length && !c.automatic) throw new Error("Conversation has no agents");
     for (const id of c.members) this.store.agent(id);
@@ -92,9 +92,20 @@ export class Engine {
       throw new Error("Message is empty");
     if (prompt.length > 32_000)
       throw new Error("Message exceeds 32,000 characters");
+    if (requestId !== undefined && (typeof requestId !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(requestId))) throw new Error("Invalid message request ID");
+    const fingerprint = createHash("sha256").update(JSON.stringify([conversationId, prompt, attachments])).digest("hex");
     const id = randomUUID(),
       date = now();
+    let acceptedId = id;
     this.store.transaction(() => {
+      if (requestId) {
+        const prior = this.store.get("SELECT taskId,fingerprint FROM message_requests WHERE id=?", requestId);
+        if (prior) {
+          if (prior.fingerprint !== fingerprint) throw new Error("Message request ID was already used with different content");
+          acceptedId = prior.taskId;
+          return;
+        }
+      }
       this.store.setConversationArchived(conversationId, false);
       this.store.continueQuestions(conversationId);
       const messageId = this.store.addMessage(conversationId, "user", prompt, {
@@ -125,10 +136,10 @@ export class Engine {
         date,
         null,
       );
+      if (requestId) this.store.exec("INSERT INTO message_requests VALUES(?,?,?)", requestId, id, fingerprint);
     });
-    this.changed();
-    void this.pump();
-    return this.store.task(id);
+    if (acceptedId === id) { this.changed(); void this.pump(); }
+    return this.store.task(acceptedId);
   }
   async pump() {
     if (this.pumping) return;

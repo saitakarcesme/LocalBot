@@ -26,6 +26,7 @@ export class Store {
       CREATE TABLE IF NOT EXISTS runs(id TEXT PRIMARY KEY, taskId TEXT NOT NULL REFERENCES tasks(id), agentId TEXT NOT NULL, status TEXT NOT NULL, checkpoint TEXT NOT NULL DEFAULT '[]', createdAt TEXT NOT NULL, updatedAt TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS messages(id TEXT PRIMARY KEY, conversationId TEXT NOT NULL REFERENCES conversations(id), taskId TEXT, runId TEXT, agentId TEXT, role TEXT NOT NULL, content TEXT NOT NULL, createdAt TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS reactions(messageId TEXT NOT NULL REFERENCES messages(id), actor TEXT NOT NULL, emoji TEXT NOT NULL, PRIMARY KEY(messageId,actor));
+      CREATE TABLE IF NOT EXISTS message_requests(id TEXT PRIMARY KEY, taskId TEXT NOT NULL REFERENCES tasks(id), fingerprint TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS tool_calls(id TEXT PRIMARY KEY, runId TEXT NOT NULL REFERENCES runs(id), name TEXT NOT NULL, arguments TEXT NOT NULL, status TEXT NOT NULL, output TEXT, createdAt TEXT NOT NULL, updatedAt TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS approvals(id TEXT PRIMARY KEY, taskId TEXT NOT NULL REFERENCES tasks(id), runId TEXT NOT NULL, toolCallId TEXT NOT NULL, summary TEXT NOT NULL, status TEXT NOT NULL, createdAt TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS artifacts(id TEXT PRIMARY KEY, name TEXT NOT NULL, path TEXT NOT NULL, mime TEXT NOT NULL, size INTEGER NOT NULL, messageId TEXT, runId TEXT);

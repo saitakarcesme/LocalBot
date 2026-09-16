@@ -87,6 +87,7 @@ enum Keychain {
   @Published var editingProject: Project?
   @Published var editingConversation: Conversation?
   @Published var sending = false
+  let pendingMessages = PendingMessageRequests()
   var connection: Connection?
   var snapshotCursor = RuntimeSnapshotCursor()
   var polling: Task<Void, Never>?
@@ -291,10 +292,12 @@ enum Keychain {
     guard let id = selectedId, !sending else { return false }
     sending = true
     defer { sending = false }
+    let requestID = pendingMessages.requestID(conversation: id, content: content, attachments: attachments.map(\.id))
     do {
       _ = try await request(
         "/messages",
-        body: ["conversationId": id, "content": content, "attachments": attachments.map(\.id)])
+        body: ["conversationId": id, "content": content, "attachments": attachments.map(\.id), "requestId": requestID])
+      pendingMessages.acknowledge(conversation: id, requestID: requestID)
       if searchFocusId != nil { await showLatestMessages() }
       await refresh()
       return true

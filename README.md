@@ -128,3 +128,5 @@ Agents can use `list_agents` to inspect a paginated contact directory with roles
 ### Verify the packaged subscription runtime
 
 After `npm run app`, run `npm run test:packaged-subscription` with an existing Codex ChatGPT login. This launches the app bundle’s Node/server in a temporary workspace, checks authenticated HTTP access, runs a real clock-and-recorded-output task, restarts the server and verifies persisted history. It consumes normal subscription usage and stops its own server afterward. It does not launch or visually test the native UI, or modify your existing LocalBot data.
+
+Native message retries reuse a saved request ID until the send is acknowledged. The runtime returns the original task for an identical retry, including after its restart, so a lost HTTP reply does not create duplicate work. Changed content receives a new ID. Older clients that omit request IDs retain their existing behavior.

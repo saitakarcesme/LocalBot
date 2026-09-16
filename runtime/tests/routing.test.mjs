@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
-import { mkdtemp, mkdir, readFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { Store } from '../dist/store.js';
@@ -344,5 +344,30 @@ test('a denied action is not requested again by the same task or another teammat
   await until(()=>!f.store.get("SELECT id FROM runs WHERE taskId=? AND status IN ('running','awaiting_approval')",next.id));
   assert.equal(f.store.get('SELECT count(*) AS n FROM artifacts').n,0);
   await assert.rejects(readFile(join(reviewer.workspace,'denied.txt')),/ENOENT/);
+ }finally{await f.close();}
+});
+
+
+test('message retries survive restart without duplicate tasks, attachment reuse or question side effects',async()=>{
+ let requests=0;
+ const f=await setup(async(body,res)=>{requests++;reply(res,{content:'',tool_calls:[{function:{name:'ask_user',arguments:{question:'Which output format?'}}}]});});
+ try{
+  const c=f.store.createConversation('Retry',['coder']);const path=join(f.store.agent('coder').workspace,'input.txt');await writeFile(path,'input');
+  const attachment=await f.engine.artifact(path,null);
+  const key='12345678-1234-1234-1234-123456789abc';
+  const task=f.engine.enqueue(c.id,'Inspect this',[attachment],key);
+  await until(()=>f.store.task(task.id).status==='awaiting_input');
+  const retry=f.engine.enqueue(c.id,'Inspect this',[attachment],key);
+  assert.equal(retry.id,task.id);assert.equal(retry.status,'awaiting_input');assert.equal(requests,1);
+  assert.equal(f.store.messages(c.id).filter(m=>m.role==='user').length,1);
+  assert.throws(()=>f.engine.enqueue(c.id,'Changed content',[attachment],key),/different content/);
+  const reopened=new Store(f.store.dir);
+  try{const e=new Engine(reopened);assert.equal(e.enqueue(c.id,'Inspect this',[attachment],key).id,task.id);}finally{reopened.db.close();}
+  const fresh='87654321-1234-1234-1234-123456789abc';
+  assert.throws(()=>f.engine.enqueue(c.id,'Next',['missing-artifact'],fresh),/Attachment/);
+  assert.equal(f.store.get('SELECT * FROM message_requests WHERE id=?',fresh),undefined);
+  assert.equal(f.store.task(task.id).status,'awaiting_input');
+  const next=f.engine.enqueue(c.id,'Next',[],fresh);assert.notEqual(next.id,task.id);
+  await until(()=>f.store.task(next.id).status==='awaiting_input');assert.equal(f.store.task(task.id).status,'continued');
  }finally{await f.close();}
 });
