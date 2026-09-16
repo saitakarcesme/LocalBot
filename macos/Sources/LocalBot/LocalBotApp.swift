@@ -110,7 +110,7 @@ struct MainView: View {
                 Text(
                   model.conversations.first { $0.id == m.conversationId }?.title ?? "Conversation"
                 ).font(.headline)
-                Text(m.content).font(.caption).lineLimit(3).foregroundStyle(.secondary)
+                Text(messagePreview(m.content)).font(.caption).lineLimit(3).foregroundStyle(.secondary)
               }.frame(maxWidth: .infinity, alignment: .leading)
             }.buttonStyle(.plain)
           }
@@ -210,7 +210,7 @@ struct ConversationRow: View {
           }
         }
         Text(
-          conversation.preview?.replacingOccurrences(of: "\n", with: " ")
+          conversation.preview.map(messagePreview)
             ?? (conversation.members.count > 1
               ? "\(conversation.members.count) agents · shared workspace"
               : model.agent(conversation.members.first)?.role ?? "Agent")

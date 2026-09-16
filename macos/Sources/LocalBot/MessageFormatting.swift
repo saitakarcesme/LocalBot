@@ -53,3 +53,10 @@ func inlineMessage(_ source: String) -> AttributedString {
   }
   return text
 }
+
+func messagePreview(_ source: String) -> String {
+  messageSections(source).map { section in
+    section.isCode ? section.text : String(inlineMessage(section.text).characters)
+  }.joined(separator: " ").components(separatedBy: .whitespacesAndNewlines)
+    .filter { !$0.isEmpty }.joined(separator: " ")
+}

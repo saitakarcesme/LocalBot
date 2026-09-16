@@ -15,6 +15,7 @@ import Foundation
     precondition(inline.runs.contains { $0.inlinePresentationIntent?.contains(.code) == true })
     precondition(!inlineMessage("[bad](file:///tmp/test)").runs.contains { $0.link != nil })
     precondition(inlineMessage("[web](https://example.com)").runs.contains { $0.link?.scheme == "https" })
+    precondition(messagePreview(source) == "Before bold let x = `value` After")
     print("Message formatting checks passed")
   }
 }
