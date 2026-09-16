@@ -58,7 +58,7 @@
       "manual scrolling survives Activity width change",
       "last selected chat survives relaunch"
     ],
-    "checkpoint": "Native polling detects same-revision restarts through server instance IDs; Swift checks, 87 runtime tests and native build pass; extended packaged smoke running; native installation/window verification pending",
+    "checkpoint": "Native polling detects same-revision restarts through server instance IDs; Swift checks, 87 runtime tests and native build pass; extended real subscription packaged smoke passed; native installation/window verification pending",
     "tests_passed": 87,
     "packaged_runtime_subscription_verified": true
   }
