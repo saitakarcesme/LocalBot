@@ -579,3 +579,35 @@ test('each model step receives current permissions while the run keeps its selec
   assert.deepEqual(actions.map(a=>[a.name,a.status]),[['write_file','failed'],['current_time','completed'],['write_file','completed']]);
  }finally{await f.close();}
 });
+
+
+test('attachment-only project messages provide scoped metadata to routing and content to the worker',async()=>{
+ let organized=false;
+ const f=await setup(async(body,res)=>{
+  if(body.tools.some(t=>t.function.name==='organize')){
+   const data=JSON.parse(body.messages.at(-1).content);
+   assert.equal(data.prompt,'');assert.equal(data.attachmentCount,1);
+   assert.deepEqual(data.attachments,[{name:'requirements.txt',mime:'text/plain',size:21}]);
+   assert(!JSON.stringify(data).includes('private-storage'));
+   assert(!JSON.stringify(data).includes('unrelated.txt'));
+   organized=true;
+   reply(res,{content:'',tool_calls:[{function:{name:'organize',arguments:{title:'Requirements discussion',members:['researcher']}}}]});
+  }else{
+   assert(organized);assert(body.messages.some(m=>m.content.includes('Attachment: requirements.txt')&&m.content.includes('Keep the client small')));
+   reply(res,{content:'',tool_calls:[{function:{name:'ask_user',arguments:{question:'Bu gereksinimleri incelememi mi, uygulamamı mı istersin?'}}}]});
+  }
+ });
+ try{
+  const workspace=f.store.agent('researcher').workspace;
+  const file=join(workspace,'private-storage.txt');await writeFile(file,'Keep the client small');
+  f.store.exec('INSERT INTO artifacts VALUES(?,?,?,?,?,?,?)','routing-attachment','requirements.txt',file,'text/plain',21,null,null);
+  const other=f.store.createConversation('Unrelated',['researcher']);
+  const message=f.store.addMessage(other.id,'user','Private');
+  f.store.exec('INSERT INTO artifacts VALUES(?,?,?,?,?,?,?)','unrelated-attachment','unrelated.txt',file,'text/plain',21,message,null);
+  const task=f.engine.enqueue(f.conversation.id,'',['routing-attachment']);
+  await until(()=>f.store.task(task.id).status==='awaiting_input');
+  assert.equal(f.store.conversation(f.conversation.id).title,'Requirements discussion');
+  assert.deepEqual(f.store.conversation(f.conversation.id).members,['researcher']);
+  assert(f.store.taskMessages(task.id).some(m=>m.content.includes('incelememi mi')));
+ }finally{await f.close();}
+});

@@ -33,8 +33,8 @@
   },
   "v0_2": {
     "status": "core_implemented_live_verified_tool_parity_in_progress",
-    "updated_at": "2026-09-16T17:29:57.457775+00:00",
-    "runtime_tests_passed": 96,
+    "updated_at": "2026-09-16T17:33:16.652412+00:00",
+    "runtime_tests_passed": 97,
     "real_subscription_agents_verified": 5,
     "real_project": "Focus Ledger",
     "project_tests_passed": 5,
@@ -58,8 +58,8 @@
       "manual scrolling survives Activity width change",
       "last selected chat survives relaunch"
     ],
-    "checkpoint": "Live tools per generation:96 tests; permission revocation/restoration and pinned provider capabilities verified",
-    "tests_passed": 96,
+    "checkpoint": "Attachment-aware routing:97 tests plus real subscription file-only title/team/clarification verified",
+    "tests_passed": 97,
     "packaged_runtime_subscription_verified": true,
     "built_app": "~/Library/Caches/LocalBot/AppBuild/LocalBot.app"
   }
