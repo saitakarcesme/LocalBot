@@ -1,3 +1,4 @@
+import { isDeepStrictEqual } from "node:util";
 import { agentStepLimit } from "./run-limits.js";
 import { codexInput } from "./image-input.js";
 import { randomUUID, createHash } from "node:crypto";
@@ -553,6 +554,8 @@ export class Engine {
               this.changed();
               if (["mcp_call", "mcp_list_tools", "mcp_list_resources", "mcp_list_resource_templates", "mcp_read_resource"].includes(name)) {
                 const integration = authorizedMCPConnection(this.store.agent(agentId).integrations, this.store.integrations(), args.integrationId);
+                if (!isDeepStrictEqual(integration, mcpIntegration))
+                  throw new Error("Integration settings changed while waiting. Request fresh approval for the updated connection.");
                 const client = new MCPClient(integration, this.secrets.get("mcp:" + integration.id));
                 try {
                   await client.connect(signal);

@@ -507,3 +507,39 @@ test('pending file approval cannot migrate into a changed contact workspace',asy
   assert.equal(await readFile(join(replacement,'approved.txt'),'utf8'),'approved content');
  }finally{await f.close();}
 });
+
+
+test('MCP approval cannot authorize a replacement server process',async()=>{
+ const f=await setup(async(body,res)=>{
+  if(body.messages.some(m=>m.role==='tool'))reply(res,{content:'Connection result recorded.'});
+  else reply(res,{content:'',tool_calls:[{function:{name:'mcp_list_tools',arguments:{integrationId:'mutable'}}}]});
+ });
+ try{
+  const agent=f.store.agent('coder');const marker=join(agent.workspace,'server-started.txt');
+  const source=`import {writeFileSync} from 'node:fs';import {createInterface} from 'node:readline';
+writeFileSync(${JSON.stringify(marker)},'started');
+createInterface({input:process.stdin}).on('line',line=>{const m=JSON.parse(line);let result;
+if(m.method==='initialize')result={protocolVersion:'2025-11-25',capabilities:{tools:{}}};
+if(m.method==='tools/list')result={tools:[]};
+if(result)process.stdout.write(JSON.stringify({jsonrpc:'2.0',id:m.id,result})+'\\n');});`;
+  const initial={id:'mutable',name:'Approval fixture',endpoint:'',requiresAuth:false,transport:'stdio',process:{command:process.execPath,args:['--input-type=module','-e',source],cwd:agent.workspace}};
+  f.store.saveIntegration(initial);f.store.saveAgent({...agent,integrations:['mutable']});
+  const c=f.store.createConversation('MCP approval',['coder']);
+  const first=f.engine.enqueue(c.id,'List integration tools');
+  await until(()=>f.store.get("SELECT id FROM approvals WHERE taskId=? AND status='pending'",first.id));
+  const changed={...initial,process:{...initial.process,args:['--input-type=module','-e',source+'\n// replacement process']}};
+  f.store.saveIntegration(changed);
+  f.engine.decide(f.store.get("SELECT id FROM approvals WHERE taskId=? AND status='pending'",first.id).id,true);
+  await until(()=>f.store.task(first.id).status==='completed_with_errors');
+  const failed=f.store.get('SELECT t.* FROM tool_calls t JOIN runs r ON r.id=t.runId WHERE r.taskId=?',first.id);
+  assert.match(failed.output,/Integration settings changed/);assert.equal(failed.status,'failed');
+  await assert.rejects(readFile(marker),e=>e.code==='ENOENT');
+  const next=f.engine.enqueue(c.id,'List tools using the updated connection');
+  await until(()=>f.store.get("SELECT id FROM approvals WHERE taskId=? AND status='pending'",next.id));
+  f.engine.decide(f.store.get("SELECT id FROM approvals WHERE taskId=? AND status='pending'",next.id).id,true);
+  await until(()=>f.store.task(next.id).status==='completed');
+  assert.equal(await readFile(marker,'utf8'),'started');
+  const success=f.store.get('SELECT t.* FROM tool_calls t JOIN runs r ON r.id=t.runId WHERE r.taskId=?',next.id);
+  assert.equal(success.status,'completed');assert.deepEqual(JSON.parse(success.output),[]);
+ }finally{await f.close();}
+});
