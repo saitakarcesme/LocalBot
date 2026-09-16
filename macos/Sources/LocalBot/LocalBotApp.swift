@@ -239,7 +239,7 @@ struct ConversationView: View {
               Text("LocalBot").font(.system(size: 11, weight: .semibold)).foregroundStyle(.tertiary)
                 .padding(.top, 20)
               if model.messages.isEmpty { emptyConversation }
-              ForEach(model.messages) { m in MessageBubble(message: m, group: members.count > 1) }
+              ForEach(model.messages) { m in MessageBubble(message: m, group: conversation.projectId != nil || members.count > 1) }
               if model.activeTask != nil || model.sending {
                 HStack(spacing: 8) {
                   Avatar(agent: members.first { $0.name == activeName } ?? model.agent("assistant"), size: 28)
