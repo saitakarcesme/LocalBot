@@ -243,11 +243,13 @@ enum Keychain {
       return false
     }
   }
-  func post(_ path: String, _ body: [String: Any]) async {
+  @discardableResult func post(_ path: String, _ body: [String: Any]) async -> Bool {
     do {
       _ = try await request(path, body: body)
+      self.error = nil
       await refresh()
-    } catch { self.error = error.localizedDescription }
+      return true
+    } catch { self.error = error.localizedDescription; return false }
   }
   func save<T: Encodable>(_ object: T, path: String) async -> Bool {
     do {

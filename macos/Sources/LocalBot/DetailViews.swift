@@ -168,14 +168,14 @@ struct NewConversationView: View {
               title.isEmpty
               ? (projectId.isEmpty ? model.agents.filter { selected.contains($0.id) }.map(\.name).joined(separator: ", ") : "New project conversation")
               : title
-            await model.post(
+            guard await model.post(
               "/conversations",
               [
                 "title": name,
                 "members": model.agents.filter { selected.contains($0.id) }.map(\.id),
                 "projectId": projectId.isEmpty ? NSNull() : projectId as Any,
                 "automatic": !projectId.isEmpty && automatic,
-              ])
+              ]) else { return }
             model.selectedId = model.conversations.first?.id
             dismiss()
           }
