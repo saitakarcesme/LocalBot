@@ -213,6 +213,7 @@ struct ConversationView: View {
   @State var draft = ""
   @State var attachments: [Artifact] = []
   @State var following = true
+  @State var initialScroll = true
   @FocusState var composing: Bool
   var members: [Agent] { conversation.members.compactMap { model.agent($0) } }
   var body: some View {
@@ -240,7 +241,8 @@ struct ConversationView: View {
           .defaultScrollAnchor(.bottom)
           .modifier(ScrollPositionObserver(isAtBottom: $following))
           .onChange(of: model.messages.count) { _, _ in
-            if following {
+            if following || initialScroll {
+              initialScroll = model.messages.isEmpty
               withAnimation(.easeOut(duration: 0.18)) { proxy.scrollTo("bottom", anchor: .bottom) }
             }
           }
@@ -445,9 +447,10 @@ struct MessageBubble: View {
           }
           if !message.reactions.isEmpty {
             HStack(spacing: 2) {
-              ForEach(message.reactions, id: \.actor) { r in
-                Text(r.emoji).font(.system(size: 14)).help(
-                  r.actor == "user" ? "You" : model.agent(r.actor)?.name ?? r.actor)
+              ForEach(Array(Set(message.reactions.map(\.emoji))).sorted(), id: \.self) { emoji in
+                let reactions = message.reactions.filter { $0.emoji == emoji }
+                Text(emoji + (reactions.count > 1 ? " \(reactions.count)" : "")).font(.system(size: 13)).help(
+                  reactions.map { $0.actor == "user" ? "You" : model.agent($0.actor)?.name ?? $0.actor }.joined(separator: ", "))
               }
             }.padding(.horizontal, 8).padding(.vertical, 3).background(.quaternary, in: Capsule())
               .padding(.horizontal, 6)
