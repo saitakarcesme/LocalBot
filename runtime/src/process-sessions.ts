@@ -6,7 +6,7 @@ type Owner = { taskId: string; agentId: string; workspace: string };
 type Session = {
   id: string; owner: Owner; child: ChildProcessWithoutNullStreams;
   output: string; bytes: number; state: "running" | "exited";
-  exitCode: number | null; reason: string; cleanup: () => void;
+  exitCode: number | null; reason: string; cleanup: () => void; wake?: () => void;
 };
 export class ProcessSessions {
   private sessions = new Map<string, Session>();
@@ -48,6 +48,7 @@ export class ProcessSessions {
       s.output += decoder.write(b.subarray(0, remaining));
       s.bytes += b.length;
       if (s.bytes > this.outputLimit) this.kill(s, "Output limit exceeded");
+      if (s.output) s.wake?.();
     };
     const stdout = new StringDecoder("utf8"), stderr = new StringDecoder("utf8");
     child.stdout.on("data", collect(stdout));
@@ -56,7 +57,7 @@ export class ProcessSessions {
     child.on("error", e => { s.reason = e.message; });
     child.on("close", code => {
       s.output += stdout.end() + stderr.end();
-      s.exitCode = code; s.state = "exited"; s.cleanup();
+      s.exitCode = code; s.state = "exited"; s.cleanup(); s.wake?.();
       // Reap any descendants that closed their inherited pipes early.
       try { process.kill(-child.pid!, "SIGKILL"); } catch {}
     });
@@ -68,6 +69,24 @@ export class ProcessSessions {
     const result = { sessionId: id, state: s.state, exitCode: s.exitCode, reason: s.reason || null, output: s.output };
     s.output = "";
     return result;
+  }
+  async wait(owner: Owner, id: string, waitMs: number, signal: AbortSignal) {
+    if (!Number.isInteger(waitMs) || waitMs < 0 || waitMs > 60_000)
+      throw new Error("Process wait must be an integer from 0 to 60000 milliseconds");
+    signal.throwIfAborted();
+    const s = this.owned(owner, id);
+    if (s.wake) throw new Error("A wait is already pending for this process session");
+    if (waitMs === 0 || s.state === "exited" || s.output) return this.poll(owner, id);
+    await new Promise<void>((resolve, reject) => {
+      const cleanup = () => { clearTimeout(timer); signal.removeEventListener("abort", abort); s.wake = undefined; };
+      const wake = () => { cleanup(); resolve(); };
+      const abort = () => { cleanup(); reject(signal.reason ?? new Error("Process wait cancelled")); };
+      const timer = setTimeout(wake, waitMs);
+      s.wake = wake;
+      signal.addEventListener("abort", abort, { once: true });
+    });
+    signal.throwIfAborted();
+    return this.poll(owner, id);
   }
   async input(owner: Owner, id: string, text: string, end: boolean) {
     const s = this.owned(owner, id);
@@ -90,7 +109,7 @@ export class ProcessSessions {
   releaseTask(taskId: string) {
     for (const [id, s] of this.sessions) if (s.owner.taskId === taskId) {
       if (s.state === "running") this.kill(s, "Task ended");
-      s.cleanup(); this.sessions.delete(id);
+      s.cleanup(); this.sessions.delete(id); s.wake?.();
     }
   }
 }

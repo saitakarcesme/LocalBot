@@ -90,3 +90,32 @@ test('agent configuration changes stop already-running sessions', async () => {
     assert.equal((await finished(m, result.sessionId)).reason, 'Agent configuration changed');
   } finally { m.releaseTask(owner.taskId); }
 });
+
+test('process waits wake on output and exit without consuming output twice', async () => {
+  const m = new ProcessSessions();const signal = new AbortController().signal;
+  try {
+    const s = await m.start(owner, launch('setTimeout(()=>process.stdout.write("ready"),150);setTimeout(()=>process.exit(0),350)'), signal);
+    const first = await m.wait(owner,s.sessionId,2000,signal);
+    assert.equal(first.output,'ready');assert.equal(first.state,'running');
+    const last = await m.wait(owner,s.sessionId,2000,signal);
+    assert.equal(last.state,'exited');assert.equal(last.exitCode,0);assert.equal(last.output,'');
+    assert.equal((await m.wait(owner,s.sessionId,60000,signal)).state,'exited');
+  } finally {m.releaseTask(owner.taskId);}
+});
+test('process waits respect timeout, cancellation, owner isolation and task cleanup', async () => {
+  const m = new ProcessSessions();const signal = new AbortController().signal;
+  try {
+    const s = await m.start(owner,launch('setInterval(()=>{},1000)'),signal);
+    for (const waitMs of [-1,60001,NaN,1.5]) await assert.rejects(m.wait(owner,s.sessionId,waitMs,signal),/integer/);
+    await assert.rejects(m.wait({...owner,taskId:'other'},s.sessionId,100,signal),/not found/);
+    assert.equal((await m.wait(owner,s.sessionId,0,signal)).state,'running');
+    const start=performance.now();assert.equal((await m.wait(owner,s.sessionId,40,signal)).state,'running');assert(performance.now()-start>=30);
+    const controller=new AbortController();const cancelled=m.wait(owner,s.sessionId,60000,controller.signal);
+    await assert.rejects(m.wait(owner,s.sessionId,1,signal),/already pending/);
+    controller.abort();await assert.rejects(cancelled,/abort/i);
+    // Cancelling a wait alone preserves the process; the task's own signal owns its lifetime.
+    assert.equal(m.poll(owner,s.sessionId).state,'running');
+    const released=m.wait(owner,s.sessionId,60000,signal);m.releaseTask(owner.taskId);
+    await assert.rejects(released,/not found/);
+  } finally {m.releaseTask(owner.taskId);}
+});
