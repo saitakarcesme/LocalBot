@@ -97,8 +97,8 @@ struct MainView: View {
                   model.newConversationProjectId = project.id
                   model.showNew = true
                 } label: { Label("New conversation", systemImage: "plus") }
-                  .buttonStyle(.plain).foregroundStyle(.secondary).font(.caption)
-              } header: { Label(project.name, systemImage: "folder") }
+                  .buttonStyle(.borderless).foregroundStyle(.secondary).font(.caption).selectionDisabled()
+              } header: { Label(project.name, systemImage: "folder").selectionDisabled() }
             }
           }.listStyle(.sidebar)
         } else {
@@ -202,9 +202,6 @@ struct ConversationRow: View {
         agent: model.agent(conversation.members.first), group: conversation.members.count > 1,
         size: 40)
       VStack(alignment: .leading, spacing: 4) {
-        if let project = model.projects.first(where: { $0.id == conversation.projectId }) {
-          Label(project.name, systemImage: "folder").font(.system(size: 10)).foregroundStyle(.secondary)
-        }
         HStack {
           Text(conversation.title).font(.system(size: 13, weight: .semibold)).lineLimit(1)
           Spacer(minLength: 1)
