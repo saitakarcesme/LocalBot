@@ -42,8 +42,9 @@ export class Engine {
     const result = JSON.parse(call.function.arguments);
     const members = c.automatic ? [...new Set<string>(result.members)].filter(id => candidates.some(a => a.id === id)).slice(0, 8) : c.members;
     if (!members.length) throw new Error("No suitable agent selected");
-    const title = String(result.title ?? "").trim().slice(0, 80);
-    if (!title) throw new Error("Conversation title is empty");
+    const topic = String(result.title ?? "").trim().slice(0, 80);
+    const title = !c.projectId && c.members.length === 1 ? `${lead.name} · ${topic}` : topic;
+    if (!topic) throw new Error("Conversation title is empty");
     this.store.transaction(() => {
       this.store.exec("UPDATE conversations SET title=?,members=? WHERE id=?", c.titled ? c.title : title, JSON.stringify(members), c.id);
       this.store.exec("INSERT INTO conversation_context VALUES(?,?,?,1) ON CONFLICT(conversationId) DO UPDATE SET titled=1", c.id, c.projectId ?? null, c.automatic ? 1 : 0);

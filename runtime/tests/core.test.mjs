@@ -197,6 +197,23 @@ after(() => fixture.close());
 const p = store.provider("local");
 p.endpoint = `http://127.0.0.1:${fixture.address().port}`;
 store.saveProvider(p);
+test("project conversations execute in the project folder and preserve contact workspace", async () => {
+  mode = "tools";
+  const projectDir = join(root, "project-work");
+  await mkdir(projectDir);
+  const project = store.createProject("Project verification", projectDir);
+  const conversation = store.createConversation("Build", ["coder"], project.id, false);
+  const engine = new Engine(store);
+  const task = engine.enqueue(conversation.id, "Save a file in this project");
+  await wait(() => store.task(task.id).status === "awaiting_approval");
+  engine.decide(store.get("SELECT id FROM approvals WHERE taskId=? AND status='pending'", task.id).id, true);
+  await wait(() => store.task(task.id).status === "completed");
+  assert.equal(await readFile(join(projectDir, "agent.txt"), "utf8"), "written by tool");
+  assert.equal(store.agent("coder").workspace, workspace);
+  assert.equal(store.snapshot().projects[0].id, project.id);
+  assert.equal(store.conversation(conversation.id).projectId, project.id);
+  store.exec("DELETE FROM artifacts WHERE runId IN (SELECT id FROM runs WHERE taskId=?)", task.id);
+});
 test("agent loop pauses for approval, executes a real tool, saves activity and artifact", async () => {
   mode = "tools";
   const c = store.createConversation("Approval", ["coder"]);
