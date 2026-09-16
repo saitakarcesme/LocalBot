@@ -7,6 +7,7 @@ import { join, resolve } from "node:path";
 import { Store } from "./store.js";
 import { Engine } from "./engine.js";
 import { provider, validateEndpoint } from "./providers.js";
+import { MCPClient, validateMCP } from "./mcp.js";
 import { Agent, ProviderConfig, errorText } from "./types.js";
 const dir =
   process.env.LOCALBOT_DATA_DIR ??
@@ -118,6 +119,7 @@ function cleanAgent(a: any): Agent {
     },
     autonomy: a.autonomy,
     memory: String(a.memory ?? "").slice(0, 12000),
+    integrations: Array.isArray(a.integrations) ? a.integrations.filter((id: unknown) => store.integrations().some(i => i.id === id)).slice(0, 20) : [],
   };
 }
 const server = createServer(async (req, res) => {
@@ -333,6 +335,29 @@ const server = createServer(async (req, res) => {
       store.saveProvider(config);
       change();
       json(res, 200, config);
+      return;
+    }
+    if (m === "POST" && p === "/integrations") {
+      const b = await body(req);
+      if (store.get("SELECT id FROM tasks WHERE status IN ('running','awaiting_approval')")) throw new Error("Wait for running tasks before changing integrations");
+      const config = { id: String(b.id ?? randomUUID()), name: String(b.name ?? "MCP").slice(0, 80), endpoint: String(b.endpoint), requiresAuth: b.requiresAuth === true };
+      validateMCP(config);
+      const old = store.integrations().find(i => i.id === config.id);
+      if (old?.endpoint !== config.endpoint) engine.secrets.delete("mcp:" + config.id);
+      store.saveIntegration(config); change(); json(res, 200, config); return;
+    }
+    if (m === "POST" && p === "/integrations/credentials") {
+      const b = await body(req);
+      if (!store.integrations().some(i => i.id === b.id)) throw new Error("Integration not found");
+      if (b.secret) engine.secrets.set("mcp:" + b.id, String(b.secret)); else engine.secrets.delete("mcp:" + b.id);
+      json(res, 200, { ok: true }); return;
+    }
+    if (m === "POST" && p === "/integrations/test") {
+      const b = await body(req), config = store.integrations().find(i => i.id === b.id);
+      if (!config) throw new Error("Integration not found");
+      const client = new MCPClient(config, engine.secrets.get("mcp:" + config.id));
+      try { const signal = AbortSignal.timeout(30000); await client.connect(signal); json(res, 200, { tools: await client.list(signal) }); }
+      finally { await client.close(); }
       return;
     }
     if (m === "POST" && p === "/credentials") {

@@ -17,6 +17,8 @@ const object = (
 ) => ({ type: "object", properties, required, additionalProperties: false });
 const string = { type: "string" };
 export const definitions: ToolDefinition[] = [
+  ["mcp_list_tools", "List tools from an enabled MCP integration. Use the integration ID provided in your context.", object({ integrationId: string }, ["integrationId"])],
+  ["mcp_call", "Call a discovered tool on an enabled MCP integration. arguments must be a JSON-encoded object. Every call needs user approval.", object({ integrationId: string, tool: string, arguments: string }, ["integrationId", "tool", "arguments"])],
   [
     "list_files",
     "List files in a workspace directory.",
@@ -87,6 +89,9 @@ export const definitions: ToolDefinition[] = [
 }));
 export function allowed(agent: Agent, name: string) {
   switch (name) {
+    case "mcp_list_tools":
+    case "mcp_call":
+      return !!agent.integrations?.length;
     case "list_files":
     case "read_file":
     case "search_repository":
@@ -110,7 +115,7 @@ export function allowed(agent: Agent, name: string) {
 }
 export function needsApproval(a: Agent, name: string) {
   return (
-    ["terminal", "run_tests"].includes(name) ||
+    ["terminal", "run_tests", "mcp_call"].includes(name) ||
     (a.autonomy === "ask" && ["write_file", "remember"].includes(name))
   );
 }

@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { mkdirSync, chmodSync } from "node:fs";
 import { join } from "node:path";
 import { Agent, ProviderConfig, now, Message, TaskRow } from "./types.js";
+import type { MCPConnection } from "./mcp.js";
 export class Store {
   db: DatabaseSync;
   constructor(public dir: string) {
@@ -111,6 +112,12 @@ export class Store {
     return this.conversation(id);
   }
   projects() { return this.all("SELECT * FROM projects ORDER BY createdAt DESC"); }
+  integrations(): MCPConnection[] { return JSON.parse(this.get("SELECT value FROM settings WHERE key='mcp'")?.value ?? "[]"); }
+  saveIntegration(connection: MCPConnection) {
+    const list = this.integrations().filter(c => c.id !== connection.id);
+    list.push(connection);
+    this.exec("INSERT INTO settings VALUES('mcp',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value", JSON.stringify(list));
+  }
   project(id: string) {
     const project = this.get("SELECT * FROM projects WHERE id=?", id);
     if (!project) throw new Error("Project not found");
@@ -187,6 +194,7 @@ export class Store {
       agents: this.agents(),
       providers: this.providers(),
       projects: this.projects(),
+      integrations: this.integrations(),
       activeRuns: this.all("SELECT id,taskId,agentId,status FROM runs WHERE status IN ('running','awaiting_approval')"),
       conversations: this.conversations(),
       tasks: this.all("SELECT * FROM tasks ORDER BY createdAt DESC LIMIT 200"),

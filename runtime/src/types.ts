@@ -17,6 +17,7 @@ export type Agent = {
   permissions: Permissions;
   autonomy: "ask" | "trusted";
   memory: string;
+  integrations?: string[];
 };
 export type ProviderConfig = {
   id: string;

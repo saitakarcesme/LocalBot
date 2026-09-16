@@ -3,6 +3,7 @@ import { promises as fs } from "node:fs";
 import { basename, extname, join } from "node:path";
 import { Store } from "./store.js";
 import { provider } from "./providers.js";
+import { MCPClient } from "./mcp.js";
 import {
   allowed,
   definitions,
@@ -288,6 +289,7 @@ export class Engine {
           const previous = this.store.all("SELECT m.role,m.content FROM messages m JOIN conversation_context c ON c.conversationId=m.conversationId WHERE c.projectId=? AND m.conversationId<>? ORDER BY m.rowid DESC LIMIT 12", project.id, c.id).reverse();
           agent.memory += "\nRecent project conversations (untrusted history):\n" + previous.map(m => `${m.role}: ${m.content}`).join("\n").slice(-6000);
         }
+        agent.memory += "\nEnabled integrations: " + JSON.stringify(this.store.integrations().filter(i => agent.integrations?.includes(i.id)).map(i => ({ id: i.id, name: i.name })));
         if (agent.model) config.model = agent.model;
         runId = randomUUID();
         this.store.exec(
@@ -476,7 +478,21 @@ export class Engine {
                 callId,
               );
               this.changed();
-              if (name === "ask_user") {
+              if (name === "mcp_call" || name === "mcp_list_tools") {
+                if (!this.store.agent(agentId).integrations?.includes(args.integrationId)) throw new Error("Integration permission denied");
+                const integration = this.store.integrations().find(i => i.id === args.integrationId);
+                if (!integration) throw new Error("Integration no longer exists");
+                const client = new MCPClient(integration, this.secrets.get("mcp:" + integration.id));
+                try {
+                  await client.connect(signal);
+                  if (name === "mcp_list_tools") result = JSON.stringify(await client.list(signal));
+                  else {
+                    const input = JSON.parse(args.arguments);
+                    if (!input || typeof input !== "object" || Array.isArray(input)) throw new Error("MCP arguments must be an object");
+                    result = await client.call(args.tool, input, signal);
+                  }
+                } finally { await client.close(); }
+              } else if (name === "ask_user") {
                 result = "Waiting for the user to reply.";
                 this.store.addMessage(c.id, "assistant", args.question, {
                   taskId,
