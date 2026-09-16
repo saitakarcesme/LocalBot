@@ -33,7 +33,7 @@
   },
   "v0_2": {
     "status": "core_implemented_live_verified_tool_parity_in_progress",
-    "updated_at": "2026-09-16T17:33:16.652412+00:00",
+    "updated_at": "2026-09-16T21:35:51.769950+00:00",
     "runtime_tests_passed": 97,
     "real_subscription_agents_verified": 5,
     "real_project": "Focus Ledger",
@@ -58,9 +58,11 @@
       "manual scrolling survives Activity width change",
       "last selected chat survives relaunch"
     ],
-    "checkpoint": "Attachment-aware routing:97 tests plus real subscription file-only title/team/clarification verified",
+    "checkpoint": "Bounded user-requested handoff: latest package installed, native direct/project conversations and actual tool/test execution verified; app left open for user trial",
     "tests_passed": 97,
     "packaged_runtime_subscription_verified": true,
-    "built_app": "~/Library/Caches/LocalBot/AppBuild/LocalBot.app"
+    "built_app": "~/Library/Caches/LocalBot/AppBuild/LocalBot.app",
+    "installed_source_commit": "57030f370fbe3ba5d2230bf4c6f42f0866f9a2bc",
+    "native_handoff_verified": true
   }
 }
