@@ -268,6 +268,15 @@ const server = createServer(async (req, res) => {
       json(res, 200, a);
       return;
     }
+    if (m === "POST" && p === "/projects/update") {
+      const b = await body(req);
+      if (typeof b.name !== "string" || !b.name.trim() || b.name.trim().length > 80 || typeof b.memory !== "string" || b.memory.length > 12000 || typeof b.workspace !== "string")
+        throw new Error("Use a project name of 1–80 characters, a folder and notes of at most 12,000 characters");
+      const workspace = await fs.realpath(b.workspace);
+      if (!(await fs.stat(workspace)).isDirectory() || workspace === homedir() || workspace === "/" || workspace.includes("/.codex") || workspace.includes("/Library")) throw new Error("Choose a dedicated existing project folder");
+      const project = store.updateProject(b.id, { name: b.name.trim(), workspace, memory: b.memory }, b.expected);
+      change(); json(res, 200, project); return;
+    }
     if (m === "POST" && p === "/projects") {
       const b = await body(req);
       const name = String(b.name ?? "").trim().slice(0, 80);

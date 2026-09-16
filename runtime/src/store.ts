@@ -158,6 +158,18 @@ export class Store {
     if (!project) throw new Error("Project not found");
     return project;
   }
+  updateProject(id: string, next: { name: string; workspace: string; memory: string }, expected: { name: string; workspace: string; memory: string }) {
+    return this.transaction(() => {
+      const current = this.project(id);
+      if (!expected || ["name", "workspace", "memory"].some(k => current[k] !== expected[k as keyof typeof expected]))
+        throw new Error("Project changed since this editor opened. Reopen project details before saving.");
+      if (this.get(`SELECT t.id FROM tasks t JOIN conversation_context c ON c.conversationId=t.conversationId
+        WHERE c.projectId=? AND t.status IN ('queued','running','awaiting_approval','awaiting_input') LIMIT 1`, id))
+        throw new Error("Finish or stop project tasks before editing the project");
+      this.exec("UPDATE projects SET name=?,workspace=?,memory=? WHERE id=?", next.name, next.workspace, next.memory, id);
+      return this.project(id);
+    });
+  }
   createProject(name: string, workspace: string) {
     const id = randomUUID();
     this.exec("INSERT INTO projects VALUES(?,?,?,'',?)", id, name, workspace, now());

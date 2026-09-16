@@ -105,3 +105,13 @@ test('provider image capability opt-in persists through HTTP settings',async()=>
   assert.equal((await request('/snapshot')).data.providers.find(p=>p.id===local.id).imageInput,false);
  }finally{await request('/providers',local);}
 });
+
+test('project editor validates folders and text, persists edits and rejects stale saves',async()=>{
+ const original=(await request('/projects',{name:'Editor test',workspace:join(root,'workspace')})).data;
+ const body={id:original.id,name:'Renamed project',workspace:original.workspace,memory:'Keep project decisions here',expected:original};
+ const saved=await request('/projects/update',body);assert.equal(saved.status,200);assert.equal(saved.data.memory,body.memory);
+ assert.equal((await request('/projects/update',body)).status,400);
+ const current=saved.data;
+ for(const bad of [{workspace:'/'},{workspace:join(root,'missing')},{name:''},{memory:'x'.repeat(12001)}])assert.equal((await request('/projects/update',{...body,expected:current,...bad})).status,400);
+ const persisted=(await request('/snapshot')).data.projects.find(p=>p.id===original.id);assert.equal(persisted.name,body.name);assert.equal(persisted.workspace,original.workspace);
+});
