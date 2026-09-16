@@ -323,6 +323,19 @@ struct AgentEditor: View {
         Section("System Prompt") {
           TextEditor(text: $agent.systemPrompt).font(.body).frame(minHeight: 90)
         }
+        if !model.integrations.isEmpty {
+          Section("MCP Integrations") {
+            ForEach(model.integrations) { connection in
+              Toggle(connection.name, isOn: Binding(get: { agent.integrations?.contains(connection.id) == true }, set: { enabled in
+                var ids = agent.integrations ?? []
+                ids.removeAll { $0 == connection.id }
+                if enabled { ids.append(connection.id) }
+                agent.integrations = ids
+              }))
+            }
+            Text("Every integration tool call requires approval. External tools operate with the connected service's permissions.").font(.caption).foregroundStyle(.secondary)
+          }
+        }
         Section("Memory") {
           TextEditor(text: $agent.memory).font(.body).frame(minHeight: 70)
           Text("Durable notes used only by this contact.").font(.caption).foregroundStyle(

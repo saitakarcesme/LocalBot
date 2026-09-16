@@ -47,6 +47,8 @@ enum Keychain {
   @Published var projects: [Project] = []
   @Published var activeRuns: [ActiveRun] = []
   @Published var showProject = false
+  @Published var showIntegrations = false
+  @Published var integrations: [MCPConnection] = []
   @Published var conversations: [Conversation] = []
   @Published var tasks: [AgentTask] = []
   @Published var approvals: [Approval] = []
@@ -189,11 +191,17 @@ enum Keychain {
       providers = s.providers
       projects = s.projects ?? []
       activeRuns = s.activeRuns ?? []
+      integrations = s.integrations ?? []
       conversations = s.conversations
       tasks = s.tasks
       approvals = s.approvals
       lastRevision = s.revision
       if first {
+        for i in integrations {
+          if let secret = Keychain.read("mcp:" + i.id + "@" + i.endpoint) {
+            _ = try? await request("/integrations/credentials", body: ["id": i.id, "secret": secret])
+          }
+        }
         for p in providers {
           if let secret = Keychain.read(p.id + "@" + p.endpoint) {
             _ = try? await request("/credentials", body: ["providerId": p.id, "secret": secret])

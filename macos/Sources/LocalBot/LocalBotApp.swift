@@ -23,6 +23,7 @@ import SwiftUI
       }
       CommandGroup(replacing: .appSettings) {
         Button("Settings…") { model.showSettings = true }.keyboardShortcut(",")
+        Button("Integrations…") { model.showIntegrations = true }
       }
       CommandMenu("Conversation") {
         Button("Show Activity") { model.showActivity.toggle() }.keyboardShortcut(
@@ -156,6 +157,7 @@ struct MainView: View {
     }
     .sheet(isPresented: $model.showNew) { NewConversationView() }
     .sheet(isPresented: $model.showProject) { NewProjectView() }
+    .sheet(isPresented: $model.showIntegrations) { IntegrationsView() }
     .sheet(isPresented: $model.showSettings) { SettingsView() }
     .sheet(item: $model.editingAgent) { AgentEditor(agent: $0) }
     .sheet(item: $model.editingConversation) { ConversationEditor(conversation: $0) }

@@ -20,6 +20,7 @@ struct Agent: Codable, Identifiable, Equatable {
   var permissions: Permissions
   var autonomy: String
   var memory: String
+  var integrations: [String]? = nil
   var tint: Color {
     switch color {
     case "purple": return .purple
@@ -117,6 +118,7 @@ struct Activity: Codable, Identifiable {
   var createdAt: String
 }
 struct Snapshot: Codable {
+  var integrations: [MCPConnection]?
   var projects: [Project]?
   var activeRuns: [ActiveRun]?
   var agents: [Agent]
@@ -125,6 +127,12 @@ struct Snapshot: Codable {
   var tasks: [AgentTask]
   var approvals: [Approval]
   var revision: Int
+}
+struct MCPConnection: Codable, Identifiable {
+  var id: String
+  var name: String
+  var endpoint: String
+  var requiresAuth: Bool
 }
 struct ActiveRun: Codable, Identifiable {
   var id: String
