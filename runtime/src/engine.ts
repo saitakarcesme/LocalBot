@@ -1,3 +1,4 @@
+import { agentStepLimit } from "./run-limits.js";
 import { codexInput } from "./image-input.js";
 import { randomUUID } from "node:crypto";
 import { promises as fs } from "node:fs";
@@ -390,7 +391,8 @@ export class Engine {
           )
           .map((m) => m[1])
           .filter((n) => definitions.some((t) => t.function.name === n));
-        for (let step = 0; step < 24; step++) {
+        const maxSteps = agentStepLimit(agent.maxSteps);
+        for (let step = 0; step < maxSteps; step++) {
           signal.throwIfAborted();
           this.store.exec(
             "UPDATE runs SET checkpoint=?,updatedAt=? WHERE id=?",
@@ -613,7 +615,7 @@ export class Engine {
         }
         if (!ended)
           throw new Error(
-            "Reached 24 agent steps. Review activity and send a follow-up to continue.",
+            `Reached this contact's ${maxSteps}-step limit. Completed actions are preserved. Review Activity, adjust the contact's task step limit if needed, and send a follow-up to continue.`,
           );
         this.store.exec(
           "UPDATE runs SET status='completed',updatedAt=? WHERE id=?",

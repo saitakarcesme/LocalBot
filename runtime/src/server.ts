@@ -1,3 +1,4 @@
+import { agentStepLimit } from "./run-limits.js";
 import { MCPStdioTransport } from "./mcp-stdio.js";
 import { processSessions } from "./process-sessions.js";
 import { createServer, IncomingMessage, ServerResponse } from "node:http";
@@ -120,6 +121,7 @@ function cleanAgent(a: any): Agent {
       web: p.web === true,
     },
     autonomy: a.autonomy,
+    maxSteps: agentStepLimit(a.maxSteps),
     memory: String(a.memory ?? "").slice(0, 12000),
     integrations: Array.isArray(a.integrations) ? a.integrations.filter((id: unknown) => store.integrations().some(i => i.id === id)).slice(0, 20) : [],
   };
