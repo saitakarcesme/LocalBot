@@ -29,7 +29,7 @@ import SwiftUI
         Button("Show Activity") { model.showActivity.toggle() }.keyboardShortcut(
           "i", modifiers: [.command, .shift])
         Button("Stop Task") {
-          if let t = model.activeTask { Task { await model.post("/cancel", ["taskId": t.id]) } }
+          if let t = model.stoppableTask { Task { await model.post("/cancel", ["taskId": t.id]) } }
         }.keyboardShortcut(".")
         Button("Find Messages") {
           NotificationCenter.default.post(name: .init("FocusSearch"), object: nil)
@@ -442,7 +442,7 @@ struct ConversationView: View {
               send()
               return .handled
             }.padding(.vertical, 9)
-          if let t = model.activeTask {
+          if let t = model.stoppableTask {
             Button {
               Task { await model.post("/cancel", ["taskId": t.id]) }
             } label: {

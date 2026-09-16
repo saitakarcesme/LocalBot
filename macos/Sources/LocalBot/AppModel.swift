@@ -95,6 +95,7 @@ enum Keychain {
   var selected: Conversation? { conversations.first { $0.id == selectedId } }
   var visibleConversations: [Conversation] { conversations.filter { ($0.archived == true) == showingArchived } }
   var currentTasks: [AgentTask] { tasks.filter { $0.conversationId == selectedId } }
+  var stoppableTask: AgentTask? { activeTask ?? currentTasks.first { $0.status == "awaiting_input" } }
   var activeTask: AgentTask? { currentTasks.first { $0.active } }
   func agent(_ id: String?) -> Agent? { agents.first { $0.id == id } }
   func start() {
