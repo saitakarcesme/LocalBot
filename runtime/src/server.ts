@@ -212,6 +212,9 @@ const server = createServer(async (req, res) => {
         "SELECT id FROM tasks WHERE conversationId=? AND status='awaiting_input'",
         b.conversationId,
       );
+      const conversation = store.conversation(b.conversationId);
+      if (conversation.automatic || (!conversation.titled && conversation.members.length && store.provider(store.agent(conversation.members[0]).providerId).kind === "codex"))
+        await engine.prepareConversation(b.conversationId, String(b.content ?? ""));
       const task = engine.enqueue(
         b.conversationId,
         String(b.content ?? ""),
@@ -261,11 +264,20 @@ const server = createServer(async (req, res) => {
       json(res, 200, a);
       return;
     }
+    if (m === "POST" && p === "/projects") {
+      const b = await body(req);
+      const name = String(b.name ?? "").trim().slice(0, 80);
+      if (!name) throw new Error("Project name is required");
+      const workspace = await fs.realpath(String(b.workspace ?? ""));
+      if (!(await fs.stat(workspace)).isDirectory() || workspace === homedir() || workspace === "/" || workspace.includes("/.codex") || workspace.includes("/Library")) throw new Error("Choose a dedicated existing project folder");
+      const project = store.createProject(name, workspace);
+      change(); json(res, 201, project); return;
+    }
     if (m === "POST" && p === "/conversations") {
       const b = await body(req);
       if (
         !Array.isArray(b.members) ||
-        !b.members.length ||
+        (!b.members.length && !b.projectId) ||
         b.members.length > 8
       )
         throw new Error("Select 1–8 agents");
@@ -275,7 +287,8 @@ const server = createServer(async (req, res) => {
         .trim()
         .slice(0, 100);
       if (!title) throw new Error("Title is required");
-      const c = store.createConversation(title, members);
+      if (b.projectId) store.project(b.projectId);
+      const c = store.createConversation(title, members, b.projectId ?? null, b.automatic === true);
       change();
       json(res, 201, c);
       return;

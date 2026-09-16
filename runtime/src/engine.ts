@@ -24,6 +24,32 @@ export class Engine {
     public store: Store,
     private changed: () => void = () => {},
   ) {}
+  async prepareConversation(conversationId: string, prompt: string) {
+    const c = this.store.conversation(conversationId);
+    if (this.store.get("SELECT id FROM tasks WHERE conversationId=? AND status IN ('queued','running','awaiting_approval')", c.id)) return;
+    if (!c.automatic && c.titled) return;
+    const candidates = this.store.agents();
+    const lead = candidates.find(a => a.id === c.members[0]) ?? candidates[0];
+    if (!lead) throw new Error("Create an agent first");
+    const config = this.store.provider(lead.providerId);
+    if (lead.model) config.model = lead.model;
+    const response = await provider(config, this.secrets.get(config.id)).generate([
+      { role: "system", content: "Organize a work conversation. Call organize with a short descriptive title in the user's language and the smallest useful ordered team of agent IDs. Select agents by their actual roles. Implementation precedes review and testing. For direct conversations keep the supplied members. Do not perform the task yet." },
+      { role: "user", content: JSON.stringify({ prompt, automatic: !!c.automatic, members: c.members, agents: candidates.map(a => ({ id: a.id, name: a.name, role: a.role })), recent: this.store.messages(c.id).slice(-6).map(m => m.content.slice(0, 1000)) }) },
+    ], [{ type: "function", function: { name: "organize", description: "Choose conversation title and team", parameters: { type: "object", properties: { title: { type: "string" }, members: { type: "array", items: { type: "string" } } }, required: ["title", "members"] } } }], AbortSignal.timeout(90_000));
+    const call = response.calls.find(c => c.function.name === "organize");
+    if (!call) throw new Error("Could not organize this conversation. Please retry.");
+    const result = JSON.parse(call.function.arguments);
+    const members = c.automatic ? [...new Set<string>(result.members)].filter(id => candidates.some(a => a.id === id)).slice(0, 8) : c.members;
+    if (!members.length) throw new Error("No suitable agent selected");
+    const title = String(result.title ?? "").trim().slice(0, 80);
+    if (!title) throw new Error("Conversation title is empty");
+    this.store.transaction(() => {
+      this.store.exec("UPDATE conversations SET title=?,members=? WHERE id=?", c.titled ? c.title : title, JSON.stringify(members), c.id);
+      this.store.exec("INSERT INTO conversation_context VALUES(?,?,?,1) ON CONFLICT(conversationId) DO UPDATE SET titled=1", c.id, c.projectId ?? null, c.automatic ? 1 : 0);
+    });
+    this.changed();
+  }
   enqueue(conversationId: string, prompt: string, attachments: string[] = []) {
     const c = this.store.conversation(conversationId);
     if (!c.members.length) throw new Error("Conversation has no agents");
@@ -84,7 +110,9 @@ export class Engine {
             .conversation(task.conversationId)
             .members.map((id: string) => this.store.agent(id)) as Agent[];
           const providers = new Set(members.map((a) => a.providerId));
-          const workspaces = members.map((a) => a.workspace);
+          const conversation = this.store.conversation(task.conversationId);
+          const project = conversation.projectId ? this.store.project(conversation.projectId) : null;
+          const workspaces = members.map((a) => project?.workspace ?? a.workspace);
           const busy = [...this.reservations.values()];
           if (
             [...providers].some(
@@ -247,6 +275,8 @@ export class Engine {
         signal.throwIfAborted();
         const agent = this.store.agent(agentId),
           config = this.store.provider(agent.providerId);
+        const project = c.projectId ? this.store.project(c.projectId) : null;
+        if (project) { agent.workspace = project.workspace; agent.memory += `\nShared project memory: ${project.memory}`; }
         if (agent.model) config.model = agent.model;
         runId = randomUUID();
         this.store.exec(
@@ -457,16 +487,21 @@ export class Engine {
                 this.changed();
                 return;
               } else if (name === "remember") {
-                const a = this.store.agent(agentId);
-                a.memory = (a.memory + "\n" + args.note).trim().slice(-12000);
-                this.store.saveAgent(a);
+                if (project) {
+                  const current = this.store.project(project.id);
+                  this.store.exec("UPDATE projects SET memory=? WHERE id=?", (current.memory + "\n" + args.note).trim().slice(-12000), project.id);
+                } else {
+                  const a = this.store.agent(agentId);
+                  a.memory = (a.memory + "\n" + args.note).trim().slice(-12000);
+                  this.store.saveAgent(a);
+                }
                 result = "Memory saved.";
               } else if (name === "react") {
                 this.store.react(task.messageId, agentId, args.emoji);
                 result = "Reaction added.";
               } else {
                 const res = await executeTool(
-                  this.store.agent(agentId),
+                  { ...this.store.agent(agentId), workspace: project?.workspace ?? this.store.agent(agentId).workspace },
                   name,
                   args,
                   signal,

@@ -14,6 +14,8 @@ export class Store {
       CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, value TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS agents(id TEXT PRIMARY KEY, data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS providers(id TEXT PRIMARY KEY, data TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS projects(id TEXT PRIMARY KEY, name TEXT NOT NULL, workspace TEXT NOT NULL, memory TEXT NOT NULL DEFAULT '', createdAt TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS conversation_context(conversationId TEXT PRIMARY KEY REFERENCES conversations(id), projectId TEXT REFERENCES projects(id), automatic INTEGER NOT NULL DEFAULT 0, titled INTEGER NOT NULL DEFAULT 0);
       CREATE TABLE IF NOT EXISTS conversations(id TEXT PRIMARY KEY, title TEXT NOT NULL, members TEXT NOT NULL, createdAt TEXT NOT NULL, updatedAt TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS threads(id TEXT PRIMARY KEY, conversationId TEXT NOT NULL REFERENCES conversations(id), title TEXT NOT NULL, createdAt TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS tasks(id TEXT PRIMARY KEY, conversationId TEXT NOT NULL REFERENCES conversations(id), threadId TEXT REFERENCES threads(id), messageId TEXT NOT NULL, prompt TEXT NOT NULL, status TEXT NOT NULL, createdAt TEXT NOT NULL, updatedAt TEXT NOT NULL, error TEXT);
@@ -85,14 +87,15 @@ export class Store {
   conversation(id: string) {
     const c = this.get("SELECT * FROM conversations WHERE id=?", id);
     if (!c) throw new Error("Conversation not found");
-    return { ...c, members: JSON.parse(c.members) };
+    const context = this.get("SELECT projectId,automatic,titled FROM conversation_context WHERE conversationId=?", id);
+    return { ...c, ...context, members: JSON.parse(c.members) };
   }
   conversations() {
     return this.all(
       `SELECT c.*, (SELECT content FROM messages WHERE conversationId=c.id ORDER BY rowid DESC LIMIT 1) preview FROM conversations c ORDER BY updatedAt DESC`,
-    ).map((c) => ({ ...c, members: JSON.parse(c.members) }));
+    ).map((c) => ({ ...c, ...this.get("SELECT projectId,automatic,titled FROM conversation_context WHERE conversationId=?", c.id), members: JSON.parse(c.members) }));
   }
-  createConversation(title: string, members: string[]) {
+  createConversation(title: string, members: string[], projectId: string | null = null, automatic = false) {
     const id = randomUUID(),
       date = now();
     this.exec(
@@ -104,7 +107,19 @@ export class Store {
       date,
     );
     this.exec("INSERT INTO threads VALUES(?,?,?,?)", id, id, "Main", date);
+    this.exec("INSERT INTO conversation_context VALUES(?,?,?,0)", id, projectId, automatic ? 1 : 0);
     return this.conversation(id);
+  }
+  projects() { return this.all("SELECT * FROM projects ORDER BY createdAt DESC"); }
+  project(id: string) {
+    const project = this.get("SELECT * FROM projects WHERE id=?", id);
+    if (!project) throw new Error("Project not found");
+    return project;
+  }
+  createProject(name: string, workspace: string) {
+    const id = randomUUID();
+    this.exec("INSERT INTO projects VALUES(?,?,?,'',?)", id, name, workspace, now());
+    return this.project(id);
   }
   addMessage(
     conversationId: string,
@@ -171,6 +186,7 @@ export class Store {
     return {
       agents: this.agents(),
       providers: this.providers(),
+      projects: this.projects(),
       conversations: this.conversations(),
       tasks: this.all("SELECT * FROM tasks ORDER BY createdAt DESC LIMIT 200"),
       approvals: this.all("SELECT * FROM approvals WHERE status='pending'"),
