@@ -209,10 +209,23 @@ export class Store {
       if (!message) throw new Error("Message cursor does not belong to this conversation");
       cursor = message.rowid + (through ? 1 : 0);
     }
-    return this.all(
+    return this.hydrateMessages(this.all(
       "SELECT * FROM (SELECT rowid,* FROM messages WHERE conversationId=? AND (? IS NULL OR rowid<?) ORDER BY rowid DESC LIMIT 300) ORDER BY rowid",
       id, cursor ?? null, cursor ?? null,
-    ).map((m) => ({
+    ));
+  }
+  taskMessages(taskId: string): Message[] {
+    const task = this.task(taskId);
+    const cutoff = this.get("SELECT rowid FROM messages WHERE id=? AND conversationId=?", task.messageId, task.conversationId)?.rowid;
+    if (!cutoff) throw new Error("Task message not found");
+    const taskOrder = this.get("SELECT rowid FROM tasks WHERE id=?", taskId).rowid;
+    return this.hydrateMessages(this.all(`SELECT * FROM (
+      SELECT m.rowid AS rowid,m.* FROM messages m LEFT JOIN tasks t ON t.id=m.taskId
+      WHERE m.conversationId=? AND ((m.taskId IS NULL AND m.rowid<=?) OR (t.conversationId=m.conversationId AND t.rowid<=?))
+      ORDER BY m.rowid DESC LIMIT 300) ORDER BY rowid`, task.conversationId, cutoff, taskOrder));
+  }
+  private hydrateMessages(rows: any[]): Message[] {
+    return rows.map((m) => ({
       ...m,
       reactions: this.all(
         "SELECT actor,emoji FROM reactions WHERE messageId=?",

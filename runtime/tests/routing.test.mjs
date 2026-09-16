@@ -148,3 +148,33 @@ test('local direct chats get stable request titles without extra inference or te
   assert.equal(f.store.conversation(manual.id).title,'Kendi başlığım');
  }finally{await f.close();}
 });
+
+
+test('future messages cannot evict task history and current team handoffs remain visible',async()=>{
+ let release,started=false;const gate=new Promise(r=>release=r);const contexts=[];
+ const f=await setup(async(body,res)=>{
+  if(body.tools?.some(t=>t.function.name==='organize')){started=true;await gate;reply(res,{content:'',tool_calls:[{function:{name:'organize',arguments:{title:'History isolation',members:['coder','reviewer']}}}]});}
+  else {contexts.push(body.messages);reply(res,{content:contexts.length===1?'CURRENT_TEAM_HANDOFF':'Reviewed.'});}
+ });
+ try{
+  f.store.addMessage(f.conversation.id,'user','EARLIER_CONTEXT_KEEP');
+  const task=f.engine.enqueue(f.conversation.id,'CURRENT_REQUEST_KEEP');
+  await until(()=>started);
+  for(let i=0;i<350;i++)f.store.addMessage(f.conversation.id,'user','FUTURE_UNOWNED_EXCLUDE_'+i);
+  // Simulate queued task records without starting 350 actual model runs.
+  const futureMessage=f.store.addMessage(f.conversation.id,'user','FUTURE_TASK_EXCLUDE',{taskId:'future-task'});
+  f.store.exec('INSERT INTO tasks VALUES(?,?,?,?,?,?,?,?,?)','future-task',f.conversation.id,f.conversation.id,futureMessage,'Future request','cancelled',new Date().toISOString(),new Date().toISOString(),null);
+  release();await until(()=>f.store.task(task.id).status==='completed');
+  assert.equal(contexts.length,2);
+  for(const messages of contexts){
+   const userContent=messages.filter(m=>m.role==='user').map(m=>m.content).join('\n');
+   assert(userContent.includes('EARLIER_CONTEXT_KEEP'));assert(userContent.includes('CURRENT_REQUEST_KEEP'));
+   assert(!JSON.stringify(messages).includes('FUTURE_UNOWNED_EXCLUDE'));assert(!JSON.stringify(messages).includes('FUTURE_TASK_EXCLUDE'));
+  }
+  assert(JSON.stringify(contexts[1]).includes('CURRENT_TEAM_HANDOFF'));
+  assert.equal(f.store.messages(f.conversation.id).length,300);
+  const history=f.store.taskMessages(task.id);
+  assert(history.some(m=>m.content==='CURRENT_TEAM_HANDOFF'));
+  assert(history.some(m=>m.content==='EARLIER_CONTEXT_KEEP'));
+ }finally{release();await f.close();}
+});
