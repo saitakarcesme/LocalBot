@@ -277,6 +277,11 @@ const server = createServer(async (req, res) => {
       const project = store.createProject(name, workspace);
       change(); json(res, 201, project); return;
     }
+    if (m === "POST" && p === "/conversations/archive") {
+      const b = await body(req);
+      const c = store.setConversationArchived(b.id, b.archived);
+      change(); json(res, 200, c); return;
+    }
     if (m === "POST" && p === "/conversations/update") {
       const b = await body(req);
       const c = store.conversation(b.id);

@@ -69,6 +69,7 @@ export class Engine {
     const id = randomUUID(),
       date = now();
     this.store.transaction(() => {
+      this.store.setConversationArchived(conversationId, false);
       const messageId = this.store.addMessage(conversationId, "user", prompt, {
         taskId: id,
       });

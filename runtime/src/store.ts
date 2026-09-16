@@ -18,6 +18,7 @@ export class Store {
       CREATE TABLE IF NOT EXISTS projects(id TEXT PRIMARY KEY, name TEXT NOT NULL, workspace TEXT NOT NULL, memory TEXT NOT NULL DEFAULT '', createdAt TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS conversation_context(conversationId TEXT PRIMARY KEY REFERENCES conversations(id), projectId TEXT REFERENCES projects(id), automatic INTEGER NOT NULL DEFAULT 0, titled INTEGER NOT NULL DEFAULT 0);
       CREATE TABLE IF NOT EXISTS conversations(id TEXT PRIMARY KEY, title TEXT NOT NULL, members TEXT NOT NULL, createdAt TEXT NOT NULL, updatedAt TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS conversation_archive(conversationId TEXT PRIMARY KEY REFERENCES conversations(id));
       CREATE TABLE IF NOT EXISTS goals(id TEXT PRIMARY KEY, conversationId TEXT NOT NULL REFERENCES conversations(id), objective TEXT NOT NULL, status TEXT NOT NULL CHECK(status IN ('active','blocked','complete')), evidence TEXT NOT NULL DEFAULT '', createdAt TEXT NOT NULL, updatedAt TEXT NOT NULL);
       CREATE UNIQUE INDEX IF NOT EXISTS goals_unfinished ON goals(conversationId) WHERE status IN ('active','blocked');
       CREATE TABLE IF NOT EXISTS threads(id TEXT PRIMARY KEY, conversationId TEXT NOT NULL REFERENCES conversations(id), title TEXT NOT NULL, createdAt TEXT NOT NULL);
@@ -91,12 +92,21 @@ export class Store {
     const c = this.get("SELECT * FROM conversations WHERE id=?", id);
     if (!c) throw new Error("Conversation not found");
     const context = this.get("SELECT projectId,automatic,titled FROM conversation_context WHERE conversationId=?", id);
-    return { ...c, ...context, members: JSON.parse(c.members) };
+    return { ...c, ...context, archived: !!this.get("SELECT 1 FROM conversation_archive WHERE conversationId=?", id), members: JSON.parse(c.members) };
   }
   conversations() {
     return this.all(
-      `SELECT c.*, (SELECT content FROM messages WHERE conversationId=c.id ORDER BY rowid DESC LIMIT 1) preview FROM conversations c ORDER BY updatedAt DESC`,
-    ).map((c) => ({ ...c, ...this.get("SELECT projectId,automatic,titled FROM conversation_context WHERE conversationId=?", c.id), members: JSON.parse(c.members) }));
+      `SELECT c.*, EXISTS(SELECT 1 FROM conversation_archive WHERE conversationId=c.id) archived, (SELECT content FROM messages WHERE conversationId=c.id ORDER BY rowid DESC LIMIT 1) preview FROM conversations c ORDER BY updatedAt DESC`,
+    ).map((c) => ({ ...c, archived: !!c.archived, ...this.get("SELECT projectId,automatic,titled FROM conversation_context WHERE conversationId=?", c.id), members: JSON.parse(c.members) }));
+  }
+  setConversationArchived(id: string, archived: boolean) {
+    this.conversation(id);
+    if (typeof archived !== "boolean") throw new Error("archived must be a boolean");
+    if (archived && this.get("SELECT id FROM tasks WHERE conversationId=? AND status IN ('running','queued','awaiting_approval','awaiting_input')", id))
+      throw new Error("Finish or stop the current task before archiving its conversation");
+    if (archived) this.exec("INSERT OR IGNORE INTO conversation_archive VALUES(?)", id);
+    else this.exec("DELETE FROM conversation_archive WHERE conversationId=?", id);
+    return this.conversation(id);
   }
   createConversation(title: string, members: string[], projectId: string | null = null, automatic = false) {
     const id = randomUUID(),
