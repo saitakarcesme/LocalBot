@@ -34,14 +34,14 @@
   },
   "v0_2": {
     "status": "core_implemented_live_verified_tool_parity_in_progress",
-    "updated_at": "2026-09-16T11:15:05.546614+00:00",
-    "runtime_tests_passed": 29,
+    "updated_at": "2026-09-16T11:25:22.220451+00:00",
+    "runtime_tests_passed": 34,
     "real_subscription_agents_verified": 5,
     "real_project": "Focus Ledger",
     "project_tests_passed": 5,
     "cross_conversation_project_context_verified": true,
     "tool_inventory_target": 269,
-    "localbot_builtin_tools": 17,
+    "localbot_builtin_tools": 21,
     "remaining": [
       "External vendor adapters and authenticated per-tool validation",
       "Codex-host-specific tool counterparts",
@@ -57,6 +57,6 @@
       "reaction aggregation",
       "MCP settings form"
     ],
-    "checkpoint": "Persistent goals installed; real GPT create/test/update/read lifecycle and native goal card verified"
+    "checkpoint": "Process sessions: real subscription start/input/poll verified; native conversation inspected; parity remains open"
   }
 }

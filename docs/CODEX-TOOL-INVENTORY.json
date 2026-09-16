@@ -21,7 +21,7 @@
     {
       "name": "exec_command",
       "status": "partial-equivalent",
-      "route": "terminal/run_tests: sandboxed, bounded, non-interactive"
+      "route": "Sandboxed process_start/process_poll/process_input/process_stop with task/agent/workspace ownership, bounded output, stdin, five-minute lifetime and cleanup. No PTY, persistent detached jobs or network access."
     },
     {
       "name": "get_goal",
@@ -1334,7 +1334,8 @@
     },
     {
       "name": "write_stdin",
-      "status": "not-yet-implemented"
+      "status": "partial-equivalent",
+      "route": "Sandboxed process_start/process_poll/process_input/process_stop with task/agent/workspace ownership, bounded output, stdin, five-minute lifetime and cleanup. No PTY, persistent detached jobs or network access."
     }
   ],
   "localbotBuiltins": [
