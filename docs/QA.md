@@ -210,3 +210,7 @@ Configurable agent run limits: previous turn was verified local HTTP vision prog
 - Full runtime suite:79/79 passed. Queued routing receives bounded earlier same-project decisions and shared notes, excluding unrelated chats and later sibling messages.
 - `node scripts/project-routing-context-smoke.mjs`: actual authenticated Codex subscription, isolated temporary project. A generic Turkish follow-up selected coder then reviewer from the earlier project decision. Observed write_file and reviewer read_file completed; independent JSON assertion confirmed `focus.json` contains exactly `{"dailyMinutes":25}`.
 - Native package build/signing passed. The installed app has not been replaced or clicked in this checkpoint because native UI automation is unavailable.
+
+### Restart recovery visibility — 2026-09-16
+
+Disk-reopen regression verifies interrupted tasks/runs/pending calls, expired approvals, preserved completed results and exactly one conversation notice even after a second reopen. Active eyes reactions become warnings; completed and user reactions remain. Queued tasks and awaiting-input questions are preserved. Full suite82/82 and native build passed. No actual installed-app crash/UI test was performed in this checkpoint; native automation is unavailable.

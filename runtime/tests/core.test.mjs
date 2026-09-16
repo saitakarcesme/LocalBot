@@ -335,24 +335,44 @@ test("cancellation stops pending approval without executing the action", async (
     0,
   );
 });
-test("crash recovery preserves results and never replays unfinished actions", () => {
-  const c = store.createConversation("Crash", ["coder"]);
-  const id = "crash-task";
-  store.exec(
-    "INSERT INTO tasks VALUES(?,?,?,?,?,?,?,?,?)",
-    id,
-    c.id,
-    c.id,
-    "none",
-    "test",
-    "running",
-    "2026-01-01",
-    "2026-01-01",
-    null,
-  );
-  store.recover();
-  assert.equal(store.task(id).status, "interrupted");
-  assert.match(store.task(id).error, /no action was replayed/);
+test("crash recovery preserves results, visibly interrupts work and is idempotent across reopen", () => {
+  const data = join(root, "crash-data");
+  let recovered = new Store(data); recovered.seed(workspace);
+  const c = recovered.createConversation("Crash", ["coder", "reviewer"]);
+  const date = "2026-01-01";
+  for (const [id,status] of [["crash-task","running"],["question-task","awaiting_input"],["queued-task","queued"]]) {
+    const message = recovered.addMessage(c.id,"user",id,{taskId:id});
+    recovered.exec("INSERT INTO tasks VALUES(?,?,?,?,?,?,?,?,?)",id,c.id,c.id,message,"test",status,date,date,null);
+  }
+  const task = recovered.task("crash-task");
+  recovered.exec("INSERT INTO runs VALUES(?,?,?,?,?,?,?)","crash-run",task.id,"coder","running","[]",date,date);
+  recovered.exec("INSERT INTO runs VALUES(?,?,?,?,?,?,?)","done-run",task.id,"reviewer","completed","[]",date,date);
+  recovered.exec("INSERT INTO tool_calls VALUES(?,?,?,?,?,?,?,?)","done-call","crash-run","read_file","{}","completed","PRESERVED_RESULT",date,date);
+  recovered.exec("INSERT INTO tool_calls VALUES(?,?,?,?,?,?,?,?)","pending-call","crash-run","terminal","{}","pending",null,date,date);
+  recovered.exec("INSERT INTO approvals VALUES(?,?,?,?,?,?,?)","pending-approval",task.id,"crash-run","pending-call","Test command","pending",date);
+  recovered.react(task.messageId,"coder","👀");recovered.react(task.messageId,"reviewer","✅");recovered.react(task.messageId,"user","❤️");
+  recovered.react(recovered.task("question-task").messageId,"coder","⚠️");
+  recovered.db.close();
+  recovered = new Store(data);
+  try {
+    recovered.recover();
+    assert.equal(recovered.task(task.id).status,"interrupted");
+    assert.match(recovered.task(task.id).error,/no action was replayed/);
+    assert.equal(recovered.get("SELECT status FROM runs WHERE id='crash-run'").status,"interrupted");
+    assert.equal(recovered.get("SELECT status FROM runs WHERE id='done-run'").status,"completed");
+    assert.equal(recovered.get("SELECT output FROM tool_calls WHERE id='done-call'").output,"PRESERVED_RESULT");
+    assert.equal(recovered.get("SELECT status FROM tool_calls WHERE id='pending-call'").status,"interrupted");
+    assert.equal(recovered.get("SELECT status FROM approvals WHERE id='pending-approval'").status,"expired");
+    const reactions=recovered.messages(c.id).find(m=>m.id===task.messageId).reactions;
+    assert(reactions.some(r=>r.actor==='coder'&&r.emoji==='⚠️'));
+    assert(reactions.some(r=>r.actor==='reviewer'&&r.emoji==='✅'));
+    assert(reactions.some(r=>r.actor==='user'&&r.emoji==='❤️'));
+    const notices=()=>recovered.messages(c.id).filter(m=>m.role==='system'&&m.taskId===task.id);
+    assert.equal(notices().length,1);assert.match(notices()[0].content,/Send a follow-up/);
+    assert.equal(recovered.task('question-task').status,'awaiting_input');assert.equal(recovered.task('queued-task').status,'queued');
+    recovered.db.close();recovered=new Store(data);recovered.recover();
+    assert.equal(notices().length,1);
+  } finally {recovered.db.close();}
 });
 test("read-only shell cannot write and shell cannot use network", async () => {
   const ro = { ...a, permissions: { ...a.permissions, filesystem: "read" } };

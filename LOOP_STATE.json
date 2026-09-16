@@ -33,7 +33,7 @@
   },
   "v0_2": {
     "status": "core_implemented_live_verified_tool_parity_in_progress",
-    "updated_at": "2026-09-16T16:09:14.244408+00:00",
+    "updated_at": "2026-09-16T16:11:33.161471+00:00",
     "runtime_tests_passed": 82,
     "real_subscription_agents_verified": 5,
     "real_project": "Focus Ledger",
@@ -58,7 +58,7 @@
       "manual scrolling survives Activity width change",
       "last selected chat survives relaunch"
     ],
-    "checkpoint": "list_agents directory shipped in build: 82 tests and real subscription role lookup passed; built-in inventory synchronized; native installation pending UI automation",
+    "checkpoint": "Restart recovery adds atomic, idempotent conversation notices and fixes stale active reactions; 82 tests and native package build passed; installation/live UI pending",
     "tests_passed": 82
   }
 }

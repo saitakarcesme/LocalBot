@@ -374,17 +374,21 @@ export class Store {
     ).map((m) => ({ ...m, reactions: [], attachments: [] }));
   }
   recover() {
-    this.exec(
-      "UPDATE tasks SET status='interrupted',error='Runtime restarted. Completed actions were preserved; no action was replayed.',updatedAt=? WHERE status IN ('running','awaiting_approval')",
-      now(),
-    );
-    this.exec(
-      "UPDATE runs SET status='interrupted' WHERE status IN ('running','awaiting_approval')",
-    );
-    this.exec(
-      "UPDATE tool_calls SET status='interrupted' WHERE status IN ('running','pending')",
-    );
-    this.exec("UPDATE approvals SET status='expired' WHERE status='pending'");
+    this.transaction(() => {
+      const interrupted = this.all("SELECT * FROM tasks WHERE status IN ('running','awaiting_approval')");
+      const date = now();
+      for (const task of interrupted) {
+        this.exec(`UPDATE reactions SET emoji='⚠️' WHERE messageId=? AND emoji='👀' AND actor IN
+          (SELECT agentId FROM runs WHERE taskId=? AND status IN ('running','awaiting_approval'))`, task.messageId, task.id);
+        this.addMessage(task.conversationId, "system", "LocalBot restarted before this task finished. Completed actions were kept. Send a follow-up to continue; no actions were replayed.", { taskId: task.id });
+      }
+      this.exec(
+        "UPDATE tasks SET status='interrupted',error='Runtime restarted. Completed actions were preserved; no action was replayed.',updatedAt=? WHERE status IN ('running','awaiting_approval')", date,
+      );
+      this.exec("UPDATE runs SET status='interrupted',updatedAt=? WHERE status IN ('running','awaiting_approval')", date);
+      this.exec("UPDATE tool_calls SET status='interrupted',updatedAt=? WHERE status IN ('running','pending')", date);
+      this.exec("UPDATE approvals SET status='expired' WHERE status='pending'");
+    });
   }
   seed(workspace: string) {
     if (this.agents().length) return;
