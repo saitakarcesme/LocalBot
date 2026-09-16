@@ -240,10 +240,10 @@ struct ConversationView: View {
                 .padding(.top, 20)
               if model.messages.isEmpty { emptyConversation }
               ForEach(model.messages) { m in MessageBubble(message: m, group: members.count > 1) }
-              if let t = model.activeTask {
+              if model.activeTask != nil || model.sending {
                 HStack(spacing: 8) {
-                  Avatar(agent: members.first { $0.name == activeName }, size: 28)
-                  if t.status == "awaiting_approval" {
+                  Avatar(agent: members.first { $0.name == activeName } ?? model.agent("assistant"), size: 28)
+                  if model.activeTask?.status == "awaiting_approval" {
                     Text("Waiting for your approval…").font(.caption).foregroundStyle(.secondary)
                   } else { TypingDots().accessibilityLabel("\(activeName) is typing") }
                   Spacer()

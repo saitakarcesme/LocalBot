@@ -132,7 +132,7 @@ struct NewConversationView: View {
       if !projectId.isEmpty {
         Toggle("Choose agents automatically for each request", isOn: $automatic)
       }
-      Text("Choose your contacts").font(.headline)
+      Text(!projectId.isEmpty && automatic ? "Agents join based on your request" : "Choose your contacts").font(.headline)
       ForEach(model.agents) { a in
         Toggle(
           isOn: Binding(
@@ -146,7 +146,7 @@ struct NewConversationView: View {
               Text(a.role).font(.caption).foregroundStyle(.secondary)
             }
           }
-        }.toggleStyle(.checkbox)
+        }.toggleStyle(.checkbox).disabled(!projectId.isEmpty && automatic)
       }
       HStack {
         Button("Create Agent…") {
