@@ -82,3 +82,5 @@ Agents can explicitly create, read and update conversation goals. Goals survive 
 ### Process sessions
 
 Agents can start a sandboxed process, poll output, send stdin and stop it. Starting and sending input require approval. Sessions are scoped to their task, agent and workspace, limited to two per task/four total, 100 KB output and five minutes. Task completion/cancellation or agent configuration changes terminate running sessions. This is piped input/output, not a PTY; sessions do not survive runtime restart.
+
+Project messages enter the persistent task queue immediately, including while the team is being selected. Stop cancels routing as well as execution. Each queued request selects its own team; project messages retain their sender names and avatars when that team changes.

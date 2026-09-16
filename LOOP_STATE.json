@@ -34,8 +34,8 @@
   },
   "v0_2": {
     "status": "core_implemented_live_verified_tool_parity_in_progress",
-    "updated_at": "2026-09-16T11:25:22.220451+00:00",
-    "runtime_tests_passed": 34,
+    "updated_at": "2026-09-16T11:31:53.290363+00:00",
+    "runtime_tests_passed": 36,
     "real_subscription_agents_verified": 5,
     "real_project": "Focus Ledger",
     "project_tests_passed": 5,
@@ -57,6 +57,6 @@
       "reaction aggregation",
       "MCP settings form"
     ],
-    "checkpoint": "Process sessions: real subscription start/input/poll verified; native conversation inspected; parity remains open"
+    "checkpoint": "Queued project rerouting and routing cancellation verified with live GPT; project sender labels corrected"
   }
 }
