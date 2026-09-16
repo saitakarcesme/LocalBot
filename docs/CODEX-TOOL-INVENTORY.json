@@ -1335,7 +1335,7 @@
     {
       "name": "web__run",
       "status": "partial-equivalent",
-      "route": "web_fetch only; search, finance, weather and browser actions are not implemented"
+      "route": "web_fetch: bounded public HTTPS text retrieval, up to five revalidated redirects, pinned DNS, final source URL and UTF-8 text. Search, finance, weather and browser actions are not implemented."
     },
     {
       "name": "write_stdin",

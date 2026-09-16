@@ -58,7 +58,7 @@
       "manual scrolling survives Activity width change",
       "last selected chat survives relaunch"
     ],
-    "checkpoint": "Reversible conversation archives: native archive/restore round-trip, preserved history, protected active tasks, 63 runtime tests",
-    "tests_passed": 63
+    "checkpoint": "Validated HTTPS redirects, UTF-8 preservation and live subscription Mira web fetch verified; 67 runtime tests",
+    "tests_passed": 67
   }
 }

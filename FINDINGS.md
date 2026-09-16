@@ -131,3 +131,6 @@ Configurable agent run limits: previous turn was verified local HTTP vision prog
 
 ### Conversation archive checkpoint — 2026-09-16
 Reversible archive/restore now organizes multiple direct-agent and project chats without deleting history, FTS entries, artifacts, or project context. Runtime blocks archiving unfinished tasks; valid follow-up messages restore archived chats transactionally. Native context menus, archive-list switch, empty state, and selection synchronization implemented. Existing Mira UTC history round-tripped through native archive/restore successfully; 63/63 runtime tests and final native build pass. This is UI/runtime conversation management, not a claim that all Codex-host archive tool equivalents are implemented.
+
+### Public web redirect checkpoint — 2026-09-16
+Real research was unnecessarily blocked by all HTTP redirects being refused. Extracted a bounded HTTPS reader, revalidates and pins DNS on every hop, blocks special-use/transition IPs, caps redirects at five and total time at 20 seconds. Preserves split UTF-8 and plain-text angle brackets. 67 tests pass; installed Mira completed one actual redirected Wikipedia fetch through the Codex subscription bridge and produced a source-linked answer. Tool count stays 27; this improves web_fetch, not full web/browser parity.

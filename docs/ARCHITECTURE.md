@@ -39,7 +39,7 @@ Filesystem paths are canonicalized and restricted to a dedicated workspace; trav
 
 MCP was evaluated. Arbitrary stdio MCP servers have the full authority of their launched process, and mixing that with an agent's read-only checkbox would misrepresent the security boundary. This release therefore ships audited built-ins, not unchecked MCP server launching. A future MCP adapter must use the same schema, permission, approval and audit path, plus a server-level process sandbox. Browser page automation and MCP server configuration are not exposed as working features.
 
-Web fetch validates public IP addresses, pins the DNS result, refuses redirects and bounds response size. Model endpoints are separately user configured and may use localhost. Remote endpoints require HTTPS and authentication; a localhost SSH tunnel supports LAN servers without TLS. No public inbound runtime binding exists.
+Web fetch validates public IP addresses, pins each DNS result, follows at most five public HTTPS redirects with destination revalidation, and bounds the full operation to 20 seconds and each body to 500 KB. Binary/compressed responses are rejected; UTF-8 bytes are decoded after collection, and plain text preserves line breaks and angle brackets. Output identifies the final source URL and flags truncation at 20,000 characters. Model endpoints are separately user configured and may use localhost. Remote endpoints require HTTPS and authentication; a localhost SSH tunnel supports LAN servers without TLS. No public inbound runtime binding exists.
 
 ## IPC and credentials
 
