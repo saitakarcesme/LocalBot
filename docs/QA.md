@@ -234,3 +234,7 @@ Swift pending-send checks and88 runtime tests pass. Packaged real subscription t
 ### Direct title fallback — 2026-09-16
 
 89 tests pass. Controlled provider failures (missing organize call, invalid JSON and thrown error) no longer prevent direct-agent clock execution; automatic routing and cancellation still prevent agent starts. Native build/signing and actual subscription packaged regression passed. The live regression covers normal provider operation; title failures were injected, and installed UI remains unverified.
+
+### Native work-indicator state checks — 2026-09-16
+
+Swift checks verify running/approval tasks outrank newer queued messages, queued-only selection, question inactivity, preparation without a run, matching-run typing, approval waiting and sending/hidden states. Final native build/signing passed after extracting the status row. Runtime unchanged from89 passing tests. Actual sidebar switching, Stop clicks and indicator appearance remain pending native UI automation; no visual verification is claimed.

@@ -283,15 +283,7 @@ struct ConversationView: View {
               if model.messages.isEmpty { emptyConversation }
               ForEach(model.messages) { m in MessageBubble(message: m, group: conversation.projectId != nil || members.count > 1).id(m.id)
                 .background(m.id == model.searchFocusId ? Color.accentColor.opacity(0.12) : .clear, in: RoundedRectangle(cornerRadius: 12)) }
-              if model.activeTask != nil || model.sending {
-                HStack(spacing: 8) {
-                  Avatar(agent: members.first { $0.name == activeName } ?? model.agent("assistant"), size: 28)
-                  if model.activeTask?.status == "awaiting_approval" {
-                    Text("Waiting for your approval…").font(.caption).foregroundStyle(.secondary)
-                  } else { TypingDots().accessibilityLabel("\(activeName) is typing") }
-                  Spacer()
-                }.padding(.horizontal, 28).padding(.top, 5)
-              }
+              if progress != .hidden { progressIndicator }
               Color.clear.frame(height: 1).id("bottom")
             }.padding(.bottom, 16)
           }
@@ -393,14 +385,35 @@ struct ConversationView: View {
       UserDefaults.standard.set(new, forKey: "draft.\(conversation.id)")
     }
   }
-  var activeName: String {
-    if let run = model.activeRuns.first(where: { $0.taskId == model.activeTask?.id }), let agent = model.agent(run.agentId) { return agent.name }
-    if let a = model.activity.last, let agent = model.agent(a.agentId),
-      model.activeTask?.id == a.taskId
-    {
-      return agent.name
-    }
-    return members.first?.name ?? "Agent"
+  var progressIndicator: some View {
+    HStack(spacing: 8) {
+      if let activeAgent { Avatar(agent: activeAgent, size: 28) }
+      switch progress {
+      case .typing:
+        TypingDots().accessibilityLabel("\(activeAgent?.name ?? "Agent") is typing")
+      case .approval:
+        Text("Waiting for your approval…").font(.caption).foregroundStyle(.secondary)
+      case .queued:
+        Text("Queued…").font(.caption).foregroundStyle(.secondary)
+      case .sending:
+        Text("Sending…").font(.caption).foregroundStyle(.secondary)
+      case .preparing:
+        Text(conversation.automatic == 1 ? "Choosing your team…" : "Preparing…")
+          .font(.caption).foregroundStyle(.secondary)
+      case .hidden: EmptyView()
+      }
+      Spacer()
+    }.padding(.horizontal, 28).padding(.top, 5)
+  }
+  var activeRun: ActiveRun? {
+    model.activeRuns.first { $0.taskId == model.activeTask?.id }
+  }
+  var activeAgent: Agent? {
+    if let activeRun { return model.agent(activeRun.agentId) }
+    return nil
+  }
+  var progress: ConversationProgress.Indicator {
+    ConversationProgress.indicator(task: model.activeTask, run: activeRun, sending: model.sending && model.sendingConversationId == conversation.id)
   }
   var emptyConversation: some View {
     VStack(spacing: 12) {

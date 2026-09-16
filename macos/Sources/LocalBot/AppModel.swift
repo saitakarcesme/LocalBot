@@ -87,6 +87,7 @@ enum Keychain {
   @Published var editingProject: Project?
   @Published var editingConversation: Conversation?
   @Published var sending = false
+  @Published var sendingConversationId: String?
   let pendingMessages = PendingMessageRequests()
   var connection: Connection?
   var snapshotCursor = RuntimeSnapshotCursor()
@@ -98,7 +99,7 @@ enum Keychain {
   var visibleConversations: [Conversation] { conversations.filter { ($0.archived == true) == showingArchived } }
   var currentTasks: [AgentTask] { tasks.filter { $0.conversationId == selectedId } }
   var stoppableTask: AgentTask? { activeTask ?? currentTasks.first { $0.status == "awaiting_input" } }
-  var activeTask: AgentTask? { currentTasks.first { $0.active } }
+  var activeTask: AgentTask? { ConversationProgress.activeTask(in: currentTasks) }
   func agent(_ id: String?) -> Agent? { agents.first { $0.id == id } }
   func start() {
     guard polling == nil else { return }
@@ -291,7 +292,8 @@ enum Keychain {
   func send(_ content: String, attachments: [Artifact]) async -> Bool {
     guard let id = selectedId, !sending else { return false }
     sending = true
-    defer { sending = false }
+    sendingConversationId = id
+    defer { sending = false; sendingConversationId = nil }
     let requestID = pendingMessages.requestID(conversation: id, content: content, attachments: attachments.map(\.id))
     do {
       _ = try await request(
