@@ -140,8 +140,8 @@
     },
     {
       "name": "mcp__codex_app__read_thread",
-      "status": "requires-localbot-counterpart",
-      "route": "Codex desktop host APIs cannot be copied into another application"
+      "status": "partial-equivalent",
+      "route": "search_history retrieves source-identified excerpts from the current conversation or project, including archived chats, before the current task. No arbitrary thread read, full-thread pagination or cross-project access."
     },
     {
       "name": "mcp__codex_app__read_thread_terminal",

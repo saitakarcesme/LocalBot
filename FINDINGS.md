@@ -137,3 +137,6 @@ Real research was unnecessarily blocked by all HTTP redirects being refused. Ext
 
 ### Question lifecycle checkpoint — 2026-09-16
 Inspection found answered ask_user tasks stayed awaiting_input forever, preventing archiving. Follow-up enqueue now transactionally marks prior waiting tasks/runs continued and clears only their transient agent reactions; failed sends roll back. Waiting questions can be cancelled from the runtime and native Stop controls, with idempotent cancellation messages. Real subscription Mira answer/cancel/archive flows passed; native conversation observed, 68 runtime tests passed (18 core tests rerun after fixture cleanup). No replay of completed tool calls or in-place process resumption is claimed.
+
+### Agent history retrieval checkpoint — 2026-09-16
+Agents previously saw bounded recent context without a retrieval tool. Added search_history using existing SQLite FTS, scoped to the task's conversation/project and strictly before its user message. Source-identified bounded excerpts let agents recover older project decisions without loading the entire transcript or accessing unrelated chats. Real Mira search of Focus Ledger returned seven matches and a source-named explanation. Tests70/70, built-in tools28, installed native app verified. This is not complete Codex read_thread parity.

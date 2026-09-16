@@ -40,7 +40,7 @@
     "project_tests_passed": 5,
     "cross_conversation_project_context_verified": true,
     "tool_inventory_target": 269,
-    "localbot_builtin_tools": 27,
+    "localbot_builtin_tools": 28,
     "remaining": [
       "External vendor adapters and authenticated per-tool validation",
       "Codex-host-specific tool counterparts",
@@ -58,7 +58,7 @@
       "manual scrolling survives Activity width change",
       "last selected chat survives relaunch"
     ],
-    "checkpoint": "Question answer/cancel lifecycle and stale reactions fixed; live subscription Mira plus archive round-trips verified; 68 tests",
-    "tests_passed": 68
+    "checkpoint": "Scoped agent history retrieval: older/archived history isolation tested and live Focus Ledger search verified; 70 tests, 28 tools",
+    "tests_passed": 70
   }
 }

@@ -73,7 +73,7 @@ This is a usable local development release, not a notarized public distribution.
 - [Native UI specification](docs/UI-SPEC.md)
 - [Verification results](docs/QA.md)
 
-The [269-entry Codex tool inventory](docs/CODEX-TOOL-INVENTORY.json) is a coverage target, not a claim that all Codex-hosted services are implemented. LocalBot currently exposes 27 built-in tool entries, including MCP discovery and invocation. External integrations require their own supported endpoint and authentication.
+The [269-entry Codex tool inventory](docs/CODEX-TOOL-INVENTORY.json) is a coverage target, not a claim that all Codex-hosted services are implemented. LocalBot currently exposes 28 built-in tool entries, including MCP discovery and invocation. External integrations require their own supported endpoint and authentication.
 
 For precise edits, read_file returns a SHA-256 fingerprint. edit_file replaces one unique old_text block using that fingerprint; stale or ambiguous edits fail without changing the target. It follows the contact’s filesystem permission and edit approval policy.
 
@@ -110,3 +110,6 @@ Codex subscription agents can inspect attached PNG/JPEG/GIF/WebP images through 
 In Model Settings, enable **Model supports image input** only when your Ollama or compatible endpoint serves a vision model. Images are encoded as bytes for the endpoint; local file paths are never sent. Tool responses retain their required ordering. References: [Ollama vision](https://docs.ollama.com/capabilities/vision), [compatible image messages](https://developers.openai.com/api/docs/guides/images-vision).
 
 Contact details include a **Task step limit** (1–256, default 24). One step is one model response, potentially containing several tools. Group participants each have their own limit. Changes apply to subsequent runs. Reaching the limit reports an incomplete task and retains actions; adjust the limit and send a follow-up to continue. Higher limits consume more model capacity, while permission and cancellation controls remain enforced.
+
+
+Agents can use `search_history` to retrieve older messages from their current conversation or its project, including archived chats. Search uses SQLite FTS with literal terms, returns up to 10 source-identified excerpts, and excludes messages at or after the current task’s user message. Results are historical evidence, not proof that files still have the same contents. There is no cross-project or unrelated direct-chat search.
