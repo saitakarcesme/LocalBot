@@ -11,7 +11,7 @@
 
 ## Scope still open
 
-The 269-entry Codex inventory is a target. Thirteen built-in entries and MCP transport are implemented; all external vendor tools are **not** authenticated, implemented or verified. Interactive browser automation, arbitrary MCP stdio launching, full Codex desktop host equivalents and the remote 2×3090 hardware remain open. MCP supports the explicitly listed 2025 protocol revisions; modern 2026 MRTR and OAuth flows are not claimed.
+The 269-entry Codex inventory is a target. Twenty-five built-in entries and MCP HTTP/stdio transports are implemented; all external vendor tools are **not** authenticated, implemented or verified. Interactive browser automation, full Codex desktop host equivalents and the remote 2×3090 hardware remain open. MCP supports the explicitly listed 2025 protocol revisions; modern 2026 MRTR and OAuth flows are not claimed.
 
 ---
 
@@ -101,3 +101,6 @@ History pagination: 42/42 runtime tests. Installed UI verified with a temporary 
 
 
 Search navigation: 43/43 runtime tests and native build passed. In the installed app, searching a temporary 650-message fixture for record 0007 opened its bounded historical window and visibly highlighted the match. Latest messages returned to record 0649. The fixture and its FTS records were removed, preserving real conversations. Runtime checks reject cross-conversation cursors and conflicting before/through cursors. TypeScript compiler dependencies now use a lockfile-keyed cache under ~/Library/Caches/LocalBot/RuntimeBuild, avoiding observed iCloud file-open stalls.
+
+
+Local MCP stdio: 49/49 runtime tests and native app build passed. Installed GPT subscription Mira executed three approved stdio actions: resource discovery, template discovery and reading the brief. The actual child returned Cedar/seven sample records; native conversation showed the result and three actions. Temporary server files, integration and agent grant were removed. Tests cover protocol negotiation, tool/resource calls, concurrent response correlation, UTF-8, missing executable, malformed/oversized output, environment isolation, cancellation, process cap and shutdown. Native Integrations form exposes executable/args/cwd and explains user-account access. OAuth, explicit environment-secret injection and third-party vendor validation remain open.

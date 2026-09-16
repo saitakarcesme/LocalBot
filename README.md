@@ -21,7 +21,7 @@ Choose **Codex subscription** in model settings to use the existing ChatGPT logi
 
 Use **File → New Project** to select a project folder. Each project has conversations, shared memory and bounded context from earlier project chats. With automatic routing enabled, the request selects a small ordered team by role. Conversation Details lets you rename the chat, change members or switch to manual selection. Direct chats receive descriptive topic titles after the first request.
 
-**LocalBot → Integrations** manages MCP Streamable HTTP connections (2025-11-25 and compatible earlier revisions). Tokens stay in Keychain. Enable each connection per contact; external calls require approval and appear in Activity. An MCP connection is not equivalent to having authenticated every service.
+**LocalBot → Integrations** manages MCP Streamable HTTP and local stdio connections (2025-11-25 and compatible earlier revisions). Tokens stay in Keychain. Enable each connection per contact; external calls require approval and appear in Activity. An MCP connection is not equivalent to having authenticated every service.
 
 `node scripts/subscription-smoke.mjs` performs actual subscription-backed agent and project work against the running app. It approves only its scoped test writes, memory note and restricted Node test commands. It creates real test files and conversations; do not run it merely to check connectivity.
 
@@ -66,7 +66,7 @@ To back up history, close the app, stop its runtime when no task is active, then
 
 ## Current limits
 
-This is a usable local development release, not a notarized public distribution. The 2×3090 machine and the requested 27B model have not been available for hardware validation. API adapters have protocol tests; the Codex ChatGPT subscription bridge has live agent and project tests. No arbitrary MCP stdio launcher, interactive browser automation, vision inference, conversation branches or automatic crash replay is presented as a working feature. Shell execution is macOS-only until equivalent Windows/Linux sandboxing exists.
+This is a usable local development release, not a notarized public distribution. The 2×3090 machine and the requested 27B model have not been available for hardware validation. API adapters have protocol tests; the Codex ChatGPT subscription bridge has live agent and project tests. Interactive browser automation, vision inference, conversation branches and automatic crash replay remain unimplemented. Shell execution is macOS-only until equivalent Windows/Linux sandboxing exists.
 
 - [Architecture and security boundaries](docs/ARCHITECTURE.md)
 - [Remote PC setup](docs/REMOTE-MODELS.md)
@@ -94,3 +94,5 @@ MCP integrations can expose tools, resources or both. Agents can list resource p
 Long conversations initially load the latest 300 messages. Scroll to the top and choose **Load earlier messages** to fetch another page while retaining your reading position. Older pages are loaded only when requested.
 
 Search results open and highlight the matching message, including older history. Choose **Latest messages** to return to the current conversation. TypeScript builds cache locked compiler dependencies in `~/Library/Caches/LocalBot/RuntimeBuild` to avoid iCloud Documents dependency stalls.
+
+Local MCP processes use an absolute executable, JSON argument array and absolute working directory in Integrations. Save & Test launches the configured server with user account access; use trusted installed executables. Agent launches always require approval showing the process configuration. No shell expansion, inherited environment credentials or token injection is provided. Two processes maximum, bounded messages/session output and cancellation/shutdown cleanup keep the client lightweight. These integration processes are not the workspace-sandboxed terminal tool.

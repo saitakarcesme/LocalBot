@@ -26,7 +26,6 @@
     "qa_report": "docs/QA.md",
     "remaining_hardware_validation": "2x RTX 3090 PC with user-specified 27B model; endpoint not provided",
     "known_scope_limits": [
-      "MCP server launcher not shipped",
       "Interactive browser automation not shipped",
       "No vision inference",
       "Not notarized for public distribution"
@@ -34,8 +33,8 @@
   },
   "v0_2": {
     "status": "core_implemented_live_verified_tool_parity_in_progress",
-    "updated_at": "2026-09-16T12:17:20.082724+00:00",
-    "runtime_tests_passed": 43,
+    "updated_at": "2026-09-16T12:25:07.553570+00:00",
+    "runtime_tests_passed": 49,
     "real_subscription_agents_verified": 5,
     "real_project": "Focus Ledger",
     "project_tests_passed": 5,
@@ -46,7 +45,7 @@
       "External vendor adapters and authenticated per-tool validation",
       "Codex-host-specific tool counterparts",
       "Interactive browser automation",
-      "MCP stdio and newer protocol revisions",
+      "MCP newer protocol revisions, OAuth and environment-secret configuration",
       "Remote 3090 hardware validation"
     ],
     "installed_version": "0.2.0",
@@ -59,6 +58,6 @@
       "manual scrolling survives Activity width change",
       "last selected chat survives relaunch"
     ],
-    "checkpoint": "Historical search match and return-to-latest verified with 650-message native fixture; fixture removed"
+    "checkpoint": "Local stdio MCP installed, approved GPT resource workflow and native form verified"
   }
 }
