@@ -521,6 +521,8 @@ export class Engine {
               if (name === "view_image" && !this.makeProvider(config).capabilities().images) throw new Error("Selected provider cannot inspect images");
               // Re-read permission configuration for every action; toggling a permission revokes it immediately.
               const live = this.store.agent(agentId);
+              if ((project?.workspace ?? live.workspace) !== agent.workspace)
+                throw new Error("Workspace changed during this run. Send a new request to work in the new folder.");
               if (!allowed(live, name))
                 throw new Error(`Permission denied: ${name}`);
               const mcpIntegration = ["mcp_call", "mcp_list_tools", "mcp_list_resources", "mcp_list_resource_templates", "mcp_read_resource"].includes(name)
@@ -530,7 +532,7 @@ export class Engine {
               if (needsApproval(live, name) || mcpIntegration?.transport === "stdio") {
                 const approved = await this.approve(
                   taskId, runId, callId,
-                  `${agent.name} · ${name}\n${JSON.stringify(args, null, 2)}${mcpIntegration?.transport === "stdio" ? "\nLaunch local MCP server (user account access):\n" + JSON.stringify(mcpIntegration.process, null, 2) : ""}`,
+                  `${agent.name} · ${name}\nWorkspace: ${agent.workspace}\n${JSON.stringify(args, null, 2)}${mcpIntegration?.transport === "stdio" ? "\nLaunch local MCP server (user account access):\n" + JSON.stringify(mcpIntegration.process, null, 2) : ""}`,
                   signal,
                 );
                 if (!approved) {
@@ -538,7 +540,10 @@ export class Engine {
                   throw new Error("User denied this action. Do not retry it without a new explicit request.");
                 }
               }
-              if (!allowed(this.store.agent(agentId), name))
+              const afterApproval = this.store.agent(agentId);
+              if ((project?.workspace ?? afterApproval.workspace) !== agent.workspace)
+                throw new Error("Workspace changed while waiting. This approval cannot be used in a different folder; send a new request.");
+              if (!allowed(afterApproval, name))
                 throw new Error("Permission was revoked while waiting.");
               this.store.exec(
                 "UPDATE tool_calls SET status='running',updatedAt=? WHERE id=?",
@@ -616,7 +621,7 @@ export class Engine {
                 result = "Reaction added.";
               } else {
                 const res = await executeTool(
-                  { ...this.store.agent(agentId), workspace: project?.workspace ?? this.store.agent(agentId).workspace },
+                  { ...this.store.agent(agentId), workspace: agent.workspace },
                   name,
                   args,
                   signal,

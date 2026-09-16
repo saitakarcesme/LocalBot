@@ -478,3 +478,32 @@ test('automatic routing sees executable tool permissions rather than trusting co
   assert.equal(f.store.agent('coder').permissions.filesystem,'read');
  }finally{await f.close();}
 });
+
+
+test('pending file approval cannot migrate into a changed contact workspace',async()=>{
+ const f=await setup(async(body,res)=>{
+  if(body.messages.some(m=>m.role==='tool'))reply(res,{content:'Action result recorded.'});
+  else reply(res,{content:'',tool_calls:[{function:{name:'write_file',arguments:{path:'approved.txt',content:'approved content'}}}]});
+ });
+ try{
+  const original=f.store.agent('coder');
+  const replacement=join(original.workspace,'replacement');await mkdir(replacement);
+  const c=f.store.createConversation('Workspace approval',['coder']);
+  const task=f.engine.enqueue(c.id,'Write the file in this workspace');
+  await until(()=>f.store.get("SELECT id FROM approvals WHERE taskId=? AND status='pending'",task.id));
+  const approval=f.store.get("SELECT * FROM approvals WHERE taskId=? AND status='pending'",task.id);
+  assert(JSON.stringify(approval).includes(original.workspace));
+  f.store.saveAgent({...original,workspace:replacement});
+  f.engine.decide(approval.id,true);
+  await until(()=>f.store.task(task.id).status==='completed_with_errors');
+  const call=f.store.get('SELECT t.* FROM tool_calls t JOIN runs r ON r.id=t.runId WHERE r.taskId=?',task.id);
+  assert.equal(call.status,'failed');assert.match(call.output,/Workspace changed while waiting/);
+  for(const folder of [original.workspace,replacement])await assert.rejects(readFile(join(folder,'approved.txt')),e=>e.code==='ENOENT');
+  assert.equal(f.store.get('SELECT count(*) AS n FROM artifacts').n,0);
+  const next=f.engine.enqueue(c.id,'Now write it in the new workspace');
+  await until(()=>f.store.get("SELECT id FROM approvals WHERE taskId=? AND status='pending'",next.id));
+  f.engine.decide(f.store.get("SELECT id FROM approvals WHERE taskId=? AND status='pending'",next.id).id,true);
+  await until(()=>f.store.task(next.id).status==='completed');
+  assert.equal(await readFile(join(replacement,'approved.txt'),'utf8'),'approved content');
+ }finally{await f.close();}
+});
