@@ -317,6 +317,7 @@ export class Engine {
     this.changed();
     let runId: string | undefined;
     let hadErrors = false;
+    const deniedActions = new Set<string>();
     try {
       await this.organizeConversation(taskId, signal);
       signal.throwIfAborted();
@@ -495,19 +496,19 @@ export class Engine {
                 throw new Error(`Permission denied: ${name}`);
               const mcpIntegration = ["mcp_call", "mcp_list_tools", "mcp_list_resources", "mcp_list_resource_templates", "mcp_read_resource"].includes(name)
                 ? authorizedMCPConnection(live.integrations, this.store.integrations(), args.integrationId) : undefined;
-              if (
-                (needsApproval(live, name) || mcpIntegration?.transport === "stdio") &&
-                !(await this.approve(
-                  taskId,
-                  runId,
-                  callId,
+              const actionKey = JSON.stringify([project?.workspace ?? live.workspace, name, Object.fromEntries(Object.entries(args).sort(([a], [b]) => a.localeCompare(b)))]);
+              if (deniedActions.has(actionKey)) throw new Error("This action was already denied in this task. Do not retry it; wait for a new explicit user request.");
+              if (needsApproval(live, name) || mcpIntegration?.transport === "stdio") {
+                const approved = await this.approve(
+                  taskId, runId, callId,
                   `${agent.name} · ${name}\n${JSON.stringify(args, null, 2)}${mcpIntegration?.transport === "stdio" ? "\nLaunch local MCP server (user account access):\n" + JSON.stringify(mcpIntegration.process, null, 2) : ""}`,
                   signal,
-                ))
-              )
-                throw new Error(
-                  "User denied this action. Do not retry it without a new explicit request.",
                 );
+                if (!approved) {
+                  deniedActions.add(actionKey);
+                  throw new Error("User denied this action. Do not retry it without a new explicit request.");
+                }
+              }
               if (!allowed(this.store.agent(agentId), name))
                 throw new Error("Permission was revoked while waiting.");
               this.store.exec(

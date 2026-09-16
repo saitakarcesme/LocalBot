@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
-import { mkdtemp, mkdir } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { Store } from '../dist/store.js';
@@ -314,5 +314,35 @@ test('activity retrieval pages and reconstructs recorded outputs without replay 
   const other=f.store.createConversation('Other',['coder']);const second=f.engine.enqueue(other.id,'Nothing');await until(()=>f.store.task(second.id).status==='completed');
   assert.throws(()=>f.store.readActivity(second.id,undefined,'chunk-6'),/not found/);
   assert.throws(()=>f.store.readActivity(second.id,'chunk-6'),/cursor/);
+ }finally{await f.close();}
+});
+
+
+test('a denied action is not requested again by the same task or another teammate',async()=>{
+ let requests=0;
+ const f=await setup(async(body,res)=>{
+  requests++;
+  // Both agents retry the same action, with property order reversed on the second request.
+  const prior=body.messages.filter(m=>m.role==='tool').length;
+  if(prior<2)reply(res,{content:'',tool_calls:[{function:{name:'write_file',arguments:prior?{content:'blocked',path:'denied.txt'}:{path:'denied.txt',content:'blocked'}}}]});
+  else reply(res,{content:'The denied action was not performed.'});
+ });
+ try{
+  const reviewer=f.store.agent('reviewer');reviewer.permissions.filesystem='write';f.store.saveAgent(reviewer);
+  const c=f.store.createConversation('Denial',['coder','reviewer']);
+  const task=f.engine.enqueue(c.id,'Prepare a file');
+  await until(()=>f.store.get("SELECT id FROM approvals WHERE taskId=? AND status='pending'",task.id));
+  f.engine.decide(f.store.get("SELECT id FROM approvals WHERE taskId=? AND status='pending'",task.id).id,false);
+  await until(()=>f.store.task(task.id).status==='completed_with_errors');
+  assert.equal(f.store.get('SELECT count(*) AS n FROM approvals WHERE taskId=?',task.id).n,1);
+  const calls=f.store.all('SELECT t.* FROM tool_calls t JOIN runs r ON r.id=t.runId WHERE r.taskId=? ORDER BY t.rowid',task.id);
+  assert.equal(calls.length,4);assert(calls.every(c=>c.status==='failed'));assert(calls.slice(1).every(c=>c.output.includes('already denied')));
+  const next=f.engine.enqueue(c.id,'I now explicitly request another attempt');
+  await until(()=>f.store.get("SELECT id FROM approvals WHERE taskId=? AND status='pending'",next.id));
+  f.engine.cancel(next.id);
+  await until(()=>f.store.task(next.id).status==='cancelled');
+  await until(()=>!f.store.get("SELECT id FROM runs WHERE taskId=? AND status IN ('running','awaiting_approval')",next.id));
+  assert.equal(f.store.get('SELECT count(*) AS n FROM artifacts').n,0);
+  await assert.rejects(readFile(join(reviewer.workspace,'denied.txt')),/ENOENT/);
  }finally{await f.close();}
 });
