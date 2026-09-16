@@ -108,7 +108,7 @@ struct MainView: View {
                   Label(project.name, systemImage: "folder")
                   Spacer()
                   Button { model.editingProject = project } label: { Image(systemName: "ellipsis.circle") }
-                    .buttonStyle(.plain).help("Project details").accessibilityLabel("Project details: " + project.name)
+                    .buttonStyle(.plain).padding(.trailing, 14).help("Project details").accessibilityLabel("Project details: " + project.name)
                 }.selectionDisabled()
               }
             }
@@ -203,6 +203,9 @@ struct MainView: View {
                     Task { await model.archiveConversation(c) }
                   }.disabled(model.tasks.contains { $0.conversationId == c.id && ($0.active || $0.status == "awaiting_input") })
                   Button("Conversation Details…") { model.editingConversation = c }
+                  if let project = model.projects.first(where: { $0.id == c.projectId }) {
+                    Button("Project Details…") { model.editingProject = project }
+                  }
                   Button("New conversation with these agents") {
                     Task {
                       await model.post("/conversations", ["title": c.title, "members": c.members, "projectId": c.projectId as Any? ?? NSNull(), "automatic": c.automatic == 1])
