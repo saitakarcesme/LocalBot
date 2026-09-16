@@ -487,7 +487,7 @@ struct MessageBubble: View {
               .foregroundStyle(.secondary).padding(.leading, 9)
           }
           if !message.content.isEmpty {
-            Text(message.content).font(.system(size: 14)).textSelection(.enabled).padding(
+            MessageText(content: message.content, formatted: !outgoing).font(.system(size: 14)).padding(
               .horizontal, 13
             ).padding(.vertical, 9).foregroundStyle(outgoing ? Color.white : Color.primary)
               .background(
