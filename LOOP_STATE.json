@@ -58,7 +58,7 @@
       "manual scrolling survives Activity width change",
       "last selected chat survives relaunch"
     ],
-    "checkpoint": "Native message request IDs and transactional server deduplication added; Swift checks, 88 tests and build pass; packaged retry/restart smoke running; installed UI pending",
+    "checkpoint": "Native message request IDs and transactional server deduplication added; Swift checks, 88 tests and build pass; real subscription packaged retry/restart smoke passed; installed UI pending",
     "tests_passed": 88,
     "packaged_runtime_subscription_verified": true
   }
