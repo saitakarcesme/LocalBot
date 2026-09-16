@@ -34,8 +34,8 @@
   },
   "v0_2": {
     "status": "core_implemented_live_verified_tool_parity_in_progress",
-    "updated_at": "2026-09-16T12:05:54.939864+00:00",
-    "runtime_tests_passed": 42,
+    "updated_at": "2026-09-16T12:17:20.082724+00:00",
+    "runtime_tests_passed": 43,
     "real_subscription_agents_verified": 5,
     "real_project": "Focus Ledger",
     "project_tests_passed": 5,
@@ -59,6 +59,6 @@
       "manual scrolling survives Activity width change",
       "last selected chat survives relaunch"
     ],
-    "checkpoint": "Older history pagination verified with 650-record native fixture; fixture removed"
+    "checkpoint": "Historical search match and return-to-latest verified with 650-message native fixture; fixture removed"
   }
 }

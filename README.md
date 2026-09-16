@@ -92,3 +92,5 @@ MCP integrations can expose tools, resources or both. Agents can list resource p
 `apply_patch` supports Add/Update/Delete File, Move to, exact `@@` hunks and End of File markers. Read existing files first and supply their SHA-256 values in `expected_hashes`. Every patch requires approval. All paths and hunks are checked before target changes; execution failures attempt rollback. A recovery JSON artifact retains base64 preimages and file modes, including deleted files. Matching is exact and unique; fuzzy matching is not supported. Multi-file updates are not crash-atomic; recovery records are retained under the workspace `.localbot-tmp` directory.
 
 Long conversations initially load the latest 300 messages. Scroll to the top and choose **Load earlier messages** to fetch another page while retaining your reading position. Older pages are loaded only when requested.
+
+Search results open and highlight the matching message, including older history. Choose **Latest messages** to return to the current conversation. TypeScript builds cache locked compiler dependencies in `~/Library/Caches/LocalBot/RuntimeBuild` to avoid iCloud Documents dependency stalls.
