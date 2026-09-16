@@ -141,7 +141,7 @@
     {
       "name": "mcp__codex_app__read_thread",
       "status": "partial-equivalent",
-      "route": "search_history retrieves source-identified excerpts from the current conversation or project, including archived chats, before the current task. No arbitrary thread read, full-thread pagination or cross-project access."
+      "route": "search_history locates source excerpts; read_history reads five-message chronological pages with owned before cursors and explicit 2,000-character per-message truncation. Current/same-project conversations only, before current task. No cross-project or attachment-body access."
     },
     {
       "name": "mcp__codex_app__read_thread_terminal",

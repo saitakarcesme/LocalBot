@@ -143,3 +143,6 @@ Agents previously saw bounded recent context without a retrieval tool. Added sea
 
 ### Automatic project-context ordering checkpoint — 2026-09-16
 Found the automatically injected sibling-project history lacked search_history's task-message cutoff. Queued work could therefore receive a later sibling instruction as history. Added bounded source-identified excerpts before the task's message and whole-entry budgeting. Provider-boundary regression gates routing to reproduce the timing; earlier evidence arrives, future sibling requests and unrelated private chats do not. Tests71/71, built and installed, signature verified. Shared durable project memory is not versioned by this change.
+
+### Paginated agent history checkpoint — 2026-09-16
+Added read_history to complement search_history: bounded chronological pages with source metadata and owned cursors, current/same-project scope, task-message cutoff and explicit long-message truncation. Test covers13 messages across3 pages, foreign/future cursor rejection and archived sources. Live Mira read2 messages from prior Focus Ledger summary and grounded its response in that tool output. Tests72/72, built-in tools29, app installed; full unbounded message/attachment reads remain outside this tool.

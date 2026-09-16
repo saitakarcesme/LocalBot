@@ -73,7 +73,7 @@ This is a usable local development release, not a notarized public distribution.
 - [Native UI specification](docs/UI-SPEC.md)
 - [Verification results](docs/QA.md)
 
-The [269-entry Codex tool inventory](docs/CODEX-TOOL-INVENTORY.json) is a coverage target, not a claim that all Codex-hosted services are implemented. LocalBot currently exposes 28 built-in tool entries, including MCP discovery and invocation. External integrations require their own supported endpoint and authentication.
+The [269-entry Codex tool inventory](docs/CODEX-TOOL-INVENTORY.json) is a coverage target, not a claim that all Codex-hosted services are implemented. LocalBot currently exposes 29 built-in tool entries, including MCP discovery and invocation. External integrations require their own supported endpoint and authentication.
 
 For precise edits, read_file returns a SHA-256 fingerprint. edit_file replaces one unique old_text block using that fingerprint; stale or ambiguous edits fail without changing the target. It follows the contact’s filesystem permission and edit approval policy.
 
@@ -113,3 +113,5 @@ Contact details include a **Task step limit** (1–256, default 24). One step is
 
 
 Agents can use `search_history` to retrieve older messages from their current conversation or its project, including archived chats. Search uses SQLite FTS with literal terms, returns up to 10 source-identified excerpts, and excludes messages at or after the current task’s user message. Results are historical evidence, not proof that files still have the same contents. There is no cross-project or unrelated direct-chat search.
+
+`read_history` reads a source conversation in pages of five messages using `nextBefore`; it shares search_history’s project and task boundaries. Messages longer than 2,000 characters are explicitly marked `truncated`. It does not read attachment bodies or provide unrestricted access to unrelated chats.

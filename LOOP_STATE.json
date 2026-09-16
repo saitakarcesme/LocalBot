@@ -40,7 +40,7 @@
     "project_tests_passed": 5,
     "cross_conversation_project_context_verified": true,
     "tool_inventory_target": 269,
-    "localbot_builtin_tools": 28,
+    "localbot_builtin_tools": 29,
     "remaining": [
       "External vendor adapters and authenticated per-tool validation",
       "Codex-host-specific tool counterparts",
@@ -58,7 +58,7 @@
       "manual scrolling survives Activity width change",
       "last selected chat survives relaunch"
     ],
-    "checkpoint": "Automatic project excerpts isolated from future sibling messages; actual model payload tested; 71 tests and installed build",
-    "tests_passed": 71
+    "checkpoint": "Paginated scoped agent history reads verified through real subscription Mira; 72 tests, 29 built-in tools",
+    "tests_passed": 72
   }
 }
