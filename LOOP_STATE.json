@@ -58,7 +58,7 @@
       "manual scrolling survives Activity width change",
       "last selected chat survives relaunch"
     ],
-    "checkpoint": "Capability-aware routing passed 93 tests and real Codex subscription sole-writer selection; native installation pending closure",
+    "checkpoint": "Capability-aware routing:93 tests, real sole-writer selection, clean signed cache build2bd1068 and packaged subscription regression passed; installed app closure pending",
     "tests_passed": 93,
     "packaged_runtime_subscription_verified": true,
     "built_app": "~/Library/Caches/LocalBot/AppBuild/LocalBot.app"
