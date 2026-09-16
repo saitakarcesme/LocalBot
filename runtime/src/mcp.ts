@@ -16,6 +16,8 @@ export function validateMCP(connection: MCPConnection) {
 /** MCP 2025-11-25 Streamable HTTP; server prompts cannot grant permissions. */
 export class MCPClient {
   private session?: string;
+  private resourcesAvailable = false;
+  private toolsAvailable = false;
   private version = "2025-11-25";
   constructor(private connection: MCPConnection, private secret?: string) { validateMCP(connection); }
   private headers() {
@@ -68,9 +70,12 @@ export class MCPClient {
     const initialized = await this.rpc("initialize", { protocolVersion: this.version, capabilities: {}, clientInfo: { name: "LocalBot", version: "0.2.0" } }, signal);
     if (!["2025-11-25", "2025-06-18", "2025-03-26"].includes(initialized.protocolVersion)) throw new Error("Unsupported MCP protocol version");
     this.version = initialized.protocolVersion;
+    this.resourcesAvailable = !!initialized.capabilities?.resources;
+    this.toolsAvailable = !!initialized.capabilities?.tools;
     await this.rpc("notifications/initialized", {}, signal, true);
   }
   async list(signal: AbortSignal) {
+    if (!this.toolsAvailable) throw new Error("This MCP server does not advertise tools");
     const tools: any[] = [];
     let cursor: string | undefined;
     for (let page = 0; page < 20; page++) {
@@ -80,6 +85,37 @@ export class MCPClient {
       if (!cursor) return tools;
     }
     throw new Error("MCP tool listing exceeds pagination limit");
+  }
+  async discover(signal: AbortSignal) {
+    return {
+      tools: this.toolsAvailable ? await this.list(signal) : [],
+      resources: this.resourcesAvailable ? await this.resources(signal) : { resources: [] },
+      templates: this.resourcesAvailable ? await this.resources(signal, true) : { resourceTemplates: [] },
+    };
+  }
+  async resources(signal: AbortSignal, templates = false, cursor?: string) {
+    if (!this.resourcesAvailable) throw new Error("This MCP server does not advertise resources");
+    if (cursor && cursor.length > 4096) throw new Error("MCP cursor exceeds 4096 characters");
+    const key = templates ? "resourceTemplates" : "resources";
+    const result = await this.rpc(templates ? "resources/templates/list" : "resources/list", cursor ? { cursor } : {}, signal);
+    if (!Array.isArray(result[key]) || result[key].some((item: any) => !item || typeof item.name !== "string" || typeof item[templates ? "uriTemplate" : "uri"] !== "string"))
+      throw new Error("Invalid MCP resource listing");
+    if (result.nextCursor !== undefined && (typeof result.nextCursor !== "string" || result.nextCursor.length > 4096))
+      throw new Error("Invalid MCP resource cursor");
+    if (JSON.stringify(result).length > 100_000) throw new Error("MCP resource page exceeds 100 KB");
+    return result;
+  }
+  async readResource(uri: string, signal: AbortSignal) {
+    if (!this.resourcesAvailable) throw new Error("This MCP server does not advertise resources");
+    if (!uri || uri.length > 8192 || !/^[a-z][a-z0-9+.-]*:/i.test(uri) || /[\x00-\x20]/.test(uri))
+      throw new Error("Invalid MCP resource URI");
+    // URI is sent only to the selected, authorized MCP server. Never fetch it locally.
+    const result = await this.rpc("resources/read", { uri }, signal);
+    if (!Array.isArray(result.contents) || result.contents.some((item: any) => !item || typeof item.uri !== "string" || (typeof item.text !== "string" && typeof item.blob !== "string")))
+      throw new Error("Invalid MCP resource contents");
+    const output = JSON.stringify(result);
+    if (output.length > 100_000) throw new Error("MCP resource content exceeds 100 KB; request a smaller resource");
+    return output;
   }
   async call(name: string, args: unknown, signal: AbortSignal) {
     const tools = await this.list(signal);

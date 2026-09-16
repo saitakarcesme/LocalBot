@@ -366,7 +366,7 @@ const server = createServer(async (req, res) => {
       const b = await body(req), config = store.integrations().find(i => i.id === b.id);
       if (!config) throw new Error("Integration not found");
       const client = new MCPClient(config, engine.secrets.get("mcp:" + config.id));
-      try { const signal = AbortSignal.timeout(30000); await client.connect(signal); json(res, 200, { tools: await client.list(signal) }); }
+      try { const signal = AbortSignal.timeout(30000); await client.connect(signal); json(res, 200, await client.discover(signal)); }
       finally { await client.close(); }
       return;
     }

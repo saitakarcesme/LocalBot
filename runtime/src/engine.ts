@@ -460,7 +460,7 @@ export class Engine {
               const live = this.store.agent(agentId);
               if (!allowed(live, name))
                 throw new Error(`Permission denied: ${name}`);
-              if (name === "mcp_call" || name === "mcp_list_tools") authorizedMCPConnection(live.integrations, this.store.integrations(), args.integrationId);
+              if (["mcp_call", "mcp_list_tools", "mcp_list_resources", "mcp_list_resource_templates", "mcp_read_resource"].includes(name)) authorizedMCPConnection(live.integrations, this.store.integrations(), args.integrationId);
               if (
                 needsApproval(live, name) &&
                 !(await this.approve(
@@ -482,12 +482,14 @@ export class Engine {
                 callId,
               );
               this.changed();
-              if (name === "mcp_call" || name === "mcp_list_tools") {
+              if (["mcp_call", "mcp_list_tools", "mcp_list_resources", "mcp_list_resource_templates", "mcp_read_resource"].includes(name)) {
                 const integration = authorizedMCPConnection(this.store.agent(agentId).integrations, this.store.integrations(), args.integrationId);
                 const client = new MCPClient(integration, this.secrets.get("mcp:" + integration.id));
                 try {
                   await client.connect(signal);
                   if (name === "mcp_list_tools") result = JSON.stringify(await client.list(signal));
+                  else if (name === "mcp_list_resources" || name === "mcp_list_resource_templates") result = JSON.stringify(await client.resources(signal, name === "mcp_list_resource_templates", args.cursor));
+                  else if (name === "mcp_read_resource") result = await client.readResource(args.uri, signal);
                   else {
                     const input = JSON.parse(args.arguments);
                     if (!input || typeof input !== "object" || Array.isArray(input)) throw new Error("MCP arguments must be an object");

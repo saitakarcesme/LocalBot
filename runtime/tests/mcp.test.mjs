@@ -47,3 +47,41 @@ test("MCP permissions and endpoint protection fail closed", () => {
   assert.throws(() => validateMCP({ endpoint: "http://remote.example/mcp", requiresAuth: true }), /HTTPS/);
   assert.throws(() => validateMCP({ endpoint: "https://remote.example/mcp", requiresAuth: false }), /authentication/);
 });
+
+test("MCP resource-only servers expose paginated resources, templates and bounded content", async () => {
+  const seen=[];
+  const server=createServer(async(req,res)=>{
+    if(req.method==='DELETE'){res.end();return;}
+    let raw='';for await(const part of req)raw+=part;
+    const m=JSON.parse(raw);seen.push(m);
+    if(m.method==='notifications/initialized'){res.writeHead(202);res.end();return;}
+    let result;
+    if(m.method==='initialize')result={protocolVersion:'2025-11-25',capabilities:{resources:{}},serverInfo:{name:'resources',version:'1'}};
+    if(m.method==='resources/list')result=m.params.cursor?{resources:[{name:'Second',uri:'notes://second'}]}:{resources:[{name:'First',uri:'notes://first'}],nextCursor:'next'};
+    if(m.method==='resources/templates/list')result={resourceTemplates:[{name:'Note',uriTemplate:'notes://{id}'}]};
+    if(m.method==='resources/read')result=m.params.uri==='notes://invalid'?{contents:[{uri:'notes://invalid'}]}:{contents:[{uri:m.params.uri,text:m.params.uri==='notes://huge'?'x'.repeat(100001):'Merhaba dünya'}]};
+    res.end(JSON.stringify({jsonrpc:'2.0',id:m.id,result}));
+  });
+  await new Promise(r=>server.listen(0,'127.0.0.1',r));
+  const client=new MCPClient({id:'resources',name:'Resources',endpoint:`http://127.0.0.1:${server.address().port}`,requiresAuth:false});
+  const signal=AbortSignal.timeout(3000);
+  try{
+    await client.connect(signal);
+    const discovery=await client.discover(signal);
+    assert.deepEqual(discovery.tools,[]);
+    assert.equal(discovery.resources.nextCursor,'next');
+    assert.equal((await client.resources(signal,false,'next')).resources[0].uri,'notes://second');
+    assert.equal(discovery.templates.resourceTemplates[0].uriTemplate,'notes://{id}');
+    assert.equal(JSON.parse(await client.readResource('notes://first',signal)).contents[0].text,'Merhaba dünya');
+    await assert.rejects(client.readResource('notes://huge',signal),/exceeds/);
+    await assert.rejects(client.readResource('notes://invalid',signal),/Invalid MCP resource contents/);
+    await assert.rejects(client.readResource('not a URI',signal),/Invalid MCP resource URI/);
+    await assert.rejects(client.list(signal),/does not advertise tools/);
+    assert(!seen.some(m=>m.method==='tools/list'));
+  }finally{await client.close();await new Promise(r=>server.close(r));}
+  for(const name of ['mcp_list_resources','mcp_list_resource_templates','mcp_read_resource']){
+    assert.equal(allowed({integrations:[]},name),false);
+    assert.equal(allowed({integrations:['resources']},name),true);
+  }
+  assert.equal(needsApproval({autonomy:'high'},'mcp_read_resource'),true);
+});
