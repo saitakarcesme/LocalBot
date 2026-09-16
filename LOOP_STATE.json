@@ -34,14 +34,14 @@
   },
   "v0_2": {
     "status": "core_implemented_live_verified_tool_parity_in_progress",
-    "updated_at": "2026-09-16T10:59:56.827603+00:00",
-    "runtime_tests_passed": 26,
+    "updated_at": "2026-09-16T11:09:06.623465+00:00",
+    "runtime_tests_passed": 28,
     "real_subscription_agents_verified": 5,
     "real_project": "Focus Ledger",
     "project_tests_passed": 5,
     "cross_conversation_project_context_verified": true,
     "tool_inventory_target": 269,
-    "localbot_builtin_tools": 13,
+    "localbot_builtin_tools": 14,
     "remaining": [
       "External vendor adapters and authenticated per-tool validation",
       "Codex-host-specific tool counterparts",
@@ -56,6 +56,7 @@
       "last message visible on open",
       "reaction aggregation",
       "MCP settings form"
-    ]
+    ],
+    "checkpoint": "Precise file editing installed; real GPT read-edit-read sequence verified"
   }
 }

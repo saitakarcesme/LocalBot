@@ -65,3 +65,9 @@
 - Runtime suite: 26 passing tests. MCP HTTP transport and per-agent connection controls shipped; vendor access is not implied by transport support.
 - 269 Codex registry entries tracked honestly; 13 LocalBot built-ins. Full parity remains open.
 - GitHub heartbeat is paused; this task commits and pushes each checkpoint.
+
+## Tool coverage continuation — precise file edits
+
+Previous goal turn was progress (installed v0.2, live agent/project work, commits and verified UI). Added edit_file with SHA-256 stale-read detection, unique exact matching, atomic replacement and artifact integration. Tests verify permissions, cancellation, symlink refusal, ambiguous/stale input, preserved executable bits, unchanged hard-link aliases and temporary-file cleanup. A test path expectation was corrected for macOS canonical /private/var paths; both new tests passed, alongside the prior 26 tests. Full Codex patch syntax remains open.
+
+Live edit verification passed through the installed runtime using the ChatGPT subscription. Exact tool sequence: read_file, edit_file, read_file. Approval was scoped to the verification filename and exact replacement; disk content independently matched.

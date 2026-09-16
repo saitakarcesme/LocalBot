@@ -7,7 +7,7 @@
     {
       "name": "apply_patch",
       "status": "partial-equivalent",
-      "route": "write_file: whole-file writes; patch syntax not implemented"
+      "route": "edit_file: unique exact-block replacement, stale SHA-256 checks and atomic file replacement; write_file for whole files. Multi-file Codex patch syntax remains open."
     },
     {
       "name": "clock__curr_time",
@@ -1347,7 +1347,8 @@
     "ask_user",
     "react",
     "mcp_list_tools",
-    "mcp_call"
+    "mcp_call",
+    "edit_file"
   ],
   "verifiedIntegrationTransport": "MCP Streamable HTTP 2025-11-25 plus 2025-06-18/2025-03-26 negotiation"
 }

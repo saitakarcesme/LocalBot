@@ -82,3 +82,5 @@ The requested 2×3090 PC and 27B model were not available; no throughput, VRAM-f
 The 1.7B model remains a lightweight development model. A completed model response is not proof of semantic correctness; tool evidence and user review remain important for real engineering work.
 
 Final v0.2 native checks: integration form opens from the app menu; project headers do not replace the selected chat; the installed signed binary opens the long project transcript with its final test result visible; identical reactions aggregate as a count. Runtime health reports 0.2.0.
+
+Precise-edit continuation: 28 tests now pass across the suite and focused rerun. The installed GPT subscription agent executed read_file → approved edit_file → read_file on a new verification file. Independent disk inspection confirmed only `status: pending` changed to `status: done`, preserving `keep: unchanged`. The tool call and resulting artifact are recorded in LocalBot.
