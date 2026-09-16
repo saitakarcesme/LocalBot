@@ -58,7 +58,7 @@
       "manual scrolling survives Activity width change",
       "last selected chat survives relaunch"
     ],
-    "checkpoint": "Native project editor rename round-trip verified; stale-save and unfinished-task guards, 75 runtime tests",
-    "tests_passed": 75
+    "checkpoint": "Shared credential-path policy enforced and tested in real macOS sandbox; 76 tests, installed/signature verified",
+    "tests_passed": 76
   }
 }

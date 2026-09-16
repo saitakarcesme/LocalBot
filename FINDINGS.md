@@ -152,3 +152,6 @@ Closed read_history's long-message gap: bounded single-message chunks with Unico
 
 ### Native project editing checkpoint — 2026-09-16
 Projects now have an editor for name, workspace and shared notes. Runtime validates folders, rejects unfinished project work, and compares the original fields transactionally to prevent stale UI overwriting newer memory.75 tests pass. Native rename/save/reopen/restore verified on Focus Ledger with history/folder/notes preserved. Context-menu access and header spacing improved. Workspace changes select future work location; no files are moved.
+
+### Shell credential-path checkpoint — 2026-09-16
+Found direct file tools and shell sandbox disagreed on protected credential paths. Shared case-insensitive credential definitions now cover both; real sandbox cat/redirection tests reject13 generated credential fixtures while normal workspace operations pass. Corrected SBPL regex escaping based on failing regression before shipping.76 tests pass; built, signed, installed and reopened. Git metadata exception documented; no claim of arbitrary secret-content detection.
