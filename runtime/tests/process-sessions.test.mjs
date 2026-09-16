@@ -71,3 +71,14 @@ test('process tools enforce permissions and use the real macOS sandbox', { skip:
     assert.equal(result.state, 'exited'); assert.equal(result.exitCode, 0); assert.equal(output, 'received:sandbox works');
   } finally { processSessions.releaseTask('sandbox'); await rm(workspace, { recursive: true, force: true }); }
 });
+
+test('agent configuration changes stop already-running sessions', async () => {
+  const m = new ProcessSessions();
+  try {
+    const result = await m.start(owner, launch('setInterval(()=>{},1000)'), new AbortController().signal);
+    m.releaseAgent('another-agent');
+    assert.equal(m.poll(owner, result.sessionId).reason, null);
+    m.releaseAgent(owner.agentId);
+    assert.equal((await finished(m, result.sessionId)).reason, 'Agent configuration changed');
+  } finally { m.releaseTask(owner.taskId); }
+});

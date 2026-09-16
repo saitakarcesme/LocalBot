@@ -1,3 +1,4 @@
+import { processSessions } from "./process-sessions.js";
 import { createServer, IncomingMessage, ServerResponse } from "node:http";
 import { randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 import { promises as fs, readFileSync, unlinkSync } from "node:fs";
@@ -261,6 +262,7 @@ const server = createServer(async (req, res) => {
           "Choose a dedicated project directory, not a home, system or runtime directory.",
         );
       a.workspace = real;
+      processSessions.releaseAgent(a.id);
       store.saveAgent(a);
       change();
       json(res, 200, a);

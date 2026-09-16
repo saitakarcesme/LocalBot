@@ -83,6 +83,10 @@ export class ProcessSessions {
     if (s.state === "running") this.kill(s, "Stopped by agent");
     return this.poll(owner, id);
   }
+  releaseAgent(agentId: string) {
+    for (const s of this.sessions.values()) if (s.owner.agentId === agentId && s.state === "running")
+      this.kill(s, "Agent configuration changed");
+  }
   releaseTask(taskId: string) {
     for (const [id, s] of this.sessions) if (s.owner.taskId === taskId) {
       if (s.state === "running") this.kill(s, "Task ended");
