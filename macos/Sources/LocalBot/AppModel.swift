@@ -58,6 +58,7 @@ enum Keychain {
   @Published var selectedId: String? {
     didSet {
       if selectedId != oldValue {
+        UserDefaults.standard.set(selectedId, forKey: "selectedConversation")
         messages = []
         activity = []
         Task { await refreshConversation() }
@@ -211,9 +212,9 @@ enum Keychain {
           }
         }
       }
-      if selectedId == nil {
-        selectedId =
-          conversations.first(where: { $0.members == ["coder"] })?.id ?? conversations.first?.id
+      if selectedId == nil || !conversations.contains(where: { $0.id == selectedId }) {
+        let saved = UserDefaults.standard.string(forKey: "selectedConversation")
+        selectedId = conversations.first(where: { $0.id == saved })?.id ?? conversations.first?.id
       }
       await refreshConversation()
     } catch { connected = false }
