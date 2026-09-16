@@ -11,12 +11,14 @@ import { spawn } from "node:child_process";
 import { lookup } from "node:dns/promises";
 import { isIP } from "node:net";
 import { Agent, ToolDefinition } from "./types.js";
+import { editFile, fileHash } from "./file-edit.js";
 const object = (
   properties: Record<string, unknown>,
   required: string[] = [],
 ) => ({ type: "object", properties, required, additionalProperties: false });
 const string = { type: "string" };
 export const definitions: ToolDefinition[] = [
+  ["edit_file", "Replace one exact, unique text block in a UTF-8 workspace file. First read_file and supply its sha256 to reject stale edits. Returns an artifact; preserves other content.", object({ path: string, old_text: string, new_text: string, expected_sha256: string }, ["path", "old_text", "new_text", "expected_sha256"])],
   ["mcp_list_tools", "List tools from an enabled MCP integration. Use the integration ID provided in your context.", object({ integrationId: string }, ["integrationId"])],
   ["mcp_call", "Call a discovered tool on an enabled MCP integration. arguments must be a JSON-encoded object. Every call needs user approval.", object({ integrationId: string, tool: string, arguments: string }, ["integrationId", "tool", "arguments"])],
   [
@@ -97,6 +99,7 @@ export function allowed(agent: Agent, name: string) {
     case "search_repository":
       return agent.permissions.filesystem !== "off";
     case "write_file":
+    case "edit_file":
       return agent.permissions.filesystem === "write";
     case "terminal":
     case "run_tests":
@@ -116,7 +119,7 @@ export function allowed(agent: Agent, name: string) {
 export function needsApproval(a: Agent, name: string) {
   return (
     ["terminal", "run_tests", "mcp_call"].includes(name) ||
-    (a.autonomy === "ask" && ["write_file", "remember"].includes(name))
+    (a.autonomy === "ask" && ["write_file", "edit_file", "remember"].includes(name))
   );
 }
 export function validateArguments(name: string, args: any) {
@@ -389,12 +392,19 @@ export async function executeTool(
       const stat = await fs.stat(p);
       if (!stat.isFile() || stat.size > 200_000)
         throw new Error("Only regular files up to 200 KB may be read.");
+      const content = await fs.readFile(p);
       return {
         output: JSON.stringify({
           path: args.path,
-          content: await fs.readFile(p, "utf8"),
+          sha256: fileHash(content),
+          content: content.toString("utf8"),
         }),
       };
+    }
+    case "edit_file": {
+      const path = await safePath(a.workspace, args.path);
+      const result = await editFile(path, args.old_text, args.new_text, args.expected_sha256, signal);
+      return { output: JSON.stringify({ path: args.path, ...result }), artifact: path };
     }
     case "write_file": {
       const p = await safePath(a.workspace, args.path, true);
