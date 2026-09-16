@@ -13,7 +13,8 @@
     "app": "bash scripts/build-app.sh",
     "check": "npm test && swift build --package-path macos -j 1",
     "test:packaged-subscription": "node scripts/packaged-runtime-smoke.mjs",
-    "audit:tools": "node scripts/audit-tool-inventory.mjs"
+    "audit:tools": "node scripts/audit-tool-inventory.mjs",
+    "install:app": "node scripts/install-app.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

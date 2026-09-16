@@ -33,7 +33,7 @@
   },
   "v0_2": {
     "status": "core_implemented_live_verified_tool_parity_in_progress",
-    "updated_at": "2026-09-16T17:10:24.970140+00:00",
+    "updated_at": "2026-09-16T17:17:49.113817+00:00",
     "runtime_tests_passed": 92,
     "real_subscription_agents_verified": 5,
     "real_project": "Focus Ledger",
@@ -58,7 +58,7 @@
       "manual scrolling survives Activity width change",
       "last selected chat survives relaunch"
     ],
-    "checkpoint": "Clean commit7b19ae1 cached bundle passed strict signature, 27-file hashes and real subscription regression; installed LocalBot still running; user quit request pending",
+    "checkpoint": "Guarded installer added; source verified and running-app refusal tested; installation still pending native app closure",
     "tests_passed": 92,
     "packaged_runtime_subscription_verified": true,
     "built_app": "~/Library/Caches/LocalBot/AppBuild/LocalBot.app"

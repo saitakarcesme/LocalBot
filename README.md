@@ -134,3 +134,9 @@ Native message retries reuse a saved request ID until the send is acknowledged. 
 `list_tasks` gives agents five-task pages of recorded conversation/project work with status, source IDs and bounded prompt excerpts. Its active filter includes queued, running and approval/input waits. It includes the requesting task and earlier work only; it neither changes tasks nor reveals other projects.
 
 App bundles are assembled outside synced Documents folders to avoid file-provider metadata invalidating macOS signatures. Override the destination with `LOCALBOT_APP_BUILD_DIR` if needed. Each build includes `Contents/Resources/build-info.json` and an adjacent `LocalBot.app.manifest.json` with hashes of the signed files. Run `node scripts/verify-build-manifest.mjs` to check all bundle files against that manifest; this is an integrity check, not publisher authentication.
+
+### Installing a verified build
+
+After building, quit LocalBot and keep it closed throughout installation. Run `npm run install:app -- --check` for a read-only signature, manifest and process readiness check; then `npm run install:app` to install into `~/Applications`. The installer refuses while either the installed/built native app or its bundled Node runtime is running. It never quits applications or kills processes.
+
+Installation stages and verifies the copy, preserves the old app as `LocalBot.backup-<id>.app`, promotes the new app, and verifies it again. Failed verification restores the previous app when possible and retains the failed stage for diagnosis. User data is untouched. The app is not automatically launched. Keep the backup until the installed version has been checked; backups consume disk space. A process started concurrently during installation is outside this check's guarantee.
