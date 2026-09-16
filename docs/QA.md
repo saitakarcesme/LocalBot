@@ -250,3 +250,7 @@ Swift checks verify running/approval tasks outrank newer queued messages, queued
 ### Stale contact editing — 2026-09-16
 
 92 tests and inventory gate pass. Real HTTP requests verify a stale editor cannot overwrite updated memory or permissions, while refreshed edits succeed and default optional fields do not cause false conflicts. Native contact editor sends its captured original state; build/signing passed. Legacy callers without expected-state data retain prior behavior. Native sheet/alert interaction remains unverified.
+
+### Signed cache bundle — 2026-09-16
+
+Clean source commit7b19ae1 produced `~/Library/Caches/LocalBot/AppBuild/LocalBot.app`, outside synced Documents. Strict deep codesign verification and27 signed-file hashes passed. The packaged real subscription/restart/retry regression passed using this new location. Manifest records sourceDirty=false and build time; it verifies integrity, not publisher trust. Installed app remained running, so no replacement or native window validation was performed.

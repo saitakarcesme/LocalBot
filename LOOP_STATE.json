@@ -58,7 +58,7 @@
       "manual scrolling survives Activity width change",
       "last selected chat survives relaunch"
     ],
-    "checkpoint": "Signed app builds moved outside synced Documents; build identity and 27-file integrity manifest verified; user asked to quit installed LocalBot for replacement; clean rebuild/package regression pending",
+    "checkpoint": "Clean commit7b19ae1 cached bundle passed strict signature, 27-file hashes and real subscription regression; installed LocalBot still running; user quit request pending",
     "tests_passed": 92,
     "packaged_runtime_subscription_verified": true,
     "built_app": "~/Library/Caches/LocalBot/AppBuild/LocalBot.app"
