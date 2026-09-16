@@ -66,7 +66,7 @@ To back up history, close the app, stop its runtime when no task is active, then
 
 ## Current limits
 
-This is a usable local development release, not a notarized public distribution. The 2×3090 machine and the requested 27B model have not been available for hardware validation. API adapters have protocol tests; the Codex ChatGPT subscription bridge has live agent and project tests. Interactive browser automation, image inference through HTTP providers, conversation branches and automatic crash replay remain unimplemented. Shell execution is macOS-only until equivalent Windows/Linux sandboxing exists.
+This is a usable local development release, not a notarized public distribution. The 2×3090 machine and the requested 27B model have not been available for hardware validation. API adapters have protocol tests; the Codex ChatGPT subscription bridge has live agent and project tests. Interactive browser automation, Anthropic image input, conversation branches and automatic crash replay remain unimplemented. Local HTTP vision payloads have loopback protocol tests; real local vision inference remains unverified. Shell execution is macOS-only until equivalent Windows/Linux sandboxing exists.
 
 - [Architecture and security boundaries](docs/ARCHITECTURE.md)
 - [Remote PC setup](docs/REMOTE-MODELS.md)
@@ -103,6 +103,8 @@ Incoming messages render native inline emphasis and code, with fenced code block
 
 `process_poll` waits for new output or process exit for up to `wait_ms` (decimal string, 0–60000; default 10000). Use 0 for an immediate snapshot. Pending waits end on task cancellation; output is consumed only once.
 
-Codex subscription agents can inspect attached PNG/JPEG/GIF/WebP images through CLI multimodal input: at most four recent context images, 5 MB per image and 12 MB total. Native attachment previews remain unchanged. PNG image understanding was live-tested; other formats have signature handling but have not been individually live-tested. HTTP providers currently receive an explicit unsupported-image note. The image adapter follows [Codex App Server input types](https://learn.chatgpt.com/docs/app-server).
+Codex subscription agents can inspect attached PNG/JPEG/GIF/WebP images through CLI multimodal input: at most four recent context images, 5 MB per image and 12 MB total. Native attachment previews remain unchanged. PNG image understanding was live-tested; other formats have signature handling but have not been individually live-tested. Ollama and OpenAI-compatible connections can enable image input for a compatible vision model; other connections receive an explicit unsupported-image note. The image adapter follows [Codex App Server input types](https://learn.chatgpt.com/docs/app-server).
 
-`view_image` lets an image-capable agent inspect a workspace picture with filesystem read permission. It rejects path escapes, symlinks and invalid/oversized images, retains an artifact copy and records the call in Activity. Current image-capable provider: Codex CLI. The same four-image/12 MB generation limits apply to attachments and image tools together.
+`view_image` lets an image-capable agent inspect a workspace picture with filesystem read permission. It rejects path escapes, symlinks and invalid/oversized images, retains an artifact copy and records the call in Activity. Image-capable providers: Codex CLI, and explicitly enabled Ollama/OpenAI-compatible models. The same four-image/12 MB generation limits apply to attachments and image tools together.
+
+In Model Settings, enable **Model supports image input** only when your Ollama or compatible endpoint serves a vision model. Images are encoded as bytes for the endpoint; local file paths are never sent. Tool responses retain their required ordering. References: [Ollama vision](https://docs.ollama.com/capabilities/vision), [compatible image messages](https://developers.openai.com/api/docs/guides/images-vision).

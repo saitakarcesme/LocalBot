@@ -1330,7 +1330,7 @@
     {
       "name": "view_image",
       "status": "implemented-equivalent",
-      "route": "view_image reads validated workspace pictures with filesystem permission, copies them to an artifact and passes real multimodal input to the image-capable Codex CLI provider. Bounded image count/bytes; HTTP provider vision and resolution controls are not implemented."
+      "route": "view_image reads validated workspace pictures with filesystem permission, retains an artifact and passes multimodal input through Codex CLI or opt-in Ollama/OpenAI-compatible providers. Codex live verified; HTTP protocol verified; actual local vision inference and resolution controls remain unverified/unimplemented."
     },
     {
       "name": "web__run",
