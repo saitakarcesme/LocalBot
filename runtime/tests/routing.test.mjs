@@ -205,3 +205,33 @@ test('contact directory paginates public role data and runs without filesystem o
   assert.deepEqual(f.store.conversation(c.id).members,['researcher']);
  }finally{await f.close();}
 });
+
+
+test('follow-ups queued before a group question close the stale wait when they start',async()=>{
+ let release,started=false,count=0;const gate=new Promise(r=>release=r);const contexts=[];
+ const f=await setup(async(body,res)=>{
+  count++;contexts.push(body.messages);
+  if(count===1){started=true;await gate;reply(res,{content:'',tool_calls:[{function:{name:'ask_user',arguments:{question:'Which format should we use?'}}}]});}
+  else reply(res,{content:'Follow-up handled.'});
+ });
+ try{
+  const c=f.store.createConversation('Queued answer',['coder','reviewer']);
+  const first=f.engine.enqueue(c.id,'Prepare the output');
+  await until(()=>started);
+  const followup=f.engine.enqueue(c.id,'Use JSON for the output');
+  assert.equal(f.store.task(followup.id).status,'queued');
+  release();await until(()=>f.store.task(followup.id).status==='completed');
+  assert.equal(f.store.task(first.id).status,'continued');
+  const firstRuns=f.store.all('SELECT agentId,status FROM runs WHERE taskId=?',first.id);
+  assert.deepEqual(firstRuns.map(r=>[r.agentId,r.status]),[['coder','continued']]);
+  assert.equal(f.store.all('SELECT * FROM runs WHERE taskId=?',followup.id).length,2);
+  assert.equal(count,3);
+  const previous=f.store.messages(c.id);
+  assert(previous.some(m=>m.content==='Which format should we use?'));
+  assert(!previous.find(m=>m.id===first.messageId).reactions.some(r=>['👀','⚠️'].includes(r.emoji)));
+  assert(JSON.stringify(contexts[1]).includes('Which format should we use?'));
+  assert(JSON.stringify(contexts[1]).includes('Use JSON for the output'));
+  f.store.setConversationArchived(c.id,true);
+  assert.equal(f.store.conversation(c.id).archived,true);
+ }finally{release();await f.close();}
+});

@@ -309,7 +309,11 @@ export class Engine {
     let c = this.store.conversation(task.conversationId);
     this.active.set(taskId, controller);
     const signal = controller.signal;
-    this.store.status(taskId, "running");
+    this.store.transaction(() => {
+      // A follow-up may have been queued before the preceding run asked its question.
+      this.store.continueQuestions(task.conversationId);
+      this.store.status(taskId, "running");
+    });
     this.changed();
     let runId: string | undefined;
     let hadErrors = false;
