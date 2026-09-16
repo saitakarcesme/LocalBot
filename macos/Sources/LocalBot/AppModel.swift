@@ -46,6 +46,7 @@ enum Keychain {
   @Published var providers: [Provider] = []
   @Published var projects: [Project] = []
   @Published var activeRuns: [ActiveRun] = []
+  @Published var goals: [AgentGoal] = []
   @Published var showProject = false
   @Published var showIntegrations = false
   @Published var integrations: [MCPConnection] = []
@@ -192,6 +193,7 @@ enum Keychain {
       providers = s.providers
       projects = s.projects ?? []
       activeRuns = s.activeRuns ?? []
+      goals = s.goals ?? []
       integrations = s.integrations ?? []
       conversations = s.conversations
       tasks = s.tasks

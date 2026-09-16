@@ -118,6 +118,7 @@ struct Activity: Codable, Identifiable {
   var createdAt: String
 }
 struct Snapshot: Codable {
+  var goals: [AgentGoal]?
   var integrations: [MCPConnection]?
   var projects: [Project]?
   var activeRuns: [ActiveRun]?
@@ -127,6 +128,15 @@ struct Snapshot: Codable {
   var tasks: [AgentTask]
   var approvals: [Approval]
   var revision: Int
+}
+struct AgentGoal: Codable, Identifiable {
+  var id: String
+  var conversationId: String
+  var objective: String
+  var status: String
+  var evidence: String
+  var createdAt: String
+  var updatedAt: String
 }
 struct MCPConnection: Codable, Identifiable {
   var id: String

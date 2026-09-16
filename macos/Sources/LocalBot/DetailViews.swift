@@ -56,6 +56,21 @@ struct ActivityView: View {
       Divider()
       ScrollView {
         LazyVStack(alignment: .leading, spacing: 12) {
+          if let goal = model.goals.first(where: { $0.conversationId == model.selectedId }) {
+            VStack(alignment: .leading, spacing: 6) {
+              HStack {
+                Label("Goal", systemImage: "scope").font(.headline)
+                Spacer()
+                Text(goal.status.capitalized).font(.caption).foregroundStyle(.secondary)
+              }
+              Text(goal.objective).font(.callout).textSelection(.enabled)
+              if !goal.evidence.isEmpty { Text(goal.evidence).font(.caption).foregroundStyle(.secondary).textSelection(.enabled) }
+              if goal.status != "complete" {
+                Text("Saved for this conversation. Send a follow-up to continue; this does not schedule unattended runs.")
+                  .font(.caption2).foregroundStyle(.secondary)
+              }
+            }.padding(12).background(.quaternary, in: RoundedRectangle(cornerRadius: 10))
+          }
           if model.activity.isEmpty {
             Text("Tool calls appear here as your agents work.").foregroundStyle(.secondary).font(
               .callout
