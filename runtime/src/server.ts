@@ -324,6 +324,7 @@ const server = createServer(async (req, res) => {
         temperature: bounded(b.temperature, 0, 2, 0.3),
         maxTokens: Math.floor(bounded(b.maxTokens, 128, 16000, 1200)),
         requiresAuth: b.requiresAuth === true,
+        imageInput: b.imageInput === true,
       };
       validateEndpoint(config);
       const previous = store.providers().find((p) => p.id === config.id);

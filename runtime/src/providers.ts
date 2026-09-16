@@ -1,3 +1,4 @@
+import { imageMessages } from "./http-images.js";
 import { randomUUID } from "node:crypto";
 import { CodexProvider } from "./codex-provider.js";
 import {
@@ -50,7 +51,7 @@ class HTTPProvider implements ModelProvider {
     validateEndpoint(p);
   }
   capabilities() {
-    return { tools: true, streaming: true, images: false };
+    return { tools: true, streaming: true, images: this.p.imageInput === true && ["ollama", "openai"].includes(this.p.kind) };
   }
   async request(path: string, body: unknown | undefined, signal?: AbortSignal) {
     if (this.p.requiresAuth && !this.secret)
@@ -100,6 +101,11 @@ class HTTPProvider implements ModelProvider {
     signal: AbortSignal,
   ): Promise<Generation> {
     const p = this.p;
+    if (messages.some(m => m.images?.length)) {
+      if (!this.capabilities().images) throw new Error("Enable image input for a vision-capable Ollama or compatible model");
+      messages = await imageMessages(messages, p.kind as "ollama" | "openai");
+      signal.throwIfAborted();
+    }
     let path: string, body: any;
     if (p.kind === "ollama") {
       path = "/api/chat";

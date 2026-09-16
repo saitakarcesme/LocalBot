@@ -20,6 +20,7 @@ export type Agent = {
   integrations?: string[];
 };
 export type ProviderConfig = {
+  imageInput?: boolean;
   id: string;
   name: string;
   kind: "ollama" | "openai" | "anthropic" | "codex";
