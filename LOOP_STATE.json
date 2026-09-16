@@ -58,7 +58,7 @@
       "manual scrolling survives Activity width change",
       "last selected chat survives relaunch"
     ],
-    "checkpoint": "read_activity provides scoped pages and complete stored output chunks; 86 tests and native build pass; real subscription verification in progress; native installation pending",
+    "checkpoint": "read_activity provides scoped pages and complete stored output chunks; 86 tests and native build pass; real subscription saved-output retrieval verified; native installation pending",
     "tests_passed": 86
   }
 }

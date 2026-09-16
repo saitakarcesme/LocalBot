@@ -214,3 +214,7 @@ Configurable agent run limits: previous turn was verified local HTTP vision prog
 ### Restart recovery visibility — 2026-09-16
 
 Disk-reopen regression verifies interrupted tasks/runs/pending calls, expired approvals, preserved completed results and exactly one conversation notice even after a second reopen. Active eyes reactions become warnings; completed and user reactions remain. Queued tasks and awaiting-input questions are preserved. Full suite82/82 and native build passed. No actual installed-app crash/UI test was performed in this checkpoint; native automation is unavailable.
+
+### Recorded Activity retrieval — 2026-09-16
+
+`node scripts/read-activity-smoke.mjs` passed against authenticated Codex CLI: one current_time call, two read_activity calls, and exact equality between saved output and retrieved chunk.86 runtime tests and native build/signing passed. Stored output can be recovered without repeating its originating action; access is limited to the current task. Native installation/live UI checks remain pending.
