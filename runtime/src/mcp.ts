@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
+import { MCPStdioTransport, validateStdioServer, type StdioServer } from "./mcp-stdio.js";
 
-export type MCPConnection = { id: string; name: string; endpoint: string; requiresAuth: boolean };
+export type MCPConnection = { id: string; name: string; endpoint: string; requiresAuth: boolean; transport?: "http" | "stdio"; process?: StdioServer };
 export function authorizedMCPConnection(enabled: string[] | undefined, connections: MCPConnection[], id: string) {
   if (!enabled?.includes(id)) throw new Error("Integration permission denied");
   const connection = connections.find(c => c.id === id);
@@ -8,6 +9,12 @@ export function authorizedMCPConnection(enabled: string[] | undefined, connectio
   return connection;
 }
 export function validateMCP(connection: MCPConnection) {
+  if (connection.transport === "stdio") {
+    if (!connection.process) throw new Error("MCP process configuration is missing");
+    if (connection.requiresAuth) throw new Error("Stdio token injection is not supported");
+    validateStdioServer(connection.process); return;
+  }
+  if (connection.transport && connection.transport !== "http") throw new Error("Unknown MCP transport");
   const url = new URL(connection.endpoint);
   if (url.username || url.password || url.search || url.hash || !["https:", "http:"].includes(url.protocol)) throw new Error("Use a plain MCP HTTP(S) endpoint");
   if (!["localhost", "127.0.0.1", "[::1]"].includes(url.hostname) && (url.protocol !== "https:" || !connection.requiresAuth)) throw new Error("Remote MCP servers require HTTPS and authentication");
@@ -16,16 +23,18 @@ export function validateMCP(connection: MCPConnection) {
 /** MCP 2025-11-25 Streamable HTTP; server prompts cannot grant permissions. */
 export class MCPClient {
   private session?: string;
+  private stdio?: MCPStdioTransport;
   private resourcesAvailable = false;
   private toolsAvailable = false;
   private version = "2025-11-25";
-  constructor(private connection: MCPConnection, private secret?: string) { validateMCP(connection); }
+  constructor(private connection: MCPConnection, private secret?: string) { validateMCP(connection); if (connection.transport === "stdio") this.stdio = new MCPStdioTransport(connection.process!); }
   private headers() {
     if (this.connection.requiresAuth && !this.secret) throw new Error("MCP credential is missing. Save it in Integrations.");
     return { "Content-Type": "application/json", Accept: "application/json, text/event-stream", "MCP-Protocol-Version": this.version,
       ...(this.session ? { "MCP-Session-Id": this.session } : {}), ...(this.secret ? { Authorization: `Bearer ${this.secret}` } : {}) };
   }
   private async rpc(method: string, params: unknown, signal: AbortSignal, notification = false): Promise<any> {
+    if (this.stdio) return this.stdio.rpc(method, params, signal, notification);
     const id = randomUUID();
     const response = await fetch(this.connection.endpoint, { method: "POST", headers: this.headers(), redirect: "error", signal: AbortSignal.any([signal, AbortSignal.timeout(60_000)]),
       body: JSON.stringify({ jsonrpc: "2.0", ...(notification ? {} : { id }), method, params }) });
@@ -125,6 +134,7 @@ export class MCPClient {
     return JSON.stringify(result).slice(0, 100000);
   }
   async close() {
+    if (this.stdio) { await this.stdio.close(); return; }
     if (this.session) await fetch(this.connection.endpoint, { method: "DELETE", headers: this.headers(), redirect: "error", signal: AbortSignal.timeout(2000) }).then(r => r.body?.cancel()).catch(() => {});
   }
 }
