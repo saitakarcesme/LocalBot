@@ -58,7 +58,7 @@
       "manual scrolling survives Activity width change",
       "last selected chat survives relaunch"
     ],
-    "checkpoint": "Complete Unicode-safe history chunks tested and exact live source-message read verified; 73 tests",
-    "tests_passed": 73
+    "checkpoint": "Native project editor rename round-trip verified; stale-save and unfinished-task guards, 75 runtime tests",
+    "tests_passed": 75
   }
 }

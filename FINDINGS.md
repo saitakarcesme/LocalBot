@@ -149,3 +149,6 @@ Added read_history to complement search_history: bounded chronological pages wit
 
 ### Complete history-message chunks checkpoint — 2026-09-16
 Closed read_history's long-message gap: bounded single-message chunks with Unicode offsets and nextOffset now allow complete historical text retrieval. Scope and task-time boundary are rechecked for every chunk. Three-chunk Unicode reconstruction and invalid cursor/offset cases tested; live subscription Mira source chunk matched persisted text exactly. Tests73/73; installed app;29 tools unchanged. Attachment bodies remain outside history retrieval.
+
+### Native project editing checkpoint — 2026-09-16
+Projects now have an editor for name, workspace and shared notes. Runtime validates folders, rejects unfinished project work, and compares the original fields transactionally to prevent stale UI overwriting newer memory.75 tests pass. Native rename/save/reopen/restore verified on Focus Ledger with history/folder/notes preserved. Context-menu access and header spacing improved. Workspace changes select future work location; no files are moved.

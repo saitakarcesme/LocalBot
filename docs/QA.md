@@ -173,3 +173,10 @@ Configurable agent run limits: previous turn was verified local HTTP vision prog
 - 73/73 runtime tests pass. A three-chunk text with a rocket emoji at the first boundary and repeated Turkish text reconstructs byte-for-byte after concatenation. Tests cover empty text, invalid/oversized offsets, conflicting arguments, unrelated/current/future message rejection. Unicode offsets use SQLite character indexing, not UTF-16 string indexes.
 - Built and installed native app. Live `scripts/history-chunks-smoke.mjs` used subscription-backed Mira to request a specific existing Focus Ledger source message at offset 0. The completed tool output was compared exactly against the recorded source text; Mira summarized that history. Multi-chunk reconstruction is covered by runtime tests, not this short-source live test.
 - This reads persisted message text, not attachments or fresh workspace file contents. Tool count remains 29.
+
+## Native project editing — 2026-09-16
+
+- Added project name/workspace/shared-notes editor and POST /projects/update. Existing project IDs, conversation associations, histories and creation dates remain intact. Workspace is canonicalized/validated before update. Name/notes limits are checked server-side. Project tasks in queued/running/awaiting_approval/awaiting_input block updates.
+- Optimistic comparison of original name/workspace/memory prevents stale forms overwriting newer agent notes or another editor's changes; checks and mutation occur in a SQLite transaction after filesystem validation.
+- 75/75 tests pass: real HTTP create/update/snapshot persistence, stale save rejection, invalid folders/text, and Store guards for each unfinished task status plus restart persistence/history preservation.
+- Installed native UI: opened Focus Ledger Project Details, changed name to Focus Ledger QA, saved, reopened and confirmed persisted name, then restored Focus Ledger via the same form. Workspace and notes were left unchanged. Native folder/notes fields were visible; their persistence is tested through HTTP, not a live folder move. Added conversation context-menu entry and inset header button from scrollbar after visual inspection.
