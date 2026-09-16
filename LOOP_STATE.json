@@ -33,7 +33,7 @@
   },
   "v0_2": {
     "status": "core_implemented_live_verified_tool_parity_in_progress",
-    "updated_at": "2026-09-16T16:55:47.863429+00:00",
+    "updated_at": "2026-09-16T16:59:04.429137+00:00",
     "runtime_tests_passed": 91,
     "real_subscription_agents_verified": 5,
     "real_project": "Focus Ledger",
@@ -58,7 +58,7 @@
       "manual scrolling survives Activity width change",
       "last selected chat survives relaunch"
     ],
-    "checkpoint": "list_tasks enables scoped paginated project status inspection; 91 tests, real subscription tool use and native build pass; installed native UI pending",
+    "checkpoint": "Tool inventory gate and generated coverage report added; view_image coverage corrected to partial; 91 tests plus gate pass; full target and installed UI remain incomplete",
     "tests_passed": 91,
     "packaged_runtime_subscription_verified": true
   }

@@ -1329,7 +1329,7 @@
     },
     {
       "name": "view_image",
-      "status": "implemented-equivalent",
+      "status": "partial-equivalent",
       "route": "view_image reads validated workspace pictures with filesystem permission, retains an artifact and passes multimodal input through Codex CLI or opt-in Ollama/OpenAI-compatible providers. Codex live verified; HTTP protocol verified; actual local vision inference and resolution controls remain unverified/unimplemented."
     },
     {
