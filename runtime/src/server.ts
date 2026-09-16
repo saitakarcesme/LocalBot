@@ -273,6 +273,19 @@ const server = createServer(async (req, res) => {
       const project = store.createProject(name, workspace);
       change(); json(res, 201, project); return;
     }
+    if (m === "POST" && p === "/conversations/update") {
+      const b = await body(req);
+      const c = store.conversation(b.id);
+      if (store.get("SELECT id FROM tasks WHERE conversationId=? AND status IN ('running','queued','awaiting_approval')", c.id)) throw new Error("Stop the current task before changing its team");
+      const title = String(b.title ?? c.title).trim().slice(0, 100);
+      if (!title || !Array.isArray(b.members) || b.members.length > 8 || (!b.members.length && !(c.projectId && b.automatic))) throw new Error("Choose a title and a team, or automatic project routing");
+      for (const id of b.members) store.agent(id);
+      store.transaction(() => {
+        store.exec("UPDATE conversations SET title=?,members=? WHERE id=?", title, JSON.stringify([...new Set(b.members)]), c.id);
+        store.exec("INSERT INTO conversation_context VALUES(?,?,?,1) ON CONFLICT(conversationId) DO UPDATE SET automatic=excluded.automatic,titled=1", c.id, c.projectId ?? null, c.projectId && b.automatic ? 1 : 0);
+      });
+      change(); json(res, 200, store.conversation(c.id)); return;
+    }
     if (m === "POST" && p === "/conversations") {
       const b = await body(req);
       if (

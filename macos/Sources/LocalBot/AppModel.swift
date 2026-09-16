@@ -68,6 +68,7 @@ enum Keychain {
   @Published var showSettings = false
   @Published var showActivity = false
   @Published var editingAgent: Agent?
+  @Published var editingConversation: Conversation?
   @Published var sending = false
   var connection: Connection?
   var lastRevision = -1

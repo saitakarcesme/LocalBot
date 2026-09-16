@@ -185,6 +185,36 @@ struct NewConversationView: View {
     }.padding(24).frame(width: 430)
   }
 }
+struct ConversationEditor: View {
+  @EnvironmentObject var model: AppModel
+  @Environment(\.dismiss) var dismiss
+  var conversation: Conversation
+  @State var title = ""
+  @State var selected: Set<String> = []
+  @State var automatic = false
+  var body: some View {
+    VStack(alignment: .leading, spacing: 16) {
+      Text("Conversation Details").font(.title2.bold())
+      TextField("Title", text: $title).textFieldStyle(.roundedBorder)
+      if conversation.projectId != nil { Toggle("Choose agents automatically", isOn: $automatic) }
+      ForEach(model.agents) { agent in
+        Toggle(agent.name + " · " + agent.role, isOn: Binding(get: { selected.contains(agent.id) }, set: { if $0 { selected.insert(agent.id) } else { selected.remove(agent.id) } }))
+      }
+      HStack {
+        Button("Cancel") { dismiss() }
+        Spacer()
+        Button("Save") {
+          Task {
+            await model.post("/conversations/update", ["id": conversation.id, "title": title, "members": model.agents.filter { selected.contains($0.id) }.map(\.id), "automatic": automatic])
+            if model.error == nil { dismiss() }
+          }
+        }.buttonStyle(.borderedProminent)
+      }
+    }.padding(24).frame(width: 430).onAppear {
+      title = conversation.title; selected = Set(conversation.members); automatic = conversation.automatic == 1
+    }
+  }
+}
 struct NewProjectView: View {
   @EnvironmentObject var model: AppModel
   @Environment(\.dismiss) var dismiss

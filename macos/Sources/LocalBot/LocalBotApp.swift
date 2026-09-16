@@ -90,6 +90,7 @@ struct MainView: View {
               ConversationRow(conversation: c).tag(c.id)
                 .listRowInsets(EdgeInsets(top: 4, leading: 7, bottom: 4, trailing: 7))
                 .contextMenu {
+                  Button("Conversation Details…") { model.editingConversation = c }
                   Button("New conversation with these agents") {
                     Task {
                       await model.post("/conversations", ["title": c.title, "members": c.members])
@@ -157,6 +158,7 @@ struct MainView: View {
     .sheet(isPresented: $model.showProject) { NewProjectView() }
     .sheet(isPresented: $model.showSettings) { SettingsView() }
     .sheet(item: $model.editingAgent) { AgentEditor(agent: $0) }
+    .sheet(item: $model.editingConversation) { ConversationEditor(conversation: $0) }
     .alert(
       "LocalBot",
       isPresented: Binding(get: { model.error != nil }, set: { if !$0 { model.error = nil } })
@@ -183,6 +185,9 @@ struct ConversationRow: View {
         agent: model.agent(conversation.members.first), group: conversation.members.count > 1,
         size: 40)
       VStack(alignment: .leading, spacing: 4) {
+        if let project = model.projects.first(where: { $0.id == conversation.projectId }) {
+          Label(project.name, systemImage: "folder").font(.system(size: 10)).foregroundStyle(.secondary)
+        }
         HStack {
           Text(conversation.title).font(.system(size: 13, weight: .semibold)).lineLimit(1)
           Spacer(minLength: 1)

@@ -2,10 +2,11 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 npm run build
-swift build --package-path macos -j 1
+SWIFT_BUILD_DIR="${LOCALBOT_SWIFT_BUILD_DIR:-$HOME/Library/Caches/LocalBot/SwiftBuild}"
+swift build --package-path macos --scratch-path "$SWIFT_BUILD_DIR" -j 1
 APP="$PWD/build/LocalBot.app"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources/runtime"
-cp macos/.build/debug/LocalBot "$APP/Contents/MacOS/LocalBot"
+cp "$SWIFT_BUILD_DIR/debug/LocalBot" "$APP/Contents/MacOS/LocalBot"
 cp runtime/dist/*.js "$APP/Contents/Resources/runtime/"
 NODE_VERSION=22.22.2
 NODE_ARCH="$(uname -m)"
