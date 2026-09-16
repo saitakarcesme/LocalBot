@@ -324,6 +324,11 @@ struct AgentEditor: View {
   @EnvironmentObject var model: AppModel
   @Environment(\.dismiss) var dismiss
   @State var agent: Agent
+  private let original: Agent
+  init(agent: Agent) {
+    _agent = State(initialValue: agent)
+    original = agent
+  }
   var body: some View {
     VStack(spacing: 0) {
       HStack(spacing: 12) {
@@ -334,7 +339,7 @@ struct AgentEditor: View {
         }
         Spacer()
         Button("Cancel") { dismiss() }
-        Button("Save") { Task { if await model.save(agent, path: "/agents") { dismiss() } } }
+        Button("Save") { Task { if await model.saveAgent(agent, expected: original) { dismiss() } } }
           .buttonStyle(.borderedProminent).keyboardShortcut(.defaultAction)
       }.padding(22)
       Divider()

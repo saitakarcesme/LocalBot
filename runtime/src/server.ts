@@ -2,6 +2,7 @@ import { agentStepLimit } from "./run-limits.js";
 import { MCPStdioTransport } from "./mcp-stdio.js";
 import { processSessions } from "./process-sessions.js";
 import { createServer, IncomingMessage, ServerResponse } from "node:http";
+import { isDeepStrictEqual } from "node:util";
 import { randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 import { promises as fs, readFileSync, unlinkSync } from "node:fs";
 import { homedir } from "node:os";
@@ -238,7 +239,8 @@ const server = createServer(async (req, res) => {
       return;
     }
     if (m === "POST" && p === "/agents") {
-      const a = cleanAgent(await body(req));
+      const input = await body(req);
+      const a = cleanAgent(input);
       const stat = await fs.stat(a.workspace);
       if (!stat.isDirectory())
         throw new Error("Workspace must be an existing directory");
@@ -253,8 +255,12 @@ const server = createServer(async (req, res) => {
           "Choose a dedicated project directory, not a home, system or runtime directory.",
         );
       a.workspace = real;
+      store.transaction(() => {
+        if (input.expected !== undefined && !isDeepStrictEqual(cleanAgent(store.agent(a.id)), cleanAgent(input.expected)))
+          throw new Error("Contact changed since this editor opened. Reopen contact details before saving.");
+        store.saveAgent(a);
+      });
       processSessions.releaseAgent(a.id);
-      store.saveAgent(a);
       change();
       json(res, 200, a);
       return;

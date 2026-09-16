@@ -115,3 +115,21 @@ test('project editor validates folders and text, persists edits and rejects stal
  for(const bad of [{workspace:'/'},{workspace:join(root,'missing')},{name:''},{memory:'x'.repeat(12001)}])assert.equal((await request('/projects/update',{...body,expected:current,...bad})).status,400);
  const persisted=(await request('/snapshot')).data.projects.find(p=>p.id===original.id);assert.equal(persisted.name,body.name);assert.equal(persisted.workspace,original.workspace);
 });
+
+
+test('stale contact saves preserve new memory and permissions, while fresh edits succeed',async()=>{
+ const snapshot=(await request('/snapshot')).data;
+ const original=(await request('/agents',{...snapshot.agents[0],id:'stale-contact-fixture',name:'Original contact',memory:''})).data;
+ const changed=await request('/agents',{...original,memory:'Keep explanations short.',permissions:{...original.permissions,web:!original.permissions.web}});
+ assert.equal(changed.status,200);
+ const stale=await request('/agents',{...original,name:'Stale rename',expected:original});
+ assert.equal(stale.status,400);assert.match(stale.data.error,/Contact changed/);
+ let saved=(await request('/snapshot')).data.agents.find(a=>a.id===original.id);
+ assert.equal(saved.name,'Original contact');assert.equal(saved.memory,'Keep explanations short.');assert.equal(saved.permissions.web,changed.data.permissions.web);
+ const fresh=await request('/agents',{...saved,name:'Fresh rename',expected:saved});assert.equal(fresh.status,200);
+ saved=(await request('/snapshot')).data.agents.find(a=>a.id===original.id);
+ assert.equal(saved.name,'Fresh rename');assert.equal(saved.memory,'Keep explanations short.');
+ // Optional legacy fields normalize consistently rather than creating false conflicts.
+ const expected={...saved};delete expected.maxSteps;delete expected.integrations;
+ const normalized=await request('/agents',{...saved,name:'Normalized edit',expected});assert.equal(normalized.status,200);
+});

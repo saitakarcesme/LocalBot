@@ -246,3 +246,7 @@ Swift checks verify running/approval tasks outrank newer queued messages, queued
 ### Agent task listing — 2026-09-16
 
 91 tests pass, including project pagination, state filtering, source metadata, foreign/future task exclusion and unchanged waiting tasks. `node scripts/list-tasks-smoke.mjs` verified an actual Codex subscription call: one list_tasks action returned the current task as running, which Mira reported. Native build/signing passed; no installed UI test was performed.
+
+### Stale contact editing — 2026-09-16
+
+92 tests and inventory gate pass. Real HTTP requests verify a stale editor cannot overwrite updated memory or permissions, while refreshed edits succeed and default optional fields do not cause false conflicts. Native contact editor sends its captured original state; build/signing passed. Legacy callers without expected-state data retain prior behavior. Native sheet/alert interaction remains unverified.

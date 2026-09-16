@@ -316,6 +316,15 @@ enum Keychain {
       return true
     } catch { self.error = error.localizedDescription; return false }
   }
+  func saveAgent(_ agent: Agent, expected: Agent) async -> Bool {
+    do {
+      var body = try JSONSerialization.jsonObject(with: JSONEncoder().encode(agent)) as! [String: Any]
+      if agents.contains(where: { $0.id == agent.id }) {
+        body["expected"] = try JSONSerialization.jsonObject(with: JSONEncoder().encode(expected))
+      }
+      return await post("/agents", body)
+    } catch { self.error = error.localizedDescription; return false }
+  }
   func save<T: Encodable>(_ object: T, path: String) async -> Bool {
     do {
       let data = try JSONEncoder().encode(object)
