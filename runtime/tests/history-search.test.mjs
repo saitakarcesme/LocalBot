@@ -26,3 +26,17 @@ test('history excerpts and match counts are bounded and disclose overflow',async
  const task=e.enqueue(c.id,'Find needle');const result=store.searchHistory(task.id,'needle');assert.equal(result.matches.length,10);assert.equal(result.hasMore,true);assert(result.matches.every(m=>m.excerpt.length<=2000));
  }finally{e.shutdown();store.db.close();await rm(root,{recursive:true,force:true});}
 });
+
+test('history pages retain chronological order with owned cursors and task boundaries',async()=>{
+ const root=await mkdtemp(join(tmpdir(),'localbot-history-page-'));const store=new Store(root);store.seed(root);const e=new Engine(store);e.pump=async()=>{};
+ try{const project=store.createProject('Pages',root);const c=store.createConversation('Current',['coder'],project.id);const sibling=store.createConversation('Source',['researcher'],project.id);const privateChat=store.createConversation('Private',['coder']);
+ const ids=[];for(let i=0;i<13;i++)ids.push(store.addMessage(sibling.id,'user',i===12?'x'.repeat(2500):'message '+i));
+ const foreign=store.addMessage(privateChat.id,'user','Private');const task=e.enqueue(c.id,'Read prior history');const future=store.addMessage(sibling.id,'user','Future');
+ store.setConversationArchived(sibling.id,true);
+ let cursor;const found=[];do{const page=store.readHistory(task.id,sibling.id,cursor);found.unshift(...page.messages.map(m=>m.messageId));if(!cursor){assert.equal(page.messages.at(-1).truncated,true);assert.equal(page.messages.at(-1).content.length,2000);}cursor=page.nextBefore;}while(cursor);
+ assert.deepEqual(found,ids);
+ assert.throws(()=>store.readHistory(task.id,privateChat.id),/limited/);
+ for(const id of [foreign,future,'missing'])assert.throws(()=>store.readHistory(task.id,sibling.id,id),/cursor/);
+ assert.equal(store.readHistory(task.id).messages.length,0);
+ }finally{e.shutdown();store.db.close();await rm(root,{recursive:true,force:true});}
+});
