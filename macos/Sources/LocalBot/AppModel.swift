@@ -54,6 +54,7 @@ enum Keychain {
   @Published var tasks: [AgentTask] = []
   @Published var approvals: [Approval] = []
   @Published var messages: [ChatMessage] = []
+  @Published var searchFocusId: String?
   @Published var hasEarlierMessages = false
   @Published var loadingEarlierMessages = false
   @Published var activity: [Activity] = []
@@ -62,6 +63,7 @@ enum Keychain {
       if selectedId != oldValue {
         UserDefaults.standard.set(selectedId, forKey: "selectedConversation")
         messages = []
+        searchFocusId = nil
         hasEarlierMessages = false
         loadingEarlierMessages = false
         activity = []
@@ -225,12 +227,14 @@ enum Keychain {
   }
   func refreshConversation() async {
     guard let id = selectedId else { return }
+    let focus = searchFocusId
+    let suffix = focus.map { "&through=\($0)" } ?? ""
     do {
       let m = try JSONDecoder().decode(
-        [ChatMessage].self, from: await request("/messages?conversationId=\(id)"))
+        [ChatMessage].self, from: await request("/messages?conversationId=\(id)\(suffix)"))
       let a = try JSONDecoder().decode(
         [Activity].self, from: await request("/activity?conversationId=\(id)"))
-      guard selectedId == id else { return }
+      guard selectedId == id && searchFocusId == focus else { return }
       if messages.isEmpty {
         messages = m
         hasEarlierMessages = m.count == 300
@@ -242,14 +246,29 @@ enum Keychain {
       activity = a
     } catch { self.error = error.localizedDescription }
   }
+  func openSearchResult(_ message: ChatMessage) async {
+    selectedId = message.conversationId
+    searchFocusId = message.id
+    messages = []
+    hasEarlierMessages = false
+    search = ""
+    await refreshConversation()
+  }
+  func showLatestMessages() async {
+    searchFocusId = nil
+    messages = []
+    hasEarlierMessages = false
+    await refreshConversation()
+  }
   func loadEarlierMessages() async -> String? {
     guard let id = selectedId, let first = messages.first, hasEarlierMessages, !loadingEarlierMessages else { return nil }
+    let focus = searchFocusId
     loadingEarlierMessages = true
     defer { if selectedId == id { loadingEarlierMessages = false } }
     do {
       let page = try JSONDecoder().decode([ChatMessage].self,
         from: await request("/messages?conversationId=\(id)&before=\(first.id)"))
-      guard selectedId == id else { return nil }
+      guard selectedId == id && searchFocusId == focus else { return nil }
       let known = Set(messages.map(\.id))
       messages.insert(contentsOf: page.filter { !known.contains($0.id) }, at: 0)
       hasEarlierMessages = page.count == 300
@@ -264,6 +283,7 @@ enum Keychain {
       _ = try await request(
         "/messages",
         body: ["conversationId": id, "content": content, "attachments": attachments.map(\.id)])
+      if searchFocusId != nil { await showLatestMessages() }
       await refresh()
       return true
     } catch {

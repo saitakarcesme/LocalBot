@@ -104,8 +104,7 @@ struct MainView: View {
         } else {
           List(model.searchResults) { m in
             Button {
-              model.selectedId = m.conversationId
-              model.search = ""
+              Task { await model.openSearchResult(m) }
             } label: {
               VStack(alignment: .leading, spacing: 4) {
                 Text(
@@ -255,7 +254,8 @@ struct ConversationView: View {
                 }.buttonStyle(.borderless).disabled(model.loadingEarlierMessages)
               }
               if model.messages.isEmpty { emptyConversation }
-              ForEach(model.messages) { m in MessageBubble(message: m, group: conversation.projectId != nil || members.count > 1).id(m.id) }
+              ForEach(model.messages) { m in MessageBubble(message: m, group: conversation.projectId != nil || members.count > 1).id(m.id)
+                .background(m.id == model.searchFocusId ? Color.accentColor.opacity(0.12) : .clear, in: RoundedRectangle(cornerRadius: 12)) }
               if model.activeTask != nil || model.sending {
                 HStack(spacing: 8) {
                   Avatar(agent: members.first { $0.name == activeName } ?? model.agent("assistant"), size: 28)
@@ -278,6 +278,14 @@ struct ConversationView: View {
             }
           }
           .task(id: model.messages.last?.id) {
+            if let focus = model.searchFocusId, model.messages.contains(where: { $0.id == focus }) {
+              following = false
+              initialScroll = false
+              try? await Task.sleep(for: .milliseconds(80))
+              guard !Task.isCancelled else { return }
+              proxy.scrollTo(focus, anchor: .center)
+              return
+            }
             guard initialScroll && !model.messages.isEmpty else { return }
             // Let the lazy transcript resolve its row heights before the first jump.
             try? await Task.sleep(for: .milliseconds(80))
@@ -295,6 +303,17 @@ struct ConversationView: View {
               }.buttonStyle(.bordered).clipShape(Circle()).padding()
             }
           }
+        }
+        if model.searchFocusId != nil {
+          HStack {
+            Text("Viewing search result").font(.caption).foregroundStyle(.secondary)
+            Spacer()
+            Button("Latest messages") {
+              following = true
+              initialScroll = true
+              Task { await model.showLatestMessages() }
+            }.buttonStyle(.borderless)
+          }.padding(.horizontal, 24).padding(.vertical, 8)
         }
         ForEach(model.approvals.filter { a in model.currentTasks.contains { $0.id == a.taskId } }) {
           a in ApprovalCard(approval: a)
