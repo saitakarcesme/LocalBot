@@ -173,8 +173,10 @@ export function validateArguments(name: string, args: any) {
       throw new Error(`Invalid ${k}`);
   }
 }
-const sensitive =
-  /(^|\/)(\.env(?:\..*)?|\.ssh|\.aws|\.gnupg|\.git|\.codex|\.npmrc|\.netrc|credentials?|id_rsa|id_ed25519)(\/|$)/i;
+// Shared credential components for direct filesystem tools and the shell sandbox.
+// Git metadata remains separately protected by direct tools; approved Git commands need it.
+const credentialComponents = String.raw`\.env(\.[^/]*)?|\.ssh|\.aws|\.gnupg|\.codex|\.npmrc|\.netrc|credentials?|id_rsa|id_ed25519`;
+const sensitive = new RegExp(`(^|/)(${credentialComponents}|\\.git)(/|$)`, "i");
 export async function safePath(workspace: string, path: string, write = false) {
   const root = await fs.realpath(workspace);
   const full = resolve(root, path || ".");
@@ -237,8 +239,10 @@ function sandboxProfile(root: string, filesystem: string) {
     "/dev",
   ];
   if (filesystem !== "off") reads.push(root);
+  // SBPL regexes have no JS flags: spell out case folding for credential names.
+  const protectedPattern = `/(${credentialComponents})(/|$)`.replace(/[a-z]/g, c => `[${c}${c.toUpperCase()}]`);
   // Deny file data outside the workspace and OS/toolchain paths. Keep normal process IPC intact.
-  return `(version 1) (allow default) (deny network*) (deny file-read-data (require-all (require-not (literal "/")) ${reads.map((p) => `(require-not (subpath ${q(p)}))`).join(" ")})) (deny file-write* (require-all (require-not (subpath ${q(join(root, ".localbot-tmp"))})) ${filesystem === "write" ? `(require-not (subpath ${q(root)}))` : ""} (require-not (literal "/dev/null")))) (deny file-read* file-write* (regex #"/\\.env($|[./])" #"/\\.ssh(/|$)" #"/\\.aws(/|$)" #"/\\.npmrc$"))`;
+  return `(version 1) (allow default) (deny network*) (deny file-read-data (require-all (require-not (literal "/")) ${reads.map((p) => `(require-not (subpath ${q(p)}))`).join(" ")})) (deny file-write* (require-all (require-not (subpath ${q(join(root, ".localbot-tmp"))})) ${filesystem === "write" ? `(require-not (subpath ${q(root)}))` : ""} (require-not (literal "/dev/null")))) (deny file-read* file-write* (regex #"${protectedPattern}"))`;
 }
 export async function spawnSandbox(agent: Agent, command: string) {
   if (process.platform !== "darwin")
