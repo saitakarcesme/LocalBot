@@ -260,3 +260,22 @@ test('group run errors remain agent-specific and failed evidence reaches the nex
   assert.equal(request,4);
  }finally{await f.close();}
 });
+
+
+test('team evidence has a total budget, recent failure visibility and explicit omissions',async()=>{
+ const f=await setup(async(body,res)=>reply(res,{content:'Done.'}));
+ try{
+  const c=f.store.createConversation('Evidence',['coder']);
+  const task=f.engine.enqueue(c.id,'Inspect');await until(()=>f.store.task(task.id).status==='completed');
+  const run=f.store.get('SELECT id FROM runs WHERE taskId=?',task.id).id;
+  for(let i=0;i<40;i++)f.store.exec('INSERT INTO tool_calls VALUES(?,?,?,?,?,?,?,?)','evidence-'+i,run,'read_file','{}',i===39?'failed':'completed','EVENT_'+i+' '+ 'z'.repeat(40000),'2026-01-01','2026-01-01');
+  const evidence=f.store.taskEvidence(task.id,5000);
+  assert(evidence.length<=5000);assert(evidence.includes('EVENT_39'));assert(evidence.includes('read_file (failed)'));assert(!evidence.includes('EVENT_0 '));
+  assert(evidence.includes('38 earlier tool results omitted'));assert(evidence.includes('Output excerpt truncated'));
+  const other=f.store.createConversation('Other evidence',['coder']);
+  const second=f.engine.enqueue(other.id,'Other task');await until(()=>f.store.task(second.id).status==='completed');
+  assert.equal(f.store.taskEvidence(second.id,5000),'(none)');
+  assert.throws(()=>f.store.taskEvidence(task.id,999),/budget/);
+  assert.equal(f.store.get('SELECT length(output) AS n FROM tool_calls WHERE id=?','evidence-39').n,40009);
+ }finally{await f.close();}
+});

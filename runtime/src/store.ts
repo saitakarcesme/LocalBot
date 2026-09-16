@@ -214,6 +214,23 @@ export class Store {
       id, cursor ?? null, cursor ?? null,
     ));
   }
+  taskEvidence(taskId: string, budget: number) {
+    this.task(taskId);
+    if (!Number.isInteger(budget) || budget < 1000 || budget > 16000) throw new Error("Invalid evidence budget");
+    const count = this.get("SELECT count(*) AS n FROM tool_calls t JOIN runs r ON r.id=t.runId WHERE r.taskId=? AND t.status IN ('completed','failed')", taskId).n;
+    const rows = this.all(`SELECT t.id,t.name,t.status,substr(t.output,1,2000) AS output,length(t.output)>2000 AS truncated,r.agentId
+      FROM tool_calls t JOIN runs r ON r.id=t.runId WHERE r.taskId=? AND t.status IN ('completed','failed')
+      ORDER BY t.rowid DESC LIMIT 20`, taskId);
+    const entries: string[] = [];
+    let remaining = budget - 200;
+    for (const row of rows) {
+      const entry = `[${row.agentId}: ${row.name} (${row.status}); call ${row.id}] ${row.output ?? ""}${row.truncated ? "\n[Output excerpt truncated; full output is in Activity.]" : ""}`;
+      if (entry.length + 1 > remaining) break;
+      entries.unshift(entry); remaining -= entry.length + 1;
+    }
+    const omitted = count - entries.length;
+    return (omitted ? `[${omitted} earlier tool results omitted from this context; full records remain in Activity.]\n` : "") + (entries.join("\n") || "(none)");
+  }
   agentDirectory(taskId: string, after?: string) {
     const task = this.task(taskId), conversation = this.conversation(task.conversationId);
     if (after !== undefined && (typeof after !== "string" || !after || after.length > 200)) throw new Error("Invalid contact cursor");
