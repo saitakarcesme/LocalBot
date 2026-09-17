@@ -33,6 +33,18 @@ export class CodexProvider implements ModelProvider {
     } finally { rpc.close(); }
   }
   async generate(messages: Chat[], tools: ToolDefinition[], signal: AbortSignal, onProgress?: (phase: string) => void): Promise<Generation> {
+    // Validate the complete decision before exposing any calls to the executor.
+    // A malformed JSON decision can be regenerated safely: none of its actions ran.
+    for (let attempt = 0; ; attempt++) {
+      try { return await this.generateDecision(messages, tools, signal, onProgress); }
+      catch (error) {
+        if (!(error instanceof SyntaxError) || attempt >= 1 || signal.aborted) throw error;
+        onProgress?.("Correcting response format");
+        messages = [...messages, { role: "system", content: "Your previous decision was rejected before executing any actions because its JSON was malformed. Return valid JSON, including valid JSON-encoded object strings in every calls[].arguments. Escape backslashes and quotes correctly. Use completed tool results already in the context; do not repeat completed actions." }];
+      }
+    }
+  }
+  protected async generateDecision(messages: Chat[], tools: ToolDefinition[], signal: AbortSignal, onProgress?: (phase: string) => void): Promise<Generation> {
     const input = await codexInput(messages, tools);
     signal.throwIfAborted();
     const rpc = new CodexRPC();

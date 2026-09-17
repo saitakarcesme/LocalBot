@@ -24,3 +24,27 @@ test("CLI transport correlates requests and rejects timed out, cancelled and dis
     await assert.rejects(rpc.request("crash", {}), /connection closed/);
   } finally { rpc.close(); }
 });
+
+import { CodexProvider } from "../dist/codex-provider.js";
+test("malformed decisions are regenerated once without replaying completed actions", async () => {
+  const provider = new CodexProvider({}); let attempts = 0; const phases = [];
+  const history = [{role:"tool",content:"Saved index.html",tool_call_id:"saved"}];
+  provider.generateDecision = async messages => {
+    attempts++;
+    if (attempts === 1) throw new SyntaxError("Bad escaped character");
+    assert.equal(messages[0].content, "Saved index.html");
+    assert.match(messages.at(-1).content, /do not repeat completed actions/);
+    return {content:"Verified", calls:[]};
+  };
+  assert.equal((await provider.generate(history, [], new AbortController().signal, p=>phases.push(p))).content,"Verified");
+  assert.equal(attempts,2); assert.equal(history.length,1);
+  assert.deepEqual(phases,["Correcting response format"]);
+  attempts=0;
+  provider.generateDecision=async()=>{attempts++;throw new SyntaxError("Still malformed")};
+  await assert.rejects(provider.generate([],[],new AbortController().signal),/Still malformed/);
+  assert.equal(attempts,2);
+  attempts=0;
+  provider.generateDecision=async()=>{attempts++;throw new Error("Permission denied")};
+  await assert.rejects(provider.generate([],[],new AbortController().signal),/Permission denied/);
+  assert.equal(attempts,1);
+});
