@@ -8,6 +8,8 @@ import {
   isAbsolute,
 } from "node:path";
 import { spawn } from "node:child_process";
+import { StringDecoder } from "node:string_decoder";
+import { OutputBatch } from "./output-batch.js";
 import { fetchPage } from "./web-fetch.js";
 export { publicIP } from "./web-fetch.js";
 import { Agent, ToolDefinition } from "./types.js";
@@ -299,6 +301,8 @@ export async function executeProcess(
   const child = await spawnSandbox(agent, command);
   child.stdin.end();
   return new Promise<string>((resolveResult, reject) => {
+    const updates = new OutputBatch(onOutput);
+    const stdout = new StringDecoder("utf8"), stderr = new StringDecoder("utf8");
     let output = "",
       stopped = "";
     const kill = (why: string) => {
@@ -314,24 +318,27 @@ export async function executeProcess(
     const timer = setTimeout(() => kill("Timed out after 60 seconds"), 60_000);
     signal.addEventListener("abort", abort, { once: true });
     if (signal.aborted) abort();
-    const collect = (b: Buffer) => {
-      if (output.length < 100_000)
-        output += b.toString().slice(0, 100_000 - output.length);
-      else kill("Output limit exceeded");
-      onOutput?.(output);
+    const collectText = (text: string) => {
+      const remaining = Math.max(0, 100_000 - output.length);
+      output += text.slice(0, remaining);
+      if (text.length > remaining) kill("Output limit exceeded");
+      updates.push(output.slice(-16000));
     };
-    child.stdout.on("data", collect);
-    child.stderr.on("data", collect);
+    child.stdout.on("data", b => collectText(stdout.write(b)));
+    child.stderr.on("data", b => collectText(stderr.write(b)));
     const cleanup = () => {
       clearTimeout(timer);
       signal.removeEventListener("abort", abort);
     };
     child.on("error", (e) => {
       cleanup();
+      updates.close();
       reject(e);
     });
     child.on("close", (code) => {
       cleanup();
+      collectText(stdout.end() + stderr.end());
+      updates.close();
       const result = `${stopped ? stopped + "\n" : ""}Exit code: ${code ?? "signal"}\n${output}`;
       if (code !== 0 || stopped) reject(new Error(result));
       else resolveResult(result);
@@ -363,7 +370,7 @@ export async function executeTool(
       if (!taskId) throw new Error("Process sessions require a task scope");
       const owner = { taskId, agentId: a.id, workspace: await fs.realpath(a.workspace) };
       let result;
-      if (name === "process_start") result = await processSessions.start(owner, () => spawnSandbox(a, args.command), signal);
+      if (name === "process_start") result = await processSessions.start(owner, () => spawnSandbox(a, args.command), signal, onOutput);
       else if (name === "process_input") result = await processSessions.input(owner, args.session_id, args.text, args.end === "true");
       else if (name === "process_stop") result = processSessions.stop(owner, args.session_id);
       else {
@@ -467,6 +474,7 @@ export async function executeTool(
             } as any
           )[args.operation],
           signal,
+          onOutput,
         ),
       };
     case "web_fetch":

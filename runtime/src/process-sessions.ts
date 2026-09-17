@@ -1,12 +1,14 @@
 import { randomUUID } from "node:crypto";
 import { ChildProcessWithoutNullStreams } from "node:child_process";
 import { StringDecoder } from "node:string_decoder";
+import { OutputBatch } from "./output-batch.js";
 
 type Owner = { taskId: string; agentId: string; workspace: string };
 type Session = {
   id: string; owner: Owner; child: ChildProcessWithoutNullStreams;
   output: string; bytes: number; state: "running" | "exited";
   exitCode: number | null; reason: string; cleanup: () => void; wake?: () => void;
+  transcript: string; updates: OutputBatch;
 };
 export class ProcessSessions {
   private sessions = new Map<string, Session>();
@@ -23,7 +25,7 @@ export class ProcessSessions {
     s.reason = reason;
     try { process.kill(-s.child.pid!, "SIGKILL"); } catch { s.child.kill("SIGKILL"); }
   }
-  async start(owner: Owner, launch: () => Promise<ChildProcessWithoutNullStreams>, signal: AbortSignal) {
+  async start(owner: Owner, launch: () => Promise<ChildProcessWithoutNullStreams>, signal: AbortSignal, onOutput?: (output: string) => void) {
     signal.throwIfAborted();
     const running = [...this.sessions.values()].filter(s => s.state === "running");
     if (running.length + this.starting >= 4 || running.filter(s => s.owner.taskId === owner.taskId).length + this.starting >= 2)
@@ -36,7 +38,7 @@ export class ProcessSessions {
     this.starting++;
     let child: ChildProcessWithoutNullStreams;
     try { child = await launch(); } finally { this.starting--; }
-    const s: Session = { id: randomUUID(), owner: { ...owner }, child, output: "", bytes: 0, state: "running", exitCode: null, reason: "", cleanup: () => {} };
+    const s: Session = { id: randomUUID(), owner: { ...owner }, child, output: "", bytes: 0, state: "running", exitCode: null, reason: "", cleanup: () => {}, transcript: "", updates: new OutputBatch(onOutput) };
     this.sessions.set(s.id, s);
     const abort = () => this.kill(s, "Cancelled");
     const timer = setTimeout(() => this.kill(s, "Process lifetime exceeded"), this.lifetimeMs);
@@ -45,10 +47,13 @@ export class ProcessSessions {
     signal.addEventListener("abort", abort, { once: true });
     const collect = (decoder: StringDecoder) => (b: Buffer) => {
       const remaining = Math.max(0, this.outputLimit - s.bytes);
-      s.output += decoder.write(b.subarray(0, remaining));
+      const text = decoder.write(b.subarray(0, remaining));
+      s.output += text;
+      s.transcript = (s.transcript + text).slice(-12000);
       s.bytes += b.length;
       if (s.bytes > this.outputLimit) this.kill(s, "Output limit exceeded");
       if (s.output) s.wake?.();
+      this.publish(s);
     };
     const stdout = new StringDecoder("utf8"), stderr = new StringDecoder("utf8");
     child.stdout.on("data", collect(stdout));
@@ -56,13 +61,22 @@ export class ProcessSessions {
     child.stdin.on("error", () => {}); // Input callback reports EPIPE; never crash the runtime.
     child.on("error", e => { s.reason = e.message; });
     child.on("close", code => {
-      s.output += stdout.end() + stderr.end();
+      const tail = stdout.end() + stderr.end();
+      s.output += tail; s.transcript = (s.transcript + tail).slice(-12000);
       s.exitCode = code; s.state = "exited"; s.cleanup(); s.wake?.();
+      this.publish(s); s.updates.close();
       // Reap any descendants that closed their inherited pipes early.
       try { process.kill(-child.pid!, "SIGKILL"); } catch {}
     });
     if (signal.aborted) abort();
     return this.poll(owner, s.id);
+  }
+  private publish(s: Session) {
+    // JSON escaping can expand control characters sixfold; preserve a valid bounded envelope.
+    let tail = s.transcript;
+    while (JSON.stringify(tail).length > 14000) tail = tail.slice(Math.ceil(tail.length / 2));
+    s.updates.push(JSON.stringify({sessionId: s.id, state: s.state, exitCode: s.exitCode,
+      reason: s.reason || null, output: tail, notice: "Live Activity tail (up to 12000 characters); process_poll output is consumed independently."}));
   }
   poll(owner: Owner, id: string) {
     const s = this.owned(owner, id);
@@ -109,6 +123,7 @@ export class ProcessSessions {
   releaseTask(taskId: string) {
     for (const [id, s] of this.sessions) if (s.owner.taskId === taskId) {
       if (s.state === "running") this.kill(s, "Task ended");
+      this.publish(s); s.updates.close();
       s.cleanup(); this.sessions.delete(id); s.wake?.();
     }
   }
