@@ -135,5 +135,21 @@
     ],
     "default_project_directory_verified": true,
     "hover_pointer_test": "implemented; native automation has no hover API"
+  },
+  "ui_compact_activity": {
+    "status": "installed_verified",
+    "source_commit": "92c177be124c162ec34bd5d561d9aa7a7e9e6e5a",
+    "checks": [
+      "native upward activity popover",
+      "readable persisted tool output",
+      "project collapse and selection",
+      "message zoom and reset",
+      "fullscreen gray strip removed",
+      "signed bundle 28 hashes"
+    ],
+    "tool_session": "01a0af33-905b-7f10-8c3e-6ac414afea1b",
+    "tool_branch": "codex/localbot-tool-parity",
+    "tool_branch_merged": false,
+    "goal_resumed": false
   }
 }
