@@ -41,86 +41,109 @@ struct ApprovalCard: View {
 }
 struct ActivityView: View {
   @EnvironmentObject var model: AppModel
-  @State var expanded: Set<String> = []
+  @State private var expanded: Set<String> = []
+  var activeRun: ActiveRun? { model.activeRuns.first { $0.taskId == model.activeTask?.id } }
+  var workingAction: Activity? { model.activity.last { $0.status == "running" || $0.status == "pending" } }
+  var phase: String {
+    guard let task = model.activeTask else { return model.currentTasks.first?.status == "failed" ? "Work interrupted" : "Up to date" }
+    if task.status == "awaiting_approval" { return "Waiting for your approval" }
+    if task.status == "queued" { return "Queued" }
+    if let action = workingAction { return action.name.replacingOccurrences(of: "_", with: " ").capitalized }
+    return activeRun?.phase ?? "Choosing the team"
+  }
+  func summary(_ action: Activity) -> String {
+    guard let data = action.arguments.data(using: .utf8),
+      let args = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return action.name }
+    for key in ["path", "command", "query", "url", "question", "tool"] {
+      if let value = args[key] as? String { return key == "path" ? URL(fileURLWithPath: value).lastPathComponent : value }
+    }
+    return action.name.replacingOccurrences(of: "_", with: " ")
+  }
   var body: some View {
     VStack(alignment: .leading, spacing: 0) {
       HStack {
         Text("Activity").font(.headline)
         Spacer()
-        Button {
-          model.showActivity = false
-        } label: {
-          Image(systemName: "xmark")
-        }.buttonStyle(.plain).foregroundStyle(.secondary)
+        Text("\(model.activity.count) actions").font(.caption).foregroundStyle(.secondary)
+        Button { model.showActivity = false } label: { Image(systemName: "xmark") }.buttonStyle(.plain).help("Close Activity")
       }.padding(16)
+      VStack(alignment: .leading, spacing: 8) {
+        HStack(spacing: 9) {
+          if let run = activeRun { Avatar(agent: model.agent(run.agentId), size: 28) }
+          else { Image(systemName: model.activeTask == nil ? "checkmark.circle" : "clock").foregroundStyle(.secondary) }
+          VStack(alignment: .leading, spacing: 3) {
+            Text(phase).font(.system(size: 13, weight: .semibold))
+            if let run = activeRun { Text(model.agent(run.agentId)?.name ?? "Agent").font(.caption).foregroundStyle(.secondary) }
+          }
+          Spacer()
+          if model.activeTask != nil { ProgressView().controlSize(.small) }
+        }
+        if let task = model.activeTask {
+          TimelineView(.periodic(from: .now, by: 1)) { timeline in
+            Text("Elapsed \(Int(max(0, timeline.date.timeIntervalSince(dateFrom(task.createdAt)))))s")
+              .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+          }
+          Button("Stop task") { Task { await model.post("/cancel", ["taskId": task.id]) } }.buttonStyle(.borderless).font(.caption)
+        } else if let error = model.currentTasks.first?.error {
+          Text(error).font(.caption).foregroundStyle(.orange).textSelection(.enabled)
+          Text("Completed actions and saved files remain available.").font(.caption).foregroundStyle(.secondary)
+        }
+      }.padding(12).background(Color.accentColor.opacity(0.08), in: RoundedRectangle(cornerRadius: 12)).padding(.horizontal, 12).padding(.bottom, 12)
       Divider()
       ScrollView {
-        LazyVStack(alignment: .leading, spacing: 12) {
-          if let goal = model.goals.first(where: { $0.conversationId == model.selectedId }) {
-            VStack(alignment: .leading, spacing: 6) {
-              HStack {
-                Label("Goal", systemImage: "scope").font(.headline)
-                Spacer()
-                Text(goal.status.capitalized).font(.caption).foregroundStyle(.secondary)
-              }
-              Text(goal.objective).font(.callout).textSelection(.enabled)
-              if !goal.evidence.isEmpty { Text(goal.evidence).font(.caption).foregroundStyle(.secondary).textSelection(.enabled) }
-              if goal.status != "complete" {
-                Text("Saved for this conversation. Send a follow-up to continue; this does not schedule unattended runs.")
-                  .font(.caption2).foregroundStyle(.secondary)
-              }
-            }.padding(12).background(.quaternary, in: RoundedRectangle(cornerRadius: 10))
-          }
-          if model.activity.isEmpty {
-            Text("Tool calls appear here as your agents work.").foregroundStyle(.secondary).font(
-              .callout
-            ).padding(.top, 20)
-          }
-          ForEach(model.activity) { a in
-            VStack(alignment: .leading, spacing: 6) {
+        LazyVStack(alignment: .leading, spacing: 10) {
+          if model.activity.isEmpty { Text("Actions appear here as work happens.").font(.callout).foregroundStyle(.secondary).padding(.vertical, 12) }
+          ForEach(Array(model.activity.reversed())) { action in
+            VStack(alignment: .leading, spacing: 8) {
               Button {
-                if expanded.contains(a.id) { expanded.remove(a.id) } else { expanded.insert(a.id) }
-              } label: {
-                HStack(alignment: .top, spacing: 8) {
-                  Image(
-                    systemName: a.status == "completed"
-                      ? "checkmark.circle.fill"
-                      : a.status == "failed" ? "exclamationmark.circle" : "circle.dotted"
-                  ).foregroundStyle(
-                    a.status == "completed" ? .green : a.status == "failed" ? .orange : .secondary)
-                  VStack(alignment: .leading, spacing: 3) {
-                    Text(a.name.replacingOccurrences(of: "_", with: " ")).font(
-                      .system(size: 12, weight: .medium))
-                    Text("\(model.agent(a.agentId)?.name ?? "Agent") · \(a.status)").font(
-                      .system(size: 10)
-                    ).foregroundStyle(.secondary)
-                  }
-                  Spacer()
-                  Image(systemName: expanded.contains(a.id) ? "chevron.down" : "chevron.right")
-                    .font(.caption2).foregroundStyle(.tertiary)
+                withAnimation(.easeInOut(duration: 0.15)) {
+                  if !expanded.insert(action.id).inserted { expanded.remove(action.id) }
                 }
+              } label: {
+                HStack(alignment: .top, spacing: 9) {
+                  if action.status == "running" || action.status == "pending" { ProgressView().controlSize(.small) }
+                  else { Image(systemName: action.status == "completed" ? "checkmark.circle.fill" : "exclamationmark.circle.fill").foregroundStyle(action.status == "completed" ? .green : .orange) }
+                  VStack(alignment: .leading, spacing: 4) {
+                    Text(summary(action)).font(.system(size: 12, weight: .medium)).lineLimit(2).multilineTextAlignment(.leading)
+                    Text("\(model.agent(action.agentId)?.name ?? "Agent") · \(action.name.replacingOccurrences(of: "_", with: " "))")
+                      .font(.caption2).foregroundStyle(.secondary)
+                    HStack {
+                      Text(action.status.capitalized)
+                      Spacer()
+                      Text(dateFrom(action.createdAt), style: .time)
+                    }.font(.caption2).foregroundStyle(.tertiary)
+                  }
+                  Spacer(minLength: 0)
+                  Image(systemName: expanded.contains(action.id) ? "chevron.down" : "chevron.right").font(.caption2).foregroundStyle(.secondary)
+                }.contentShape(Rectangle())
               }.buttonStyle(.plain)
-              if expanded.contains(a.id) {
-                Text(a.arguments + "\n\n" + (a.output ?? "Waiting…")).font(
-                  .system(size: 10, design: .monospaced)
-                ).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading).padding(8)
-                  .background(.quaternary.opacity(0.4), in: RoundedRectangle(cornerRadius: 7))
+              if expanded.contains(action.id) {
+                Text(action.arguments + "\n\n" + (action.output ?? "Running…"))
+                  .font(.system(size: 10, design: .monospaced)).textSelection(.enabled)
+                  .frame(maxWidth: .infinity, alignment: .leading).padding(8)
+                  .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 8))
               }
-            }
+            }.padding(10).background(.quaternary.opacity(0.25), in: RoundedRectangle(cornerRadius: 10))
+          }
+          let files = model.messages.flatMap(\.attachments)
+          if !files.isEmpty {
+            Text("Saved files").font(.headline).padding(.top, 8)
+            ForEach(files) { file in Button { model.openArtifact(file) } label: { Label(file.name, systemImage: "doc") }.buttonStyle(.borderless) }
+          }
+          if let goal = model.goals.first(where: { $0.conversationId == model.selectedId }) {
+            Text("Goal · " + goal.status).font(.headline).padding(.top, 8)
+            Text(goal.objective).font(.caption).textSelection(.enabled)
           }
           if !model.currentTasks.isEmpty {
-            Divider().padding(.top, 10)
-            Text("Tasks").font(.headline)
-            ForEach(model.currentTasks.prefix(12)) { t in
-              VStack(alignment: .leading, spacing: 3) {
-                Text(t.prompt).font(.caption).lineLimit(2)
-                Text(t.status.replacingOccurrences(of: "_", with: " ")).font(.caption2)
-                  .foregroundStyle(.secondary)
-                if let error = t.error { Text(error).font(.caption2).foregroundStyle(.orange) }
-              }.padding(.vertical, 3)
+            Text("Task history").font(.headline).padding(.top, 8)
+            ForEach(model.currentTasks.prefix(8)) { task in
+              VStack(alignment: .leading, spacing: 4) {
+                Text(task.prompt).font(.caption).lineLimit(2)
+                Text(task.status.replacingOccurrences(of: "_", with: " ")).font(.caption2).foregroundStyle(.secondary)
+              }.padding(.vertical, 4)
             }
           }
-        }.padding(16)
+        }.padding(12)
       }
     }.background(.regularMaterial)
   }

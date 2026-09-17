@@ -156,6 +156,8 @@ struct MCPConnection: Codable, Identifiable {
   var process: MCPProcess? = nil
 }
 struct ActiveRun: Codable, Identifiable {
+  var phase: String? = nil
+  var progressAt: String? = nil
   var id: String
   var taskId: String
   var agentId: String
