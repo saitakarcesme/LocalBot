@@ -15,7 +15,7 @@ export type Agent = {
   model: string;
   workspace: string;
   permissions: Permissions;
-  autonomy: "ask" | "trusted";
+  autonomy: "ask" | "trusted" | "full";
   maxSteps?: number;
   memory: string;
   integrations?: string[];

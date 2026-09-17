@@ -159,6 +159,7 @@ export function allowed(agent: Agent, name: string) {
   }
 }
 export function needsApproval(a: Agent, name: string) {
+  if (a.autonomy === "full" && !name.startsWith("mcp_")) return false;
   return (
     ["terminal", "run_tests", "process_start", "process_input", "mcp_call", "mcp_read_resource", "apply_patch"].includes(name) ||
     (a.autonomy === "ask" && ["write_file", "edit_file", "remember", "create_goal", "update_goal"].includes(name))

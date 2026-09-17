@@ -103,7 +103,7 @@ function cleanAgent(a: any): Agent {
   const p = a.permissions ?? {};
   if (
     !["off", "read", "write"].includes(p.filesystem) ||
-    !["ask", "trusted"].includes(a.autonomy)
+    !["ask", "trusted", "full"].includes(a.autonomy)
   )
     throw new Error("Invalid permissions or autonomy");
   return {
@@ -234,7 +234,16 @@ const server = createServer(async (req, res) => {
       const b = await body(req);
       if (typeof b.allow !== "boolean")
         throw new Error("allow must be boolean");
-      engine.decide(b.id, b.allow);
+      if (b.always !== undefined && typeof b.always !== "boolean") throw new Error("always must be boolean");
+      engine.decide(b.id, b.allow, b.always === true);
+      json(res, 200, { ok: true });
+      return;
+    }
+    if (m === "POST" && p === "/approvals/revoke") {
+      const b = await body(req);
+      store.agent(b.agentId);
+      store.exec("DELETE FROM action_grants WHERE agentId=?", b.agentId);
+      change();
       json(res, 200, { ok: true });
       return;
     }

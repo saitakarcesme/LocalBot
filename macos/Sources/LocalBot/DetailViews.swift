@@ -26,9 +26,10 @@ struct ApprovalCard: View {
           .textSelection(.enabled)
       }
       HStack {
-        Text("Only this action will be approved.").font(.caption).foregroundStyle(.secondary)
+        Text("Always allow remembers this exact action for this agent and workspace.").font(.caption).foregroundStyle(.secondary)
         Spacer()
         Button("Deny") { decide(false) }
+        Button("Always allow") { Task { await model.post("/approvals", ["id": approval.id, "allow": true, "always": true]) } }
         Button("Allow once") { decide(true) }.buttonStyle(.borderedProminent)
       }
     }.padding(14).background(.orange.opacity(0.08), in: RoundedRectangle(cornerRadius: 12)).overlay(
@@ -415,11 +416,13 @@ struct AgentEditor: View {
           Picker("Autonomy", selection: $agent.autonomy) {
             Text("Ask before changes").tag("ask")
             Text("Allow workspace edits").tag("trusted")
+            Text("Full access — workspace").tag("full")
           }
+          Button("Forget always-allowed actions") { Task { await model.post("/approvals/revoke", ["agentId": agent.id]) } }
           Stepper("Task step limit: \(agent.maxSteps ?? 24)", value: Binding(get: { agent.maxSteps ?? 24 }, set: { agent.maxSteps = $0 }), in: 1...256)
           Text("Each step is one model response, which may request several tools. Higher limits allow longer tasks and use more model capacity. Changes apply to the next task; permissions and cancellation still apply.").font(.caption).foregroundStyle(.secondary)
           Text(
-            "Shell commands always require approval and run without network access. File tools stay within this workspace."
+            "Full access runs enabled tools without per-action approval. Disabled tools stay disabled. File tools and shell writes stay within the workspace; shell network access is blocked. Integrations still require approval."
           ).font(.caption).foregroundStyle(.secondary)
         }
         Section("System Prompt") {

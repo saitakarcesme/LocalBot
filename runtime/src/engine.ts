@@ -231,12 +231,23 @@ export class Engine {
       this.decide(a.id, false);
     this.changed();
   }
-  decide(id: string, allow: boolean) {
+  decide(id: string, allow: boolean, always = false) {
     const a = this.store.get(
       "SELECT * FROM approvals WHERE id=? AND status='pending'",
       id,
     );
     if (!a) throw new Error("Approval is no longer pending");
+    if (always && allow) {
+      const call = this.store.get("SELECT * FROM tool_calls WHERE id=?", a.toolCallId);
+      if (call.name.startsWith("mcp_")) throw new Error("Integration actions require individual approval");
+      const run = this.store.get("SELECT * FROM runs WHERE id=?", a.runId);
+      const conversation = this.store.conversation(this.store.task(a.taskId).conversationId);
+      const workspace = conversation.projectId ? this.store.project(conversation.projectId).workspace : this.store.agent(run.agentId).workspace;
+      if (!a.summary.includes(`Workspace: ${workspace}\n`)) throw new Error("Workspace changed; request a fresh approval");
+      const args = JSON.parse(call.arguments);
+      const key = JSON.stringify([workspace, call.name, Object.fromEntries(Object.entries(args).sort(([a], [b]) => a.localeCompare(b)))]);
+      this.store.exec("INSERT OR IGNORE INTO action_grants VALUES(?,?,?)", run.agentId, workspace, key);
+    }
     this.store.exec(
       "UPDATE approvals SET status=? WHERE id=?",
       allow ? "approved" : "denied",
@@ -542,7 +553,8 @@ export class Engine {
                 ? authorizedMCPConnection(live.integrations, this.store.integrations(), args.integrationId) : undefined;
               const actionKey = JSON.stringify([project?.workspace ?? live.workspace, name, Object.fromEntries(Object.entries(args).sort(([a], [b]) => a.localeCompare(b)))]);
               if (deniedActions.has(actionKey)) throw new Error("This action was already denied in this task. Do not retry it; wait for a new explicit user request.");
-              if (needsApproval(live, name) || mcpIntegration?.transport === "stdio") {
+              const granted = !name.startsWith("mcp_") && this.store.get("SELECT 1 FROM action_grants WHERE agentId=? AND workspace=? AND actionKey=?", agentId, agent.workspace, actionKey);
+              if ((needsApproval(live, name) && !granted) || mcpIntegration?.transport === "stdio") {
                 const approved = await this.approve(
                   taskId, runId, callId,
                   `${agent.name} · ${name}\nWorkspace: ${agent.workspace}\n${JSON.stringify(args, null, 2)}${mcpIntegration?.transport === "stdio" ? "\nLaunch local MCP server (user account access):\n" + JSON.stringify(mcpIntegration.process, null, 2) : ""}`,

@@ -12,6 +12,7 @@ export class Store {
     this.db = new DatabaseSync(join(dir, "localbot.sqlite"));
     this.db
       .exec(`PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;
+      CREATE TABLE IF NOT EXISTS action_grants(agentId TEXT NOT NULL, workspace TEXT NOT NULL, actionKey TEXT NOT NULL, PRIMARY KEY(agentId,workspace,actionKey));
       CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, value TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS agents(id TEXT PRIMARY KEY, data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS providers(id TEXT PRIMARY KEY, data TEXT NOT NULL);
