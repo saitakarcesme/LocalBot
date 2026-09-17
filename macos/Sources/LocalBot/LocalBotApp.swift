@@ -115,8 +115,8 @@ struct MainView: View {
                     .help(collapsedProjects.contains(project.id) ? "Expand project" : "Collapse project")
                   Button { model.editingProject = project } label: { Image(systemName: "ellipsis") }
                     .buttonStyle(.plain).help("Project details").accessibilityLabel("Project details: " + project.name)
-                }.font(.caption).foregroundStyle(.secondary).padding(.vertical, 5)
-              }.selectionDisabled()
+                }.font(.caption).foregroundStyle(.secondary).padding(.vertical, 5).selectionDisabled()
+              }
             }
 
             Section(model.showingArchived ? "Archived conversations" : "Recents") {
