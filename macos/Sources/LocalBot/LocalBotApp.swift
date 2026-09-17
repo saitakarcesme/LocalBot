@@ -269,9 +269,12 @@ struct ConversationView: View {
   var body: some View {
     HStack(spacing: 0) {
       VStack(spacing: 0) {
+        if model.messages.isEmpty {
+          emptyConversation.frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else {
         ScrollViewReader { proxy in
           ScrollView {
-            LazyVStack(spacing: 4) {
+            VStack(spacing: 4) {
               Text("LocalBot").font(.system(size: 11, weight: .semibold)).foregroundStyle(.tertiary)
                 .padding(.top, 20)
               if model.hasEarlierMessages {
@@ -290,7 +293,6 @@ struct ConversationView: View {
                   else { Text("Load earlier messages") }
                 }.buttonStyle(.borderless).disabled(model.loadingEarlierMessages)
               }
-              if model.messages.isEmpty { emptyConversation }
               ForEach(Array(model.messages.enumerated()), id: \.element.id) { index, m in
                 let begins = index == 0 || !sameMessageGroup(model.messages[index - 1], m)
                 let ends = index == model.messages.count - 1 || !sameMessageGroup(m, model.messages[index + 1])
@@ -336,6 +338,7 @@ struct ConversationView: View {
               }.buttonStyle(.bordered).clipShape(Circle()).padding()
             }
           }
+        }
         }
         if model.searchFocusId != nil {
           HStack {
@@ -401,7 +404,7 @@ struct ConversationView: View {
   }
   var progressIndicator: some View {
     HStack(spacing: 8) {
-      if let activeAgent { Avatar(agent: activeAgent, size: 28) }
+      if let activeAgent { Avatar(agent: activeAgent, size: 25) }
       switch progress {
       case .typing:
         TypingDots().accessibilityLabel("\(activeAgent?.name ?? "Agent") is typing")
@@ -417,7 +420,7 @@ struct ConversationView: View {
       case .hidden: EmptyView()
       }
       Spacer()
-    }.padding(.horizontal, 28).padding(.top, 5)
+    }.padding(.horizontal, 22).padding(.top, 5)
   }
   var activeRun: ActiveRun? {
     model.activeRuns.first { $0.taskId == model.activeTask?.id }
@@ -431,10 +434,12 @@ struct ConversationView: View {
   }
   var emptyConversation: some View {
     VStack(spacing: 12) {
-      Avatar(agent: members.first, group: members.count > 1, size: 72)
+      Avatar(agent: members.first, group: conversation.projectId != nil || members.count > 1, size: 72)
       Text(conversation.title).font(.title2.weight(.semibold))
       Text(
-        members.count > 1
+        conversation.automatic == 1
+          ? "Describe what you want to build.\nThe right agents will join automatically."
+          : members.count > 1
           ? "Different perspectives. One local model.\nYour team works in sequence and shares its results."
           : "\(members.first?.role ?? "Your agent"), right here on your Mac.\nSend a message to start working together."
       ).font(.callout).foregroundStyle(.secondary).multilineTextAlignment(.center)
@@ -445,7 +450,7 @@ struct ConversationView: View {
           Label("Choose workspace & permissions", systemImage: "folder")
         }.buttonStyle(.borderless).padding(.top, 4)
       }
-    }.frame(maxWidth: .infinity).padding(.vertical, 80)
+    }.frame(maxWidth: .infinity).padding(32)
   }
   var composer: some View {
     VStack(spacing: 8) {
@@ -625,7 +630,8 @@ struct ScrollPositionObserver: ViewModifier {
         if !userScrolling && hasMessages && isAtBottom && old.viewportSize != new.viewportSize {
           // Width/height changes may reflow the transcript. Never treat lazy row
           // measurements during history navigation as a request to jump to the end.
-          scrollToBottom()
+          // Reflow is handled by the scroll view's bottom anchor. Never mutate
+          // its position synchronously from a geometry measurement callback.
         } else {
           isAtBottom = new.nearBottom
         }
