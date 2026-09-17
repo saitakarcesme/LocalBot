@@ -70,6 +70,7 @@ struct TypingDots: View {
 struct MainView: View {
   @EnvironmentObject var model: AppModel
   @FocusState var searchFocused: Bool
+  @State private var collapsedProjects = Set(UserDefaults.standard.stringArray(forKey: "collapsedProjects") ?? [])
   var body: some View {
     NavigationSplitView {
       VStack(spacing: 0) {
@@ -87,29 +88,43 @@ struct MainView: View {
           .padding(.horizontal, 12).padding(.bottom, 8)
         if model.search.isEmpty {
           List(selection: $model.selectedId) {
-            Section(model.showingArchived ? "Archived conversations" : "Conversations") {
-              conversationRows(model.visibleConversations.filter { $0.projectId == nil })
-              if model.showingArchived && model.visibleConversations.isEmpty {
-                Text("No archived conversations").foregroundStyle(.secondary).selectionDisabled()
-              }
-            }
             ForEach(model.projects.filter { project in
               !model.showingArchived || model.visibleConversations.contains { $0.projectId == project.id }
             }) { project in
               Section {
-                conversationRows(model.visibleConversations.filter { $0.projectId == project.id })
-                if !model.showingArchived { Button {
-                  model.newConversationProjectId = project.id
-                  model.showNew = true
-                } label: { Label("New conversation", systemImage: "plus") }
-                  .buttonStyle(.borderless).foregroundStyle(.secondary).font(.caption).selectionDisabled() }
+                if !collapsedProjects.contains(project.id) {
+                  conversationRows(model.visibleConversations.filter { $0.projectId == project.id })
+                  if !model.showingArchived {
+                    Button { model.newConversationProjectId = project.id; model.showNew = true } label: {
+                      Label("New conversation", systemImage: "plus").font(.caption)
+                    }.buttonStyle(.borderless).foregroundStyle(.secondary).selectionDisabled()
+                  }
+                }
               } header: {
-                HStack {
-                  Label(project.name, systemImage: "folder")
-                  Spacer()
-                  Button { model.editingProject = project } label: { Image(systemName: "ellipsis.circle") }
-                    .buttonStyle(.plain).padding(.trailing, 14).help("Project details").accessibilityLabel("Project details: " + project.name)
-                }.selectionDisabled()
+                HStack(spacing: 6) {
+                  Button {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                      if !collapsedProjects.insert(project.id).inserted { collapsedProjects.remove(project.id) }
+                    }
+                    UserDefaults.standard.set(Array(collapsedProjects), forKey: "collapsedProjects")
+                  } label: {
+                    HStack(spacing: 6) {
+                      Image(systemName: "chevron.right").font(.system(size: 9, weight: .semibold))
+                        .rotationEffect(.degrees(collapsedProjects.contains(project.id) ? 0 : 90))
+                      Image(systemName: collapsedProjects.contains(project.id) ? "folder" : "folder.fill")
+                      Text(project.name).lineLimit(1)
+                    }.contentShape(Rectangle())
+                  }.buttonStyle(.plain).help(collapsedProjects.contains(project.id) ? "Expand project" : "Collapse project")
+                  Spacer(minLength: 4)
+                  Button { model.editingProject = project } label: { Image(systemName: "ellipsis") }
+                    .buttonStyle(.plain).help("Project details").accessibilityLabel("Project details: " + project.name)
+                }.selectionDisabled().padding(.vertical, 5)
+              }
+            }
+            Section(model.showingArchived ? "Archived conversations" : "Recents") {
+              conversationRows(model.visibleConversations.filter { $0.projectId == nil })
+              if model.showingArchived && model.visibleConversations.isEmpty {
+                Text("No archived conversations").foregroundStyle(.secondary).selectionDisabled()
               }
             }
           }.listStyle(.sidebar)
@@ -222,31 +237,22 @@ struct MainView: View {
 struct ConversationRow: View {
   @EnvironmentObject var model: AppModel
   var conversation: Conversation
+  var title: String {
+    guard let name = model.agent(conversation.members.first)?.name,
+      conversation.title.hasPrefix(name + " · ") else { return conversation.title }
+    return String(conversation.title.dropFirst(name.count + 3))
+  }
   var body: some View {
-    HStack(alignment: .center, spacing: 10) {
-      Avatar(
-        agent: model.agent(conversation.members.first), group: conversation.members.count > 1,
-        size: 40)
-      VStack(alignment: .leading, spacing: 4) {
-        HStack {
-          Text(conversation.title).font(.system(size: 13, weight: .semibold)).lineLimit(1)
-          Spacer(minLength: 1)
-          if conversation.preview != nil {
-            Text(dateFrom(conversation.updatedAt), style: .time).font(.system(size: 10))
-              .foregroundStyle(.secondary)
-          }
-        }
-        Text(
-          conversation.preview.map(messagePreview)
-            ?? (conversation.members.count > 1
-              ? "\(conversation.members.count) agents · shared workspace"
-              : model.agent(conversation.members.first)?.role ?? "Agent")
-        ).font(.system(size: 12)).foregroundStyle(.secondary).lineLimit(2).frame(
-          maxWidth: .infinity, alignment: .leading)
+    HStack(spacing: 7) {
+      Text(title).font(.system(size: 13)).lineLimit(1).truncationMode(.tail)
+      Spacer(minLength: 0)
+      if model.tasks.contains(where: { $0.conversationId == conversation.id && $0.active }) {
+        Circle().fill(Color.accentColor).frame(width: 6, height: 6).help("Work in progress")
       }
-    }.frame(height: 68).padding(.horizontal, 3)
+    }.frame(height: 28).contentShape(Rectangle()).help(title)
   }
 }
+
 struct ConversationView: View {
   @EnvironmentObject var model: AppModel
   var conversation: Conversation
@@ -261,7 +267,7 @@ struct ConversationView: View {
       VStack(spacing: 0) {
         ScrollViewReader { proxy in
           ScrollView {
-            LazyVStack(spacing: 13) {
+            LazyVStack(spacing: 4) {
               Text("LocalBot").font(.system(size: 11, weight: .semibold)).foregroundStyle(.tertiary)
                 .padding(.top, 20)
               if model.hasEarlierMessages {
@@ -281,7 +287,11 @@ struct ConversationView: View {
                 }.buttonStyle(.borderless).disabled(model.loadingEarlierMessages)
               }
               if model.messages.isEmpty { emptyConversation }
-              ForEach(model.messages) { m in MessageBubble(message: m, group: conversation.projectId != nil || members.count > 1).id(m.id)
+              ForEach(Array(model.messages.enumerated()), id: \.element.id) { index, m in
+                let begins = index == 0 || !sameMessageGroup(model.messages[index - 1], m)
+                let ends = index == model.messages.count - 1 || !sameMessageGroup(m, model.messages[index + 1])
+                MessageBubble(message: m, group: conversation.projectId != nil || members.count > 1, beginsGroup: begins, endsGroup: ends).id(m.id)
+                .padding(.top, begins ? 12 : 0)
                 .background(m.id == model.searchFocusId ? Color.accentColor.opacity(0.12) : .clear, in: RoundedRectangle(cornerRadius: 12)) }
               if progress != .hidden { progressIndicator }
               Color.clear.frame(height: 1).id("bottom")
@@ -508,6 +518,8 @@ struct MessageBubble: View {
   @Environment(\.colorScheme) var colorScheme
   var message: ChatMessage
   var group: Bool
+  var beginsGroup = true
+  var endsGroup = true
   var outgoing: Bool { message.role == "user" }
   var body: some View {
     if message.role == "system" {
@@ -519,10 +531,10 @@ struct MessageBubble: View {
         if outgoing {
           Spacer(minLength: 80)
         } else if group {
-          Avatar(agent: model.agent(message.agentId), size: 25)
+          Avatar(agent: model.agent(message.agentId), size: 25).opacity(endsGroup ? 1 : 0)
         }
         VStack(alignment: outgoing ? .trailing : .leading, spacing: 4) {
-          if group && !outgoing {
+          if group && !outgoing && beginsGroup {
             Text(model.agent(message.agentId)?.name ?? "Agent").font(.system(size: 10))
               .foregroundStyle(.secondary).padding(.leading, 9)
           }
@@ -554,7 +566,7 @@ struct MessageBubble: View {
             }.padding(.horizontal, 8).padding(.vertical, 3).background(.quaternary, in: Capsule())
               .padding(.horizontal, 6)
           }
-          HStack(spacing: 8) {
+          if endsGroup { HStack(spacing: 8) {
             Text(dateFrom(message.createdAt), style: .time).font(.system(size: 9)).foregroundStyle(
               .tertiary)
             if let run = message.runId {
@@ -564,7 +576,7 @@ struct MessageBubble: View {
                   .font(.system(size: 10)).buttonStyle(.plain).foregroundStyle(.secondary)
               }
             }
-          }.padding(.horizontal, 6)
+          }.padding(.horizontal, 6) }
         }.frame(maxWidth: 560, alignment: outgoing ? .trailing : .leading)
           .contextMenu {
             Button("Copy") {
@@ -632,4 +644,10 @@ struct ScrollPositionObserver: ViewModifier {
       content
     }
   }
+}
+
+func sameMessageGroup(_ first: ChatMessage, _ second: ChatMessage) -> Bool {
+  first.role != "system" && first.role == second.role && first.agentId == second.agentId
+    && first.taskId == second.taskId
+    && abs(dateFrom(second.createdAt).timeIntervalSince(dateFrom(first.createdAt))) < 300
 }
