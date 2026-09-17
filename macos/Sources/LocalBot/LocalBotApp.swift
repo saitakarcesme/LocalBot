@@ -9,6 +9,7 @@ import SwiftUI
     WindowGroup {
       MainView().environmentObject(model).frame(minWidth: 760, minHeight: 520)
         .background(TransparentWindowChrome())
+        .toolbarBackground(.hidden, for: .windowToolbar)
         .preferredColorScheme(appearance == "dark" ? .dark : appearance == "light" ? .light : nil)
         .task {
           model.start()
