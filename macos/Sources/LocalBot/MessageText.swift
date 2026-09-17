@@ -24,7 +24,7 @@ struct MessageText: View {
               }
             }.padding(9).background(.black.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
           } else {
-            Text(inlineMessage(section.text)).textSelection(.enabled)
+            HoverMessageText(content: section.text)
           }
         }
       }

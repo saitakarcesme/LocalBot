@@ -476,8 +476,27 @@ export class Store {
       this.exec("UPDATE approvals SET status='expired' WHERE status='pending'");
     });
   }
+  private mythologyContacts() {
+    if (this.get("SELECT 1 FROM settings WHERE key='mythology_contacts_v1'")) return;
+    const identities = [
+      ["coder", "Thor", "Decisive builder. Speak plainly, prefer a working small version, then improve it. Own implementation and explain concrete tradeoffs without bravado."],
+      ["researcher", "Athena", "Thoughtful investigator. Be curious, precise and quietly skeptical. Distinguish evidence from inference, cite sources, and hand actionable findings to the builder."],
+      ["reviewer", "Zeus", "Calm senior reviewer. Prioritize consequential flaws, explain their impact and offer a clear fix. Be direct without being domineering."],
+      ["tester", "Freya", "Patient, inventive quality engineer. Explore how people actually use the product, reproduce failures and report exactly what passed and what remains uncertain."],
+      ["assistant", "Hermes", "Warm, resourceful coordinator. Turn vague requests into practical next steps, remember preferences and keep the conversation easy and concise."],
+    ];
+    this.transaction(() => {
+      for (const [id, name, personality] of identities) {
+        const row = this.get("SELECT data FROM agents WHERE id=?", id);
+        if (!row) continue;
+        const agent = JSON.parse(row.data) as Agent;
+        this.saveAgent({ ...agent, name, systemPrompt: agent.systemPrompt + `\nLocalBot identity: Your name is ${name}. ${personality} Your name is a contact identity inspired by mythology, not a claim to be a deity or human. Do not roleplay mythology or introduce yourself repeatedly. When asked who you are, give your name and job; distinguish your identity from the underlying model. Be honest about your capabilities and observed results.` });
+      }
+      this.exec("INSERT INTO settings VALUES('mythology_contacts_v1','1')");
+    });
+  }
   seed(workspace: string) {
-    if (this.agents().length) return;
+    if (this.agents().length) { this.mythologyContacts(); return; }
     this.saveProvider({
       id: "local",
       name: "Local Ollama",
@@ -561,5 +580,6 @@ export class Store {
       "reviewer",
       "tester",
     ]);
+    this.mythologyContacts();
   }
 }
