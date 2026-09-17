@@ -287,6 +287,7 @@ export async function executeProcess(
   agent: Agent,
   command: string,
   signal: AbortSignal,
+  onOutput?: (output: string) => void,
 ) {
   signal.throwIfAborted();
   const child = await spawnSandbox(agent, command);
@@ -311,6 +312,7 @@ export async function executeProcess(
       if (output.length < 100_000)
         output += b.toString().slice(0, 100_000 - output.length);
       else kill("Output limit exceeded");
+      onOutput?.(output);
     };
     child.stdout.on("data", collect);
     child.stderr.on("data", collect);
@@ -336,6 +338,7 @@ export async function executeTool(
   args: any,
   signal: AbortSignal,
   taskId?: string,
+  onOutput?: (output: string) => void,
 ): Promise<{ output: string; artifact?: string; artifacts?: string[]; image?: string }> {
   if (!allowed(a, name)) throw new Error(`Permission denied: ${name}`);
   validateArguments(name, args);
@@ -445,7 +448,7 @@ export async function executeTool(
     }
     case "terminal":
     case "run_tests":
-      return { output: await executeProcess(a, args.command, signal) };
+      return { output: await executeProcess(a, args.command, signal, onOutput) };
     case "git":
       return {
         output: await executeProcess(

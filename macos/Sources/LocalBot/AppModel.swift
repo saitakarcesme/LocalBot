@@ -76,6 +76,7 @@ enum Keychain {
     }
   }
   @Published var connected = false
+  @Published var hasLoaded = false
   @Published var error: String?
   @Published var search = ""
   @Published var searchResults: [ChatMessage] = []
@@ -197,6 +198,7 @@ enum Keychain {
     do {
       let s = try JSONDecoder().decode(Snapshot.self, from: await request("/snapshot"))
       if !connected { connected = true }
+      if !hasLoaded { hasLoaded = true }
       let update = snapshotCursor.receive(instanceId: s.instanceId, revision: s.revision)
       guard update != .unchanged else { return }
       let previous = Dictionary(uniqueKeysWithValues: tasks.map { ($0.id, $0.status) })

@@ -647,12 +647,19 @@ export class Engine {
                 this.store.react(task.messageId, agentId, args.emoji);
                 result = "Reaction added.";
               } else {
+                let lastOutputAt = 0;
                 const res = await executeTool(
                   { ...this.store.agent(agentId), workspace: agent.workspace },
                   name,
                   args,
                   signal,
                   taskId,
+                  (output) => {
+                    if (Date.now() - lastOutputAt < 500) return;
+                    lastOutputAt = Date.now();
+                    this.store.exec("UPDATE tool_calls SET output=?,updatedAt=? WHERE id=?", output.slice(-16000), now(), callId);
+                    this.changed();
+                  },
                 );
                 result = res.output;
                 if (res.image) {

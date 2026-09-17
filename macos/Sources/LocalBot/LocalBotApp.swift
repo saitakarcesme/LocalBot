@@ -184,6 +184,19 @@ struct MainView: View {
           description: Text("Choose a contact to begin."))
       }
     }
+    .overlay {
+      if !model.hasLoaded {
+        VStack(spacing: 18) {
+          Image(systemName: "bubble.left.and.bubble.right.fill").font(.system(size: 68)).foregroundStyle(.blue.gradient)
+          Text("LocalBot").font(.largeTitle.bold())
+          Text("Your team, right here.").foregroundStyle(.secondary)
+          ProgressView().controlSize(.small)
+          Text(model.connected ? "Opening conversations…" : "Connecting to your local runtime…").font(.caption).foregroundStyle(.secondary)
+          if let error = model.error { Text(error).font(.caption).textSelection(.enabled) }
+          Button("Retry connection") { Task { await model.connect(); await model.refresh() } }.buttonStyle(.plain)
+        }.frame(maxWidth: .infinity, maxHeight: .infinity).background(.background)
+      }
+    }
     .sheet(isPresented: $model.showNew) { NewConversationView() }
     .sheet(isPresented: $model.showProject) { NewProjectView() }
     .sheet(isPresented: $model.showIntegrations) { IntegrationsView() }
@@ -298,7 +311,13 @@ struct ConversationView: View {
                 let ends = index == model.messages.count - 1 || !sameMessageGroup(m, model.messages[index + 1])
                 MessageBubble(message: m, group: conversation.projectId != nil || members.count > 1, beginsGroup: begins, endsGroup: ends).id(m.id)
                 .padding(.top, begins ? 12 : 0)
-                .background(m.id == model.searchFocusId ? Color.accentColor.opacity(0.12) : .clear, in: RoundedRectangle(cornerRadius: 12)) }
+                .background(m.id == model.searchFocusId ? Color.accentColor.opacity(0.12) : .clear, in: RoundedRectangle(cornerRadius: 12))
+                ForEach(model.activity.filter { action in
+                  action.createdAt >= m.createdAt && (index + 1 == model.messages.count || action.createdAt < model.messages[index + 1].createdAt)
+                }) { action in
+                  InlineActionView(action: action).padding(.leading, 56).padding(.trailing, 24)
+                }
+              }
               if progress != .hidden { progressIndicator }
               Color.clear.frame(height: 1).id("bottom")
             }.padding(.bottom, 16)
