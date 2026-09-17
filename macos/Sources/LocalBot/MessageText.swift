@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct MessageText: View {
+  @AppStorage("messageFontSize") private var messageFontSize = 14.0
   var content: String
   var formatted: Bool
   var body: some View {
@@ -24,12 +25,12 @@ struct MessageText: View {
               }
             }.padding(9).background(.black.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
           } else {
-            HoverMessageText(content: section.text)
+            HoverMessageText(content: section.text, fontSize: messageFontSize)
           }
         }
       }
     } else {
-      Text(verbatim: content).textSelection(.enabled)
+      Text(verbatim: content).font(.system(size: messageFontSize)).textSelection(.enabled)
     }
   }
 }

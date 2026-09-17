@@ -3,6 +3,7 @@ import AppKit
 
 struct HoverMessageText: NSViewRepresentable {
   var content: String
+  var fontSize: CGFloat = 14
   func makeNSView(context: Context) -> LinkTextView {
     let view = LinkTextView()
     view.isEditable = false; view.isSelectable = true
@@ -16,15 +17,16 @@ struct HoverMessageText: NSViewRepresentable {
     return view
   }
   func updateNSView(_ view: LinkTextView, context: Context) {
-    guard view.source != content else { return }
+    guard view.source != content || view.renderedFontSize != fontSize else { return }
     view.source = content
+    view.renderedFontSize = fontSize
     let parsed = inlineMessage(content)
     let result = NSMutableAttributedString()
     for run in parsed.runs {
-      var font = NSFont.systemFont(ofSize: 14)
-      if run.inlinePresentationIntent?.contains(.stronglyEmphasized) == true { font = NSFont.boldSystemFont(ofSize: 14) }
+      var font = NSFont.systemFont(ofSize: fontSize)
+      if run.inlinePresentationIntent?.contains(.stronglyEmphasized) == true { font = NSFont.boldSystemFont(ofSize: fontSize) }
       if run.inlinePresentationIntent?.contains(.emphasized) == true { font = NSFontManager.shared.convert(font, toHaveTrait: .italicFontMask) }
-      if run.inlinePresentationIntent?.contains(.code) == true { font = NSFont.monospacedSystemFont(ofSize: 13, weight: .regular) }
+      if run.inlinePresentationIntent?.contains(.code) == true { font = NSFont.monospacedSystemFont(ofSize: fontSize - 1, weight: .regular) }
       var attributes: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: NSColor.labelColor]
       if let link = run.link { attributes[.link] = link; attributes[.foregroundColor] = NSColor.linkColor }
       result.append(NSAttributedString(string: String(parsed[run.range].characters), attributes: attributes))
@@ -48,6 +50,7 @@ struct HoverMessageText: NSViewRepresentable {
 
 final class LinkTextView: NSTextView {
   var source = ""
+  var renderedFontSize: CGFloat = 0
   private var hoverRange: NSRange?
   private var tracking: NSTrackingArea?
   override func updateTrackingAreas() {

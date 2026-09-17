@@ -3,10 +3,12 @@ import SwiftUI
 
 @main struct LocalBotApp: App {
   @StateObject private var model = AppModel()
+  @AppStorage("messageFontSize") private var messageFontSize = 14.0
   @AppStorage("appearance") private var appearance = "system"
   var body: some Scene {
     WindowGroup {
       MainView().environmentObject(model).frame(minWidth: 760, minHeight: 520)
+        .background(TransparentWindowChrome())
         .preferredColorScheme(appearance == "dark" ? .dark : appearance == "light" ? .light : nil)
         .task {
           model.start()
@@ -24,6 +26,12 @@ import SwiftUI
       CommandGroup(replacing: .appSettings) {
         Button("Settings…") { model.showSettings = true }.keyboardShortcut(",")
         Button("Integrations…") { model.showIntegrations = true }
+      }
+      CommandMenu("Text Size") {
+        Button("Increase Text Size") { messageFontSize = min(24, messageFontSize + 1) }.keyboardShortcut("+")
+        Button("Increase Text Size") { messageFontSize = min(24, messageFontSize + 1) }.keyboardShortcut("=")
+        Button("Decrease Text Size") { messageFontSize = max(11, messageFontSize - 1) }.keyboardShortcut("-")
+        Button("Actual Size") { messageFontSize = 14 }.keyboardShortcut("0")
       }
       CommandMenu("Conversation") {
         Button("Show Activity") { model.showActivity.toggle() }.keyboardShortcut(
@@ -91,31 +99,26 @@ struct MainView: View {
             ForEach(model.projects.filter { project in
               !model.showingArchived || model.visibleConversations.contains { $0.projectId == project.id }
             }) { project in
-              DisclosureGroup(isExpanded: Binding(
-                get: { !collapsedProjects.contains(project.id) },
-                set: { expanded in
-                  withAnimation(.easeInOut(duration: 0.2)) {
-                    if expanded { collapsedProjects.remove(project.id) } else { collapsedProjects.insert(project.id) }
-                  }
-                  UserDefaults.standard.set(Array(collapsedProjects), forKey: "collapsedProjects")
-                }
-              )) {
+              HStack(spacing: 9) {
+                Button { toggleProject(project.id) } label: {
+                  HStack(spacing: 9) {
+                    Image(systemName: "chevron.right").font(.system(size: 10, weight: .semibold))
+                      .rotationEffect(.degrees(collapsedProjects.contains(project.id) ? 0 : 90))
+                    Image(systemName: collapsedProjects.contains(project.id) ? "folder" : "folder.fill").font(.system(size: 17))
+                    Text(project.name).font(.system(size: 12, weight: .medium)).lineLimit(1)
+                    Spacer(minLength: 0)
+                  }.contentShape(Rectangle())
+                }.buttonStyle(.plain)
+                Button { model.editingProject = project } label: { Image(systemName: "ellipsis") }
+                  .buttonStyle(.plain).help("Project details")
+              }.foregroundStyle(.secondary).padding(.vertical, 7).selectionDisabled()
+              if !collapsedProjects.contains(project.id) {
                 conversationRows(model.visibleConversations.filter { $0.projectId == project.id })
                 if !model.showingArchived {
                   Button { Task { await model.newConversation(projectId: project.id) } } label: {
                     Label("New conversation", systemImage: "plus").font(.caption)
                   }.buttonStyle(.borderless).foregroundStyle(.secondary).selectionDisabled()
                 }
-              } label: {
-                HStack(spacing: 6) {
-                  Button { toggleProject(project.id) } label: {
-                    Label(project.name, systemImage: collapsedProjects.contains(project.id) ? "folder" : "folder.fill")
-                      .lineLimit(1).frame(maxWidth: .infinity, alignment: .leading).contentShape(Rectangle())
-                  }.buttonStyle(.plain)
-                    .help(collapsedProjects.contains(project.id) ? "Expand project" : "Collapse project")
-                  Button { model.editingProject = project } label: { Image(systemName: "ellipsis") }
-                    .buttonStyle(.plain).help("Project details").accessibilityLabel("Project details: " + project.name)
-                }.font(.caption).foregroundStyle(.secondary).padding(.vertical, 5).selectionDisabled()
               }
             }
 
@@ -152,14 +155,14 @@ struct MainView: View {
             .secondary)
           Spacer()
           Button { model.toggleArchiveList() } label: {
-            Image(systemName: model.showingArchived ? "bubble.left.and.bubble.right" : "archivebox")
+            Image(systemName: model.showingArchived ? "bubble.left.and.bubble.right" : "archivebox").font(.system(size: 17))
           }.buttonStyle(.plain)
             .help(model.showingArchived ? "Show conversations" : "Show archived conversations")
             .accessibilityLabel(model.showingArchived ? "Show conversations" : "Show archived conversations")
           Button {
             model.showSettings = true
           } label: {
-            Image(systemName: "gearshape")
+            Image(systemName: "gearshape").font(.system(size: 17))
           }.buttonStyle(.plain).help("Model settings")
         }.padding(14)
       }
@@ -262,14 +265,7 @@ struct ConversationRow: View {
   var body: some View {
     HStack(spacing: 7) {
       if conversation.projectId != nil {
-        ZStack {
-          ForEach(Array(conversation.members.prefix(3).enumerated()), id: \.element) { index, id in
-            Avatar(agent: model.agent(id), size: 30)
-              .overlay(Circle().stroke(.background, lineWidth: 2))
-              .offset(x: CGFloat(index) * 8, y: CGFloat(index) * -3)
-          }
-          if conversation.members.isEmpty { Avatar(agent: nil, group: true, size: 30) }
-        }.frame(width: conversation.members.count > 1 ? 48 : 34, height: 38)
+        AvatarStack(agents: conversation.members.compactMap { model.agent($0) }, size: 30)
       }
       VStack(alignment: .leading, spacing: 4) {
         Text(title).font(.system(size: 13, weight: conversation.projectId == nil ? .regular : .semibold)).lineLimit(1).truncationMode(.tail)
@@ -287,6 +283,7 @@ struct ConversationRow: View {
 }
 
 struct ConversationView: View {
+  @AppStorage("messageFontSize") private var messageFontSize = 14.0
   @EnvironmentObject var model: AppModel
   var conversation: Conversation
   @State var draft = ""
@@ -400,7 +397,7 @@ struct ConversationView: View {
           ForEach(members) { a in Button("\(a.name) · \(a.role)") { model.editingAgent = a } }
         } label: {
           HStack(spacing: 9) {
-            Avatar(agent: members.first, group: members.count > 1, size: 28)
+            AvatarStack(agents: members, size: 28)
             VStack(alignment: .leading, spacing: 1) {
               Text(conversation.title).font(.headline)
               Text(
@@ -466,7 +463,7 @@ struct ConversationView: View {
   }
   var emptyConversation: some View {
     VStack(spacing: 12) {
-      Avatar(agent: members.first, group: conversation.projectId != nil || members.count > 1, size: 72)
+      AvatarStack(agents: members, size: 72)
       Text(conversation.title).font(.title2.weight(.semibold))
       Text(
         conversation.automatic == 1
@@ -514,7 +511,7 @@ struct ConversationView: View {
         HStack(alignment: .bottom, spacing: 8) {
           TextField("Message", text: $draft, axis: .vertical).lineLimit(1...7).textFieldStyle(
             .plain
-          ).font(.system(size: 14)).focused($composing)
+          ).font(.system(size: messageFontSize)).focused($composing)
             .onKeyPress(keys: [.return]) { event in
               if event.modifiers.contains(.shift) { return .ignored }
               send()
@@ -701,4 +698,34 @@ struct ScrollPositionObserver: ViewModifier {
 func sameMessageGroup(_ first: ChatMessage, _ second: ChatMessage) -> Bool {
   first.role != "system" && first.role == second.role && first.agentId == second.agentId
     && abs(dateFrom(second.createdAt).timeIntervalSince(dateFrom(first.createdAt))) < 300
+}
+
+struct AvatarStack: View {
+  let agents: [Agent]
+  var size: CGFloat
+  var body: some View {
+    ZStack(alignment: .leading) {
+      if agents.isEmpty {
+        Image(systemName: "sparkles").font(.system(size: size * 0.5)).foregroundStyle(.secondary)
+          .frame(width: size, height: size)
+      }
+      ForEach(Array(agents.prefix(3).enumerated()), id: \.element.id) { index, agent in
+        Avatar(agent: agent, size: size)
+          .overlay(Circle().stroke(.background, lineWidth: 2))
+          .offset(x: CGFloat(index) * size * 0.36)
+      }
+    }.frame(width: size * (1 + CGFloat(max(0, min(3, agents.count) - 1)) * 0.36), height: size)
+  }
+}
+struct TransparentWindowChrome: NSViewRepresentable {
+  func makeNSView(context: Context) -> ChromeView { ChromeView() }
+  func updateNSView(_ view: ChromeView, context: Context) {}
+  final class ChromeView: NSView {
+    override func viewDidMoveToWindow() {
+      super.viewDidMoveToWindow()
+      window?.titlebarAppearsTransparent = true
+      window?.toolbarStyle = .unified
+      window?.titlebarSeparatorStyle = .none
+    }
+  }
 }
