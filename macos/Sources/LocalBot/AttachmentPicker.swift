@@ -3,6 +3,7 @@ import AppKit
 
 /// File enumeration never runs on the main actor or invokes the system Open/Save service.
 struct AttachmentPicker: View {
+  var foldersOnly = false
   var add: ([URL]) async -> Void
   @Environment(\.dismiss) private var dismiss
   @State private var location = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Downloads").path
@@ -21,7 +22,7 @@ struct AttachmentPicker: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 14) {
       HStack {
-        Text("Add files").font(.title2.bold())
+        Text(foldersOnly ? "Choose folder" : "Add files").font(.title2.bold())
         Spacer()
         Button("Cancel") { dismiss() }.keyboardShortcut(.cancelAction).disabled(importing)
       }
@@ -46,11 +47,11 @@ struct AttachmentPicker: View {
         Text("Choose up to 8 files, 10 MB each. Use Go to open a folder or select a file by path.").font(.caption).foregroundStyle(.secondary)
         Spacer()
         if importing { ProgressView().controlSize(.small) }
-        Button("Attach") {
+        Button(foldersOnly ? "Use this folder" : "Attach") {
           importing = true
-          let urls = entries.filter { selection.contains($0.path) && !$0.directory }.map { URL(fileURLWithPath: $0.path) }
+          let urls = foldersOnly ? [URL(fileURLWithPath: NSString(string: location).expandingTildeInPath)] : entries.filter { selection.contains($0.path) && !$0.directory }.map { URL(fileURLWithPath: $0.path) }
           Task { await add(urls); dismiss() }
-        }.buttonStyle(.borderedProminent).disabled(importing || selectedFiles == 0 || selectedFiles > 8)
+        }.buttonStyle(.borderedProminent).disabled(importing || loading || (foldersOnly ? error != nil : selectedFiles == 0 || selectedFiles > 8))
       }
     }.padding(22).frame(width: 570).task { reload() }
   }

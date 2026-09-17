@@ -261,12 +261,28 @@ struct ConversationRow: View {
   }
   var body: some View {
     HStack(spacing: 7) {
-      Text(title).font(.system(size: 13)).lineLimit(1).truncationMode(.tail)
+      if conversation.projectId != nil {
+        ZStack {
+          ForEach(Array(conversation.members.prefix(3).enumerated()), id: \.element) { index, id in
+            Avatar(agent: model.agent(id), size: 30)
+              .overlay(Circle().stroke(.background, lineWidth: 2))
+              .offset(x: CGFloat(index) * 8, y: CGFloat(index) * -3)
+          }
+          if conversation.members.isEmpty { Avatar(agent: nil, group: true, size: 30) }
+        }.frame(width: conversation.members.count > 1 ? 48 : 34, height: 38)
+      }
+      VStack(alignment: .leading, spacing: 4) {
+        Text(title).font(.system(size: 13, weight: conversation.projectId == nil ? .regular : .semibold)).lineLimit(1).truncationMode(.tail)
+        if conversation.projectId != nil {
+          Text(messagePreview(conversation.preview ?? "Send a message to bring your team together."))
+            .font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(2)
+        }
+      }
       Spacer(minLength: 0)
       if model.tasks.contains(where: { $0.conversationId == conversation.id && $0.active }) {
         Circle().fill(Color.accentColor).frame(width: 6, height: 6).help("Work in progress")
       }
-    }.frame(height: 28).contentShape(Rectangle()).help(title)
+    }.frame(height: conversation.projectId == nil ? 28 : 62).contentShape(Rectangle()).help(title)
   }
 }
 
@@ -313,11 +329,7 @@ struct ConversationView: View {
                 MessageBubble(message: m, group: conversation.projectId != nil || members.count > 1, beginsGroup: begins, endsGroup: ends).id(m.id)
                 .padding(.top, begins ? 12 : 0)
                 .background(m.id == model.searchFocusId ? Color.accentColor.opacity(0.12) : .clear, in: RoundedRectangle(cornerRadius: 12))
-                ForEach(model.activity.filter { action in
-                  action.createdAt >= m.createdAt && (index + 1 == model.messages.count || action.createdAt < model.messages[index + 1].createdAt)
-                }) { action in
-                  InlineActionView(action: action).padding(.leading, 56).padding(.trailing, 24)
-                }
+
               }
               if progress != .hidden { progressIndicator }
               Color.clear.frame(height: 1).id("bottom")
@@ -553,6 +565,12 @@ struct MessageBubble: View {
   var beginsGroup = true
   var endsGroup = true
   var outgoing: Bool { message.role == "user" }
+  var actions: [Activity] {
+    guard message.role == "assistant", let run = message.runId else { return [] }
+    let next = model.messages.first { $0.runId == run && $0.role == "assistant" && $0.createdAt > message.createdAt }
+    let first = !model.messages.contains { $0.runId == run && $0.role == "assistant" && $0.createdAt < message.createdAt }
+    return model.activity.filter { $0.runId == run && (first || $0.createdAt >= message.createdAt) && (next == nil || $0.createdAt < next!.createdAt) }
+  }
   var body: some View {
     if message.role == "system" {
       Text(message.content).font(.caption).foregroundStyle(.secondary).multilineTextAlignment(
@@ -581,6 +599,7 @@ struct MessageBubble: View {
                 in: RoundedRectangle(cornerRadius: 18)
               ).fixedSize(horizontal: false, vertical: true)
           }
+          if !actions.isEmpty { MessageActivityPanel(actions: actions).padding(.top, -3) }
           ForEach(message.attachments) { a in
             Button {
               model.openArtifact(a)

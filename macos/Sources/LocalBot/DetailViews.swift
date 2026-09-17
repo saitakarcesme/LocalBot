@@ -287,6 +287,8 @@ struct NewProjectView: View {
   @Environment(\.dismiss) var dismiss
   @State var name = ""
   @State var workspace = ""
+  @State private var choosingFolder = false
+  @State private var creating = false
   var body: some View {
     VStack(alignment: .leading, spacing: 18) {
       Text("New Project").font(.title2.bold())
@@ -294,29 +296,30 @@ struct NewProjectView: View {
       Text("Conversations share this folder and project memory. Agents join according to the work you request.")
         .font(.callout).foregroundStyle(.secondary)
       HStack {
-        Text(workspace.isEmpty ? "Choose a project folder" : workspace).lineLimit(2)
+        Text(workspace.isEmpty ? "Documents/LocalBot/" + (name.isEmpty ? "Project name" : name) : workspace).lineLimit(2)
         Spacer()
         Button("Choose…") {
-          let panel = NSOpenPanel()
-          panel.canChooseDirectories = true; panel.canChooseFiles = false
-          panel.canCreateDirectories = true
-          if panel.runModal() == .OK { workspace = panel.url?.path ?? "" }
+          choosingFolder = true
         }
       }
       HStack {
         Button("Cancel") { dismiss() }
         Spacer()
         Button("Create Project") {
+          creating = true
           Task {
+            defer { creating = false }
             await model.post("/projects", ["name": name, "workspace": workspace])
             if model.error == nil {
-              model.newConversationProjectId = model.projects.first?.id ?? ""
-              dismiss(); model.showNew = true
+              let projectId = model.projects.first?.id
+              dismiss()
+              await model.newConversation(projectId: projectId)
             }
           }
-        }.buttonStyle(.borderedProminent).disabled(name.trimmingCharacters(in: .whitespaces).isEmpty || workspace.isEmpty)
+        }.buttonStyle(.borderedProminent).disabled(name.trimmingCharacters(in: .whitespaces).isEmpty || creating)
       }
     }.padding(24).frame(width: 460)
+      .sheet(isPresented: $choosingFolder) { AttachmentPicker(foldersOnly: true) { urls in workspace = urls.first?.path ?? "" } }
   }
 }
 struct AgentEditor: View {

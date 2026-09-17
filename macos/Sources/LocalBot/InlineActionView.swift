@@ -3,6 +3,7 @@ import SwiftUI
 /// Actual persisted tool events; animation only represents a pending or running action.
 struct InlineActionView: View {
   let action: Activity
+  var initiallyExpanded = false
   @State private var expanded = false
   private var active: Bool { ["pending", "running"].contains(action.status) }
   private var arguments: [String: String] {
@@ -16,9 +17,9 @@ struct InlineActionView: View {
   }
   var body: some View {
     VStack(alignment: .leading, spacing: 6) {
-      Button { expanded.toggle() } label: {
+      Button { withAnimation(.easeInOut(duration: 0.18)) { expanded.toggle() } } label: {
         HStack(spacing: 8) {
-          if active { ProgressView().controlSize(.mini) }
+          if active { Image(systemName: "sparkle").modifier(ActivityShimmer(active: true)) }
           else { Image(systemName: action.status == "completed" ? "checkmark" : "exclamationmark.circle").foregroundStyle(action.status == "completed" ? Color.secondary : .orange) }
           Text(title).font(.system(size: 11, design: .monospaced)).lineLimit(2).frame(maxWidth: .infinity, alignment: .leading)
           Image(systemName: expanded ? "chevron.down" : "chevron.right").font(.caption2)
@@ -27,7 +28,7 @@ struct InlineActionView: View {
       if active, let output = action.output, !output.isEmpty {
         Text(String(output.suffix(1200))).font(.system(size: 10, design: .monospaced)).lineLimit(6).textSelection(.enabled)
       }
-      if expanded {
+      if expanded || initiallyExpanded {
         ScrollView([.horizontal, .vertical]) {
           VStack(alignment: .leading, spacing: 12) {
             if let command = arguments["command"] { Text(command) }
@@ -40,5 +41,57 @@ struct InlineActionView: View {
         Text(action.status.capitalized).font(.caption2).foregroundStyle(.secondary)
       }
     }.padding(.vertical, 5)
+  }
+}
+
+
+struct ActivityShimmer: ViewModifier {
+  var active: Bool
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
+  func body(content: Content) -> some View {
+    if active && !reduceMotion {
+      TimelineView(.animation(minimumInterval: 0.08)) { timeline in
+        let phase = timeline.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 2) / 2
+        content.overlay {
+          GeometryReader { geometry in
+            LinearGradient(colors: [.clear, .white.opacity(0.9), .clear], startPoint: .leading, endPoint: .trailing)
+              .frame(width: geometry.size.width * 0.45)
+              .offset(x: geometry.size.width * (phase * 1.5 - 0.45))
+          }.mask(content)
+        }
+      }
+    } else { content }
+  }
+}
+
+struct MessageActivityPanel: View {
+  let actions: [Activity]
+  @State private var expanded = false
+  private var active: Bool { actions.contains { ["pending", "running"].contains($0.status) } }
+  var body: some View {
+    VStack(alignment: .leading, spacing: 0) {
+      Button { withAnimation(.easeInOut(duration: 0.2)) { expanded.toggle() } } label: {
+        HStack(spacing: 7) {
+          Image(systemName: active ? "sparkle" : "checkmark.circle")
+          Text(active ? "Working · " + (actions.last?.name.replacingOccurrences(of: "_", with: " ") ?? "") : "\(actions.count) actions")
+            .font(.system(size: 11, weight: .medium)).modifier(ActivityShimmer(active: active))
+          Spacer()
+          Image(systemName: expanded ? "chevron.up" : "chevron.down").font(.caption2)
+        }.padding(.horizontal, 12).padding(.vertical, 9).contentShape(Rectangle())
+      }.buttonStyle(.plain).foregroundStyle(.secondary)
+      if expanded {
+        ScrollViewReader { proxy in
+          ScrollView {
+            VStack(alignment: .leading, spacing: 8) {
+              ForEach(actions) { action in InlineActionView(action: action, initiallyExpanded: true) }
+              Color.clear.frame(height: 1).id("activityEnd")
+            }.padding(10)
+          }.frame(height: 240)
+            .defaultScrollAnchor(.bottom)
+            .onChange(of: actions.last?.output) { _, _ in if active { proxy.scrollTo("activityEnd", anchor: .bottom) } }
+        }
+      }
+    }.background(.quaternary.opacity(0.4), in: RoundedRectangle(cornerRadius: 12))
+      .overlay(RoundedRectangle(cornerRadius: 12).stroke(.quaternary, lineWidth: 0.5))
   }
 }

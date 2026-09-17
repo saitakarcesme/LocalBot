@@ -1,3 +1,4 @@
+import { defaultProjectFolder } from "./project-folder.js";
 import { agentStepLimit } from "./run-limits.js";
 import { MCPStdioTransport } from "./mcp-stdio.js";
 import { processSessions } from "./process-sessions.js";
@@ -287,7 +288,7 @@ const server = createServer(async (req, res) => {
       const b = await body(req);
       const name = String(b.name ?? "").trim().slice(0, 80);
       if (!name) throw new Error("Project name is required");
-      const workspace = await fs.realpath(String(b.workspace ?? ""));
+      const workspace = String(b.workspace ?? "").trim() ? await fs.realpath(String(b.workspace)) : await defaultProjectFolder(homedir(), name);
       if (!(await fs.stat(workspace)).isDirectory() || workspace === homedir() || workspace === "/" || workspace.includes("/.codex") || workspace.includes("/Library")) throw new Error("Choose a dedicated existing project folder");
       const project = store.createProject(name, workspace);
       change(); json(res, 201, project); return;
