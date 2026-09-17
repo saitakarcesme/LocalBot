@@ -644,3 +644,32 @@ test('failed verification exposes saved artifacts and records live generation ph
   }
  }finally{await f.close();}
 });
+
+test('read-only researcher hands observed results to a writable teammate without asking for broader permissions',async()=>{
+ const steps={researcher:0,coder:0};
+ const f=await setup(async(body,res)=>reply(res,{content:'unused'}),()=>({capabilities:()=>({tools:true,images:false,streaming:false}),async generate(messages,tools){
+  const research=messages[0].content.includes('You are Mira,');const role=research?'researcher':'coder';
+  assert.match(messages[0].content,/responsible only for your role/);
+  assert.match(messages.at(-1).content + messages[0].content,/role-specific stage|handoff/);
+  if(research){
+   assert(!tools.some(t=>t.function.name==='write_file'));
+   assert.match(messages[0].content,/Later teammates:.*Alex.*write_file/);
+   if(++steps[role]===1)return{content:'I will inspect the brief.',calls:[{id:'research-read',function:{name:'read_file',arguments:JSON.stringify({path:'brief.txt'})}}]};
+   return{content:'Research complete: use a canvas. Alex can implement it.',calls:[]};
+  }
+  assert(messages.some(m=>m.content.includes('use a canvas')));
+  if(++steps[role]===1)return{content:'I will implement the researched approach.',calls:[{id:'build-write',function:{name:'write_file',arguments:JSON.stringify({path:'index.html',content:'<!doctype html><canvas></canvas>'})}}]};
+  return{content:'Saved index.html.',calls:[]};
+ }}));
+ try{
+  await writeFile(join(f.store.agent('researcher').workspace,'brief.txt'),'Use a canvas.');
+  f.store.saveAgent({...f.store.agent('coder'),autonomy:'trusted'});
+  const c=f.store.createConversation('Research then build',['researcher','coder']);
+  const task=f.engine.enqueue(c.id,'Research the brief, then create the HTML.');
+  await until(()=>!['running','queued','awaiting_approval'].includes(f.store.task(task.id).status));
+  assert.equal(f.store.task(task.id).status,'completed');
+  assert.equal(f.store.agent('researcher').permissions.filesystem,'read');
+  assert.equal(f.store.all('SELECT * FROM runs WHERE taskId=?',task.id).length,2);
+  assert.match(await readFile(join(f.store.agent('coder').workspace,'index.html'),'utf8'),/<canvas>/);
+ }finally{await f.close();}
+});
