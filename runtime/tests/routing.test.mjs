@@ -717,3 +717,41 @@ test('subscription usage dispatch obeys provider capability and current web perm
   const call=f.store.get('SELECT t.* FROM tool_calls t JOIN runs r ON r.id=t.runId WHERE r.taskId=?',second.id);assert.match(call.output,/Permission denied/);
  }finally{await f.close();}
 });
+
+test('terminal stdout and stderr persist in Activity before exit and survive cancellation', {skip:process.platform!=='darwin'},async()=>{
+ const f=await setup(async(body,res)=>{
+  if(body.messages.some(m=>m.role==='tool'))reply(res,{content:'Done.'});
+  else reply(res,{content:'',tool_calls:[{function:{name:'terminal',arguments:{command:"printf 'first'; sleep 0.05; printf 'second' >&2; sleep 8"}}}]});
+ });
+ try {
+  f.store.saveAgent({...f.store.agent('coder'),autonomy:'full'});
+  const c=f.store.createConversation('Streaming',['coder']);f.store.exec('UPDATE conversation_context SET titled=1 WHERE conversationId=?',c.id);
+  const task=f.engine.enqueue(c.id,'Run command');
+  const call=()=>f.store.get('SELECT t.* FROM tool_calls t JOIN runs r ON r.id=t.runId WHERE r.taskId=?',task.id);
+  await until(()=>call()?.output?.includes('firstsecond'));
+  assert.equal(call().status,'running');assert.equal(f.store.task(task.id).status,'running');
+  f.engine.cancel(task.id);
+  await until(()=>!f.store.get("SELECT id FROM runs WHERE taskId=? AND status='running'",task.id));
+  assert.equal(call().status,'cancelled');assert.match(call().output,/firstsecond/);assert.match(call().output,/cancelled/i);
+ }finally{await f.close();}
+});
+
+test('background process start streams into its Activity record while provider waits', {skip:process.platform!=='darwin'},async()=>{
+ let release;const gate=new Promise(r=>release=r);
+ const f=await setup(async(body,res)=>{
+  if(body.messages.some(m=>m.role==='tool')){await gate;reply(res,{content:'Done.'});}
+  else reply(res,{content:'',tool_calls:[{function:{name:'process_start',arguments:{command:"printf 'background-one'; sleep 0.05; printf 'background-two' >&2; sleep 8"}}}]});
+ });
+ try {
+  f.store.saveAgent({...f.store.agent('coder'),autonomy:'full'});
+  const c=f.store.createConversation('Session stream',['coder']);f.store.exec('UPDATE conversation_context SET titled=1 WHERE conversationId=?',c.id);
+  const task=f.engine.enqueue(c.id,'Start command');
+  const call=()=>f.store.get('SELECT t.* FROM tool_calls t JOIN runs r ON r.id=t.runId WHERE r.taskId=?',task.id);
+  await until(()=>call()?.output?.includes('background-onebackground-two'));
+  assert.equal(call().status,'completed');assert.equal(f.store.task(task.id).status,'running');
+  const live=JSON.parse(call().output);assert.equal(live.state,'running');assert(live.sessionId);
+  f.engine.cancel(task.id);release();
+  await until(()=>!f.store.get("SELECT id FROM runs WHERE taskId=? AND status='running'",task.id));
+  assert.match(call().output,/background-onebackground-two/);
+ }finally{release();await f.close();}
+});

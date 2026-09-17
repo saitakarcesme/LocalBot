@@ -119,3 +119,14 @@ test('process waits respect timeout, cancellation, owner isolation and task clea
     await assert.rejects(released,/not found/);
   } finally {m.releaseTask(owner.taskId);}
 });
+
+test('session Activity streams before exit without consuming poll output, then stops after release',async()=>{
+ const m=new ProcessSessions();const events=[];let child;
+ try {
+  const {sessionId}=await m.start(owner,async()=>child=await launch('process.stdout.write("first");setTimeout(()=>process.stderr.write("second"),40);setInterval(()=>{},1000)')(),new AbortController().signal,text=>events.push(JSON.parse(text)));
+  for(let i=0;i<100&&!events.some(e=>e.output.includes('second'));i++)await new Promise(r=>setTimeout(r,10));
+  assert(events.some(e=>e.output==='firstsecond'&&e.state==='running'));
+  assert.equal(m.poll(owner,sessionId).output,'firstsecond');assert.equal(m.poll(owner,sessionId).output,'');
+  const close=new Promise(r=>child.once('close',r));m.releaseTask(owner.taskId);const count=events.length;await close;await new Promise(r=>setTimeout(r,550));assert.equal(events.length,count);
+ }finally{m.releaseTask(owner.taskId);}
+});

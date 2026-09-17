@@ -670,7 +670,6 @@ export class Engine {
                 this.store.react(task.messageId, agentId, args.emoji);
                 result = "Reaction added.";
               } else {
-                let lastOutputAt = 0;
                 const res = await executeTool(
                   { ...this.store.agent(agentId), workspace: agent.workspace },
                   name,
@@ -678,8 +677,6 @@ export class Engine {
                   signal,
                   taskId,
                   (output) => {
-                    if (Date.now() - lastOutputAt < 500) return;
-                    lastOutputAt = Date.now();
                     this.store.exec("UPDATE tool_calls SET output=?,updatedAt=? WHERE id=?", output.slice(-16000), now(), callId);
                     this.changed();
                   },
@@ -778,8 +775,9 @@ export class Engine {
           runId,
         );
         this.store.exec(
-          "UPDATE tool_calls SET status=?,output=?,updatedAt=? WHERE runId=? AND status IN ('pending','running')",
+          "UPDATE tool_calls SET status=?,output=CASE WHEN output IS NULL OR output='' THEN ? ELSE substr(output,-16000)||char(10)||? END,updatedAt=? WHERE runId=? AND status IN ('pending','running')",
           cancelled ? "cancelled" : "failed",
+          text,
           text,
           now(),
           runId,
