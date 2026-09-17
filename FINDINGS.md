@@ -280,3 +280,12 @@ User requested race-game failure diagnosis, compact title-only chats below colla
 - Installed signed source bb03d35; verified all 27 manifest files. Provider timeout 900s survived relaunch; no active installed tasks. Temporary browser and two test HTTP servers closed.
 - Native folder selection, collapse/expand, selection retention and persisted collapse state verified after restart. Activity shows live agent phase, elapsed time, approvals, action details/output and saved files. Original user game verification completed without rewriting its source.
 - 100 runtime tests pass. All code microcommits pushed. This is a bounded release handoff, not completion or restart of the broad goal/tool-parity roadmap.
+
+### 2026-09-17 — Freeze, empty project layout and team handoff fixes
+- Captured the reported freeze: native client consumed ~100% CPU while runtime was idle and responsive. Main-thread sample remained inside SwiftUI lazy transcript placement/graph updates. Replaced lazy transcript layout with a stable stack (message retrieval remains paged), removed synchronous scrolling from geometry callbacks, and separated the centered empty state from the transcript.
+- Typing and message avatars now both use 25pt size, 24pt gutter and 7pt spacing. Empty automatic project conversations explain team selection.
+- Avoid publishing unchanged connection state on every one-second poll; unchanged runtime snapshots no longer invalidate the whole UI.
+- Each agent receives the ordered team, tool capabilities and later teammates. Role-specific execution replaces the instruction for every agent to carry out the entire request. Researchers hand off to the writable developer without asking to widen their own permissions.
+- 101 runtime tests passed. Real gpt-5.6-sol CLI test completed Mira -> Alex: read-only research, then a 2,850-character HTML file written and checked by Alex. No permission escalation or user question was needed.
+- Installed signed source 7578f66, all 27 bundle files verified. Native empty project chat, original transcript navigation, scrolling and Activity open/close checked; user history retained. One empty project conversation was created for UI verification and remains available.
+- Final native idle measurement: 0.4% CPU over five seconds in the original conversation, down from the captured sustained ~100% freeze.
