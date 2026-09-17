@@ -73,7 +73,7 @@ struct MessageActivityPanel: View {
       Button { withAnimation(.easeInOut(duration: 0.2)) { expanded.toggle() } } label: {
         HStack(spacing: 7) {
           Image(systemName: active ? "sparkle" : "checkmark.circle")
-          Text(active ? "Working · " + (actions.last?.name.replacingOccurrences(of: "_", with: " ") ?? "") : "\(actions.count) actions")
+          Text(active ? "Working · " + (actions.last?.name.replacingOccurrences(of: "_", with: " ") ?? "") : "\(actions.count) action\(actions.count == 1 ? "" : "s")")
             .font(.system(size: 11, weight: .medium)).modifier(ActivityShimmer(active: active))
           Spacer()
           Image(systemName: expanded ? "chevron.up" : "chevron.down").font(.caption2)

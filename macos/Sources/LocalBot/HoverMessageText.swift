@@ -9,7 +9,9 @@ struct HoverMessageText: NSViewRepresentable {
     view.drawsBackground = false
     view.textContainerInset = .zero
     view.textContainer?.lineFragmentPadding = 0
-    view.textContainer?.widthTracksTextView = false
+    view.textContainer?.widthTracksTextView = true
+    view.isHorizontallyResizable = false
+    view.isVerticallyResizable = true
     view.linkTextAttributes = [.foregroundColor: NSColor.linkColor, .underlineStyle: 0, .cursor: NSCursor.pointingHand]
     return view
   }
@@ -30,8 +32,14 @@ struct HoverMessageText: NSViewRepresentable {
     view.textStorage?.setAttributedString(result)
   }
   func sizeThatFits(_ proposal: ProposedViewSize, nsView: LinkTextView, context: Context) -> CGSize? {
-    guard let container = nsView.textContainer, let layout = nsView.layoutManager else { return nil }
-    container.containerSize = CGSize(width: max(1, proposal.width ?? 530), height: .greatestFiniteMagnitude)
+    guard let storage = nsView.textStorage else { return nil }
+    // SwiftUI probes several widths. Measure a separate layout so a discarded
+    // narrow proposal cannot leave the displayed text container one glyph wide.
+    let measurement = NSTextStorage(attributedString: storage)
+    let layout = NSLayoutManager()
+    let container = NSTextContainer(size: CGSize(width: max(1, proposal.width ?? 530), height: .greatestFiniteMagnitude))
+    container.lineFragmentPadding = 0
+    measurement.addLayoutManager(layout); layout.addTextContainer(container)
     layout.ensureLayout(for: container)
     let size = layout.usedRect(for: container).size
     return CGSize(width: ceil(size.width), height: ceil(size.height))
