@@ -91,36 +91,34 @@ struct MainView: View {
             ForEach(model.projects.filter { project in
               !model.showingArchived || model.visibleConversations.contains { $0.projectId == project.id }
             }) { project in
-              Section {
-                if !collapsedProjects.contains(project.id) {
-                  conversationRows(model.visibleConversations.filter { $0.projectId == project.id })
-                  if !model.showingArchived {
-                    Button { model.newConversationProjectId = project.id; model.showNew = true } label: {
-                      Label("New conversation", systemImage: "plus").font(.caption)
-                    }.buttonStyle(.borderless).foregroundStyle(.secondary).selectionDisabled()
+              DisclosureGroup(isExpanded: Binding(
+                get: { !collapsedProjects.contains(project.id) },
+                set: { expanded in
+                  withAnimation(.easeInOut(duration: 0.2)) {
+                    if expanded { collapsedProjects.remove(project.id) } else { collapsedProjects.insert(project.id) }
                   }
+                  UserDefaults.standard.set(Array(collapsedProjects), forKey: "collapsedProjects")
                 }
-              } header: {
+              )) {
+                conversationRows(model.visibleConversations.filter { $0.projectId == project.id })
+                if !model.showingArchived {
+                  Button { model.newConversationProjectId = project.id; model.showNew = true } label: {
+                    Label("New conversation", systemImage: "plus").font(.caption)
+                  }.buttonStyle(.borderless).foregroundStyle(.secondary).selectionDisabled()
+                }
+              } label: {
                 HStack(spacing: 6) {
-                  Button {
-                    toggleProject(project.id)
-                  } label: {
-                    HStack(spacing: 6) {
-                      Image(systemName: "chevron.right").font(.system(size: 9, weight: .semibold))
-                        .rotationEffect(.degrees(collapsedProjects.contains(project.id) ? 0 : 90))
-                      Image(systemName: collapsedProjects.contains(project.id) ? "folder" : "folder.fill")
-                      Text(project.name).lineLimit(1)
-                    }.contentShape(Rectangle())
-                  }.buttonStyle(.plain).help(collapsedProjects.contains(project.id) ? "Expand project" : "Collapse project")
-                  Spacer(minLength: 4)
+                  Button { toggleProject(project.id) } label: {
+                    Label(project.name, systemImage: collapsedProjects.contains(project.id) ? "folder" : "folder.fill")
+                      .lineLimit(1).frame(maxWidth: .infinity, alignment: .leading).contentShape(Rectangle())
+                  }.buttonStyle(.plain)
+                    .help(collapsedProjects.contains(project.id) ? "Expand project" : "Collapse project")
                   Button { model.editingProject = project } label: { Image(systemName: "ellipsis") }
                     .buttonStyle(.plain).help("Project details").accessibilityLabel("Project details: " + project.name)
-                }.selectionDisabled().padding(.vertical, 5)
-                  .accessibilityElement(children: .combine)
-                  .accessibilityAction(named: Text(collapsedProjects.contains(project.id) ? "Expand project" : "Collapse project")) { toggleProject(project.id) }
-                  .accessibilityAction(named: Text("Project details")) { model.editingProject = project }
-              }
+                }.font(.caption).foregroundStyle(.secondary).padding(.vertical, 5)
+              }.selectionDisabled()
             }
+
             Section(model.showingArchived ? "Archived conversations" : "Recents") {
               conversationRows(model.visibleConversations.filter { $0.projectId == nil })
               if model.showingArchived && model.visibleConversations.isEmpty {
