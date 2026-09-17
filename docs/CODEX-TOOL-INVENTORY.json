@@ -31,7 +31,8 @@
     },
     {
       "name": "image_gen__imagegen",
-      "status": "not-yet-implemented"
+      "status": "not-yet-implemented",
+      "route": "No image-generation adapter exists. Requires a user-selected supported image provider and authorized account; the Codex decision bridge does not imply image-generation access."
     },
     {
       "name": "list_mcp_resource_templates",
@@ -46,47 +47,47 @@
     {
       "name": "mcp__codex_app__automation_update",
       "status": "requires-localbot-counterpart",
-      "route": "Codex desktop host APIs cannot be copied into another application"
+      "route": "Needs LocalBot-owned persistent schedules, timezone/recurrence validation, missed-run policy, idempotent enqueue and quiet notification policy. No scheduler added and no broad autonomous goal loop."
     },
     {
       "name": "mcp__codex_app__capture_screen_context",
       "status": "requires-localbot-counterpart",
-      "route": "Codex desktop host APIs cannot be copied into another application"
+      "route": "Needs native screen capture/accessibility grants, foreground-target selection and user-visible capture policy. Outside this runtime-only branch; no access to Codex voice capture."
     },
     {
       "name": "mcp__codex_app__consume_usage_reset",
       "status": "requires-localbot-counterpart",
-      "route": "Codex desktop host APIs cannot be copied into another application"
+      "route": "No reset action implemented. Requires an officially supported account mutation, fresh eligibility, explicit one-credit authorization and idempotency; never simulated through read-only usage."
     },
     {
       "name": "mcp__codex_app__create_sidebar_section",
       "status": "requires-localbot-counterpart",
-      "route": "Codex desktop host APIs cannot be copied into another application"
+      "route": "Needs a LocalBot section table and native/sidebar integration; not supported by runtime tools."
     },
     {
       "name": "mcp__codex_app__create_thread",
       "status": "requires-localbot-counterpart",
-      "route": "Codex desktop host APIs cannot be copied into another application"
+      "route": "Existing authenticated local HTTP conversation creation is user-facing. An agent counterpart needs explicit-request authorization, project/workspace scope and idempotent enqueue; not exposed as an agent tool."
     },
     {
       "name": "mcp__codex_app__delete_sidebar_section",
       "status": "requires-localbot-counterpart",
-      "route": "Codex desktop host APIs cannot be copied into another application"
+      "route": "Needs LocalBot section storage plus non-destructive reassignment and native UI integration; no section records currently managed."
     },
     {
       "name": "mcp__codex_app__end_realtime_voice_call",
       "status": "requires-localbot-counterpart",
-      "route": "Codex desktop host APIs cannot be copied into another application"
+      "route": "LocalBot has no owned real-time voice call; needs a voice provider/session lifecycle and explicit end-call request."
     },
     {
       "name": "mcp__codex_app__fork_thread",
       "status": "requires-localbot-counterpart",
-      "route": "Codex desktop host APIs cannot be copied into another application"
+      "route": "Needs durable lineage and a transactional snapshot of completed source history plus workspace/branch conflict rules; no copy of Codex host state."
     },
     {
       "name": "mcp__codex_app__get_handoff_status",
       "status": "requires-localbot-counterpart",
-      "route": "Codex desktop host APIs cannot be copied into another application"
+      "route": "Needs a LocalBot-owned handoff operation record, bounded status wait and revision cursors; no host migration operation currently exists."
     },
     {
       "name": "mcp__codex_app__get_usage_limits",
@@ -96,7 +97,7 @@
     {
       "name": "mcp__codex_app__handoff_thread",
       "status": "requires-localbot-counterpart",
-      "route": "Codex desktop host APIs cannot be copied into another application"
+      "route": "Needs safe workspace transfer or owned worktree creation, clean-state/conflict handling, cancellation and durable operation state. No changes to user workspaces implemented here."
     },
     {
       "name": "mcp__codex_app__list_archived_threads",
@@ -106,7 +107,7 @@
     {
       "name": "mcp__codex_app__list_projects",
       "status": "requires-localbot-counterpart",
-      "route": "Codex desktop host APIs cannot be copied into another application"
+      "route": "Authenticated local snapshot contains user projects; a model-facing cross-project list needs explicit access policy. Current conversation/project context is already supplied to the engine."
     },
     {
       "name": "mcp__codex_app__list_threads",
@@ -116,27 +117,27 @@
     {
       "name": "mcp__codex_app__load_workspace_dependencies",
       "status": "requires-localbot-counterpart",
-      "route": "Codex desktop host APIs cannot be copied into another application"
+      "route": "Needs explicit configured local runtimes and capability probes; shell tools may inspect approved workspace dependencies, but Codex bundled runtime paths are not portable."
     },
     {
       "name": "mcp__codex_app__move_project_to_sidebar_section",
       "status": "requires-localbot-counterpart",
-      "route": "Codex desktop host APIs cannot be copied into another application"
+      "route": "Needs LocalBot section schema, project access policy, validated membership and native client support."
     },
     {
       "name": "mcp__codex_app__move_thread_to_sidebar_section",
       "status": "requires-localbot-counterpart",
-      "route": "Codex desktop host APIs cannot be copied into another application"
+      "route": "Needs LocalBot section schema and scoped conversation ordering with native client support."
     },
     {
       "name": "mcp__codex_app__navigate_to_codex_page",
       "status": "requires-localbot-counterpart",
-      "route": "Codex desktop host APIs cannot be copied into another application"
+      "route": "Needs a LocalBot runtime-to-native navigation command with ownership validation and acknowledgement; no native files changed in this branch."
     },
     {
       "name": "mcp__codex_app__open_in_codex",
       "status": "requires-localbot-counterpart",
-      "route": "Codex desktop host APIs cannot be copied into another application"
+      "route": "Existing artifacts can be opened by the user. An agent-controlled native file/browser/terminal panel requires a typed UI command bridge and path/URL validation."
     },
     {
       "name": "mcp__codex_app__read_thread",
@@ -146,37 +147,37 @@
     {
       "name": "mcp__codex_app__read_thread_terminal",
       "status": "requires-localbot-counterpart",
-      "route": "Codex desktop host APIs cannot be copied into another application"
+      "route": "read_activity returns persisted owned tool output; process_poll reads live task/agent-owned command output. No arbitrary native terminal buffer access."
     },
     {
       "name": "mcp__codex_app__rename_sidebar_section",
       "status": "requires-localbot-counterpart",
-      "route": "Codex desktop host APIs cannot be copied into another application"
+      "route": "Needs LocalBot section storage, expected-state conflict detection and native sidebar integration."
     },
     {
       "name": "mcp__codex_app__reorder_section",
       "status": "requires-localbot-counterpart",
-      "route": "Codex desktop host APIs cannot be copied into another application"
+      "route": "Needs validated complete membership permutation, transaction and native UI integration for LocalBot sections."
     },
     {
       "name": "mcp__codex_app__reorder_sidebar_projects",
       "status": "requires-localbot-counterpart",
-      "route": "Codex desktop host APIs cannot be copied into another application"
+      "route": "Needs durable project ordering, validated IDs and native UI integration."
     },
     {
       "name": "mcp__codex_app__reorder_sidebar_sections",
       "status": "requires-localbot-counterpart",
-      "route": "Codex desktop host APIs cannot be copied into another application"
+      "route": "Needs durable section ordering and exact membership validation; no sections schema yet."
     },
     {
       "name": "mcp__codex_app__send_message_to_thread",
       "status": "requires-localbot-counterpart",
-      "route": "Codex desktop host APIs cannot be copied into another application"
+      "route": "Existing user HTTP message endpoint uses retry-safe request IDs. Agent-to-conversation dispatch needs explicit messaging authorization, scoped recipient selection, idempotency and resource scheduling; not exposed."
     },
     {
       "name": "mcp__codex_app__set_thread_archived",
       "status": "requires-localbot-counterpart",
-      "route": "Codex desktop host APIs cannot be copied into another application"
+      "route": "Store and authenticated HTTP support reversible archival and reject active conversations. Agent counterpart still requires scoped target selection and explicit approval; current task cannot archive its own running conversation."
     },
     {
       "name": "mcp__codex_app__set_thread_title",
@@ -186,1132 +187,1356 @@
     {
       "name": "mcp__codex_app__share_thread",
       "status": "requires-localbot-counterpart",
-      "route": "Codex desktop host APIs cannot be copied into another application"
+      "route": "Needs explicit export/publication approval, immutable sanitized snapshot, revocable sharing service and private-data policy. Local artifacts are not public share URLs."
     },
     {
       "name": "mcp__codex_app__uninstall_plugin",
       "status": "requires-localbot-counterpart",
-      "route": "Codex desktop host APIs cannot be copied into another application"
+      "route": "Needs LocalBot-owned plugin manifest/install registry, dependency checks and reviewable removal; must not uninstall Codex plugins."
     },
     {
       "name": "mcp__codex_app__wait_threads",
       "status": "requires-localbot-counterpart",
-      "route": "Codex desktop host APIs cannot be copied into another application"
+      "route": "list_tasks reports current/earlier scoped states; cancellable task-state subscriptions with revision cursors and bounded multi-target waits remain unimplemented."
     },
     {
       "name": "mcp__codex_apps__codex_document_control_execute_document_command",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "codex_document_control: operation execute_document_command. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "codex_document_control"
     },
     {
       "name": "mcp__codex_apps__codex_document_control_get_document_tool_schemas",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "codex_document_control: operation get_document_tool_schemas. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "codex_document_control"
     },
     {
       "name": "mcp__codex_apps__codex_document_control_list_document_sessions",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "codex_document_control: operation list_document_sessions. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "codex_document_control"
     },
     {
       "name": "mcp__codex_apps__figma_add_code_connect_map",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "figma: operation add_code_connect_map. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "figma"
     },
     {
       "name": "mcp__codex_apps__figma_create_generative_plugin",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "figma: operation create_generative_plugin. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "figma"
     },
     {
       "name": "mcp__codex_apps__figma_create_new_file",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "figma: operation create_new_file. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "figma"
     },
     {
       "name": "mcp__codex_apps__figma_create_shader",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "figma: operation create_shader. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "figma"
     },
     {
       "name": "mcp__codex_apps__figma_download_assets",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "figma: operation download_assets. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "figma"
     },
     {
       "name": "mcp__codex_apps__figma_export_video",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "figma: operation export_video. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "figma"
     },
     {
       "name": "mcp__codex_apps__figma_generate_deck",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "figma: operation generate_deck. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "figma"
     },
     {
       "name": "mcp__codex_apps__figma_generate_diagram",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "figma: operation generate_diagram. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "figma"
     },
     {
       "name": "mcp__codex_apps__figma_generate_figma_design",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "figma: operation generate_figma_design. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "figma"
     },
     {
       "name": "mcp__codex_apps__figma_get_code_connect_map",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "figma: operation get_code_connect_map. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "figma"
     },
     {
       "name": "mcp__codex_apps__figma_get_code_connect_suggestions",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "figma: operation get_code_connect_suggestions. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "figma"
     },
     {
       "name": "mcp__codex_apps__figma_get_context_for_code_connect",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "figma: operation get_context_for_code_connect. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "figma"
     },
     {
       "name": "mcp__codex_apps__figma_get_design_context",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "figma: operation get_design_context. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "figma"
     },
     {
       "name": "mcp__codex_apps__figma_get_figjam",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "figma: operation get_figjam. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "figma"
     },
     {
       "name": "mcp__codex_apps__figma_get_generative_plugin",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "figma: operation get_generative_plugin. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "figma"
     },
     {
       "name": "mcp__codex_apps__figma_get_libraries",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "figma: operation get_libraries. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "figma"
     },
     {
       "name": "mcp__codex_apps__figma_get_metadata",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "figma: operation get_metadata. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "figma"
     },
     {
       "name": "mcp__codex_apps__figma_get_motion_context",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "figma: operation get_motion_context. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "figma"
     },
     {
       "name": "mcp__codex_apps__figma_get_screenshot",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "figma: operation get_screenshot. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "figma"
     },
     {
       "name": "mcp__codex_apps__figma_get_shader",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "figma: operation get_shader. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "figma"
     },
     {
       "name": "mcp__codex_apps__figma_get_variable_defs",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "figma: operation get_variable_defs. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "figma"
     },
     {
       "name": "mcp__codex_apps__figma_list_file_components_for_code_connect",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "figma: operation list_file_components_for_code_connect. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "figma"
     },
     {
       "name": "mcp__codex_apps__figma_list_file_shaders",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "figma: operation list_file_shaders. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "figma"
     },
     {
       "name": "mcp__codex_apps__figma_list_generative_plugins",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "figma: operation list_generative_plugins. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "figma"
     },
     {
       "name": "mcp__codex_apps__figma_list_shaders",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "figma: operation list_shaders. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "figma"
     },
     {
       "name": "mcp__codex_apps__figma_search_design_system",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "figma: operation search_design_system. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "figma"
     },
     {
       "name": "mcp__codex_apps__figma_send_code_connect_mappings",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "figma: operation send_code_connect_mappings. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "figma"
     },
     {
       "name": "mcp__codex_apps__figma_update_generative_plugin",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "figma: operation update_generative_plugin. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "figma"
     },
     {
       "name": "mcp__codex_apps__figma_update_shader",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "figma: operation update_shader. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "figma"
     },
     {
       "name": "mcp__codex_apps__figma_upload_assets",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "figma: operation upload_assets. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "figma"
     },
     {
       "name": "mcp__codex_apps__figma_use_figma",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "figma: operation use_figma. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "figma"
     },
     {
       "name": "mcp__codex_apps__figma_weave_cancel_tool_run",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "figma: operation weave_cancel_tool_run. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "figma"
     },
     {
       "name": "mcp__codex_apps__figma_weave_get_tool_inputs",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "figma: operation weave_get_tool_inputs. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "figma"
     },
     {
       "name": "mcp__codex_apps__figma_weave_get_tool_run_output",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "figma: operation weave_get_tool_run_output. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "figma"
     },
     {
       "name": "mcp__codex_apps__figma_weave_list_tools",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "figma: operation weave_list_tools. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "figma"
     },
     {
       "name": "mcp__codex_apps__figma_weave_run_tool",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "figma: operation weave_run_tool. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "figma"
     },
     {
       "name": "mcp__codex_apps__figma_weave_upload_asset",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "figma: operation weave_upload_asset. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "figma"
     },
     {
       "name": "mcp__codex_apps__figma_whoami",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "figma: operation whoami. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "figma"
     },
     {
       "name": "mcp__codex_apps__github_add_comment_to_issue",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation add_comment_to_issue. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_add_issue_assignees",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation add_issue_assignees. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_add_issue_labels",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation add_issue_labels. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_add_reaction_to_issue_comment",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation add_reaction_to_issue_comment. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_add_reaction_to_pr",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation add_reaction_to_pr. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_add_reaction_to_pr_review_comment",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation add_reaction_to_pr_review_comment. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_add_review_to_pr",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation add_review_to_pr. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_compare_commits",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation compare_commits. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_convert_pull_request_to_draft",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation convert_pull_request_to_draft. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_create_blob",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation create_blob. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_create_branch",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation create_branch. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_create_commit",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation create_commit. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_create_file",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation create_file. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_create_issue",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation create_issue. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_create_pull_request",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation create_pull_request. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_create_tree",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation create_tree. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_delete_file",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation delete_file. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_dismiss_pull_request_review",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation dismiss_pull_request_review. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_download_user_content",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation download_user_content. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_download_workflow_artifact",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation download_workflow_artifact. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_enable_auto_merge",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation enable_auto_merge. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_fetch",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation fetch. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_fetch_blob",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation fetch_blob. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_fetch_commit",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation fetch_commit. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_fetch_commit_workflow_runs",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation fetch_commit_workflow_runs. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_fetch_file",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation fetch_file. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_fetch_issue",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation fetch_issue. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_fetch_issue_comments",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation fetch_issue_comments. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_fetch_pr",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation fetch_pr. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_fetch_pr_comments",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation fetch_pr_comments. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_fetch_pr_file_patch",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation fetch_pr_file_patch. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_fetch_pr_patch",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation fetch_pr_patch. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_fetch_workflow_job_logs",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation fetch_workflow_job_logs. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_fetch_workflow_job_steps",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation fetch_workflow_job_steps. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_fetch_workflow_run_artifacts",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation fetch_workflow_run_artifacts. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_fetch_workflow_run_jobs",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation fetch_workflow_run_jobs. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_get_commit_combined_status",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation get_commit_combined_status. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_get_issue_comment_reactions",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation get_issue_comment_reactions. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_get_pr_diff",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation get_pr_diff. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_get_pr_info",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation get_pr_info. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_get_pr_reactions",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation get_pr_reactions. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_get_pr_review_comment_reactions",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation get_pr_review_comment_reactions. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_get_profile",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation get_profile. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_get_repo",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation get_repo. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_get_repo_collaborator_permission",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation get_repo_collaborator_permission. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_get_user_login",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation get_user_login. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_get_users_recent_prs_in_repo",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation get_users_recent_prs_in_repo. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_label_pr",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation label_pr. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_list_installations",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation list_installations. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_list_installed_accounts",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation list_installed_accounts. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_list_pr_changed_filenames",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation list_pr_changed_filenames. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_list_pull_request_review_threads",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation list_pull_request_review_threads. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_list_pull_request_reviews",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation list_pull_request_reviews. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_list_recent_issues",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation list_recent_issues. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_list_repositories",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation list_repositories. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_list_repositories_by_affiliation",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation list_repositories_by_affiliation. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_list_repositories_by_installation",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation list_repositories_by_installation. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_list_user_org_memberships",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation list_user_org_memberships. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_list_user_orgs",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation list_user_orgs. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_lock_issue_conversation",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation lock_issue_conversation. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_mark_pull_request_ready_for_review",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation mark_pull_request_ready_for_review. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_merge_pull_request",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation merge_pull_request. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_remove_issue_assignees",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation remove_issue_assignees. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_remove_issue_label",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation remove_issue_label. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_remove_pull_request_reviewers",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation remove_pull_request_reviewers. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_remove_reaction_from_issue_comment",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation remove_reaction_from_issue_comment. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_remove_reaction_from_pr",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation remove_reaction_from_pr. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_remove_reaction_from_pr_review_comment",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation remove_reaction_from_pr_review_comment. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_reply_to_review_comment",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation reply_to_review_comment. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_request_pull_request_reviewers",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation request_pull_request_reviewers. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_rerun_failed_workflow_run_jobs",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation rerun_failed_workflow_run_jobs. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_rerun_workflow_job",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation rerun_workflow_job. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_resolve_review_thread",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation resolve_review_thread. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_search",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation search. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_search_branches",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation search_branches. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_search_commits",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation search_commits. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_search_installed_repositories_streaming",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation search_installed_repositories_streaming. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_search_installed_repositories_v2",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation search_installed_repositories_v2. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_search_issues",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation search_issues. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_search_prs",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation search_prs. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_search_repositories",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation search_repositories. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_unlock_issue_conversation",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation unlock_issue_conversation. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_unresolve_review_thread",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation unresolve_review_thread. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_update_file",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation update_file. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_update_issue",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation update_issue. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_update_issue_comment",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation update_issue_comment. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_update_pull_request",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation update_pull_request. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_update_ref",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation update_ref. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__github_update_review_comment",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "github: operation update_review_comment. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "github"
     },
     {
       "name": "mcp__codex_apps__gmail_apply_labels_to_emails",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "gmail: operation apply_labels_to_emails. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "gmail"
     },
     {
       "name": "mcp__codex_apps__gmail_archive_emails",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "gmail: operation archive_emails. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "gmail"
     },
     {
       "name": "mcp__codex_apps__gmail_batch_modify_email",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "gmail: operation batch_modify_email. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "gmail"
     },
     {
       "name": "mcp__codex_apps__gmail_batch_read_email",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "gmail: operation batch_read_email. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "gmail"
     },
     {
       "name": "mcp__codex_apps__gmail_batch_read_email_threads",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "gmail: operation batch_read_email_threads. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "gmail"
     },
     {
       "name": "mcp__codex_apps__gmail_bulk_label_matching_emails",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "gmail: operation bulk_label_matching_emails. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "gmail"
     },
     {
       "name": "mcp__codex_apps__gmail_create_draft",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "gmail: operation create_draft. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "gmail"
     },
     {
       "name": "mcp__codex_apps__gmail_create_label",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "gmail: operation create_label. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "gmail"
     },
     {
       "name": "mcp__codex_apps__gmail_delete_emails",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "gmail: operation delete_emails. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "gmail"
     },
     {
       "name": "mcp__codex_apps__gmail_forward_emails",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "gmail: operation forward_emails. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "gmail"
     },
     {
       "name": "mcp__codex_apps__gmail_get_profile",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "gmail: operation get_profile. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "gmail"
     },
     {
       "name": "mcp__codex_apps__gmail_list_drafts",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "gmail: operation list_drafts. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "gmail"
     },
     {
       "name": "mcp__codex_apps__gmail_list_labels",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "gmail: operation list_labels. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "gmail"
     },
     {
       "name": "mcp__codex_apps__gmail_read_attachment",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "gmail: operation read_attachment. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "gmail"
     },
     {
       "name": "mcp__codex_apps__gmail_read_email",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "gmail: operation read_email. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "gmail"
     },
     {
       "name": "mcp__codex_apps__gmail_read_email_thread",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "gmail: operation read_email_thread. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "gmail"
     },
     {
       "name": "mcp__codex_apps__gmail_search_email_ids",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "gmail: operation search_email_ids. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "gmail"
     },
     {
       "name": "mcp__codex_apps__gmail_search_emails",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "gmail: operation search_emails. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "gmail"
     },
     {
       "name": "mcp__codex_apps__gmail_send_draft",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "gmail: operation send_draft. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "gmail"
     },
     {
       "name": "mcp__codex_apps__gmail_send_email",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "gmail: operation send_email. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "gmail"
     },
     {
       "name": "mcp__codex_apps__gmail_update_draft",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "gmail: operation update_draft. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "gmail"
     },
     {
       "name": "mcp__codex_apps__hotline_get_local_hotline",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "hotline: operation get_local_hotline. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "hotline"
     },
     {
       "name": "mcp__codex_apps__hugging_face_dataset_search",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "hugging_face: operation dataset_search. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "hugging_face"
     },
     {
       "name": "mcp__codex_apps__hugging_face_hf_doc_fetch",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "hugging_face: operation hf_doc_fetch. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "hugging_face"
     },
     {
       "name": "mcp__codex_apps__hugging_face_hf_doc_search",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "hugging_face: operation hf_doc_search. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "hugging_face"
     },
     {
       "name": "mcp__codex_apps__hugging_face_hf_jobs",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "hugging_face: operation hf_jobs. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "hugging_face"
     },
     {
       "name": "mcp__codex_apps__hugging_face_hf_whoami",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "hugging_face: operation hf_whoami. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "hugging_face"
     },
     {
       "name": "mcp__codex_apps__hugging_face_hub_repo_details",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "hugging_face: operation hub_repo_details. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "hugging_face"
     },
     {
       "name": "mcp__codex_apps__hugging_face_model_search",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "hugging_face: operation model_search. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "hugging_face"
     },
     {
       "name": "mcp__codex_apps__hugging_face_paper_search",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "hugging_face: operation paper_search. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "hugging_face"
     },
     {
       "name": "mcp__codex_apps__hugging_face_space_search",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "hugging_face: operation space_search. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "hugging_face"
     },
     {
       "name": "mcp__codex_apps__plugin_management_get_app_permissions",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "plugin_management: operation get_app_permissions. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "plugin_management"
     },
     {
       "name": "mcp__codex_apps__plugin_management_get_plugin_dependencies",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "plugin_management: operation get_plugin_dependencies. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "plugin_management"
     },
     {
       "name": "mcp__codex_apps__plugin_management_search_plugins",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "plugin_management: operation search_plugins. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "plugin_management"
     },
     {
       "name": "mcp__codex_apps__plugin_management_suggest_plugins",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "plugin_management: operation suggest_plugins. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "plugin_management"
     },
     {
       "name": "mcp__codex_apps__plugin_management_uninstall_app",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "plugin_management: operation uninstall_app. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "plugin_management"
     },
     {
       "name": "mcp__codex_apps__plugin_management_update_app_permissions",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "plugin_management: operation update_app_permissions. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "plugin_management"
     },
     {
       "name": "mcp__codex_apps__safety_settings_get_family_info",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "safety_settings: operation get_family_info. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "safety_settings"
     },
     {
       "name": "mcp__codex_apps__safety_settings_get_parental_controls",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "safety_settings: operation get_parental_controls. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "safety_settings"
     },
     {
       "name": "mcp__codex_apps__safety_settings_get_trusted_contact",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "safety_settings: operation get_trusted_contact. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "safety_settings"
     },
     {
       "name": "mcp__codex_apps__safety_settings_prepare_parental_control_update",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "safety_settings: operation prepare_parental_control_update. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "safety_settings"
     },
     {
       "name": "mcp__codex_apps__safety_settings_update_parental_control",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "safety_settings: operation update_parental_control. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "safety_settings"
     },
     {
       "name": "mcp__codex_apps__sites_add_custom_domain",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "sites: operation add_custom_domain. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "sites"
     },
     {
       "name": "mcp__codex_apps__sites_change_site_slug",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "sites: operation change_site_slug. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "sites"
     },
     {
       "name": "mcp__codex_apps__sites_create_site",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "sites: operation create_site. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "sites"
     },
     {
       "name": "mcp__codex_apps__sites_create_source_repository_write_credential",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "sites: operation create_source_repository_write_credential. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "sites"
     },
     {
       "name": "mcp__codex_apps__sites_deploy_private_site_version",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "sites: operation deploy_private_site_version. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "sites"
     },
     {
       "name": "mcp__codex_apps__sites_deploy_site_version",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "sites: operation deploy_site_version. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "sites"
     },
     {
       "name": "mcp__codex_apps__sites_generate_siwc_bypass_token",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "sites: operation generate_siwc_bypass_token. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "sites"
     },
     {
       "name": "mcp__codex_apps__sites_get_deployment_status",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "sites: operation get_deployment_status. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "sites"
     },
     {
       "name": "mcp__codex_apps__sites_get_environment_variables",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "sites: operation get_environment_variables. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "sites"
     },
     {
       "name": "mcp__codex_apps__sites_get_site",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "sites: operation get_site. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "sites"
     },
     {
       "name": "mcp__codex_apps__sites_get_site_version",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "sites: operation get_site_version. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "sites"
     },
     {
       "name": "mcp__codex_apps__sites_get_site_worker_logs",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "sites: operation get_site_worker_logs. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "sites"
     },
     {
       "name": "mcp__codex_apps__sites_list_custom_domains",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "sites: operation list_custom_domains. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "sites"
     },
     {
       "name": "mcp__codex_apps__sites_list_site_versions",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "sites: operation list_site_versions. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "sites"
     },
     {
       "name": "mcp__codex_apps__sites_list_sites",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "sites: operation list_sites. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "sites"
     },
     {
       "name": "mcp__codex_apps__sites_read_database_overview",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "sites: operation read_database_overview. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "sites"
     },
     {
       "name": "mcp__codex_apps__sites_read_database_table_rows",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "sites: operation read_database_table_rows. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "sites"
     },
     {
       "name": "mcp__codex_apps__sites_refresh_custom_domain_status",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "sites: operation refresh_custom_domain_status. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "sites"
     },
     {
       "name": "mcp__codex_apps__sites_remove_custom_domain",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "sites: operation remove_custom_domain. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "sites"
     },
     {
       "name": "mcp__codex_apps__sites_save_site_version",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "sites: operation save_site_version. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "sites"
     },
     {
       "name": "mcp__codex_apps__sites_update_environment_variables",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "sites: operation update_environment_variables. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "sites"
     },
     {
       "name": "mcp__codex_apps__sites_update_site_access",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "sites: operation update_site_access. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "sites"
     },
     {
       "name": "mcp__codex_apps__sites_update_site_metadata",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "sites: operation update_site_metadata. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "sites"
     },
     {
       "name": "mcp__codex_apps__vercel_add_toolbar_reaction",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "vercel: operation add_toolbar_reaction. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "vercel"
     },
     {
       "name": "mcp__codex_apps__vercel_change_toolbar_thread_resolve_status",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "vercel: operation change_toolbar_thread_resolve_status. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "vercel"
     },
     {
       "name": "mcp__codex_apps__vercel_check_domain_availability_and_price",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "vercel: operation check_domain_availability_and_price. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "vercel"
     },
     {
       "name": "mcp__codex_apps__vercel_deploy_to_vercel",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "vercel: operation deploy_to_vercel. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "vercel"
     },
     {
       "name": "mcp__codex_apps__vercel_edit_toolbar_message",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "vercel: operation edit_toolbar_message. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "vercel"
     },
     {
       "name": "mcp__codex_apps__vercel_get_access_to_vercel_url",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "vercel: operation get_access_to_vercel_url. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "vercel"
     },
     {
       "name": "mcp__codex_apps__vercel_get_agent_run",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "vercel: operation get_agent_run. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "vercel"
     },
     {
       "name": "mcp__codex_apps__vercel_get_agent_run_trace",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "vercel: operation get_agent_run_trace. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "vercel"
     },
     {
       "name": "mcp__codex_apps__vercel_get_deployment",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "vercel: operation get_deployment. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "vercel"
     },
     {
       "name": "mcp__codex_apps__vercel_get_deployment_build_logs",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "vercel: operation get_deployment_build_logs. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "vercel"
     },
     {
       "name": "mcp__codex_apps__vercel_get_project",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "vercel: operation get_project. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "vercel"
     },
     {
       "name": "mcp__codex_apps__vercel_get_runtime_errors",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "vercel: operation get_runtime_errors. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "vercel"
     },
     {
       "name": "mcp__codex_apps__vercel_get_runtime_logs",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "vercel: operation get_runtime_logs. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "vercel"
     },
     {
       "name": "mcp__codex_apps__vercel_get_toolbar_thread",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "vercel: operation get_toolbar_thread. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "vercel"
     },
     {
       "name": "mcp__codex_apps__vercel_import_claude_design_from_url",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "vercel: operation import_claude_design_from_url. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "vercel"
     },
     {
       "name": "mcp__codex_apps__vercel_list_agent_run_projects",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "vercel: operation list_agent_run_projects. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "vercel"
     },
     {
       "name": "mcp__codex_apps__vercel_list_agent_runs",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "vercel: operation list_agent_runs. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "vercel"
     },
     {
       "name": "mcp__codex_apps__vercel_list_deployments",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "vercel: operation list_deployments. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "vercel"
     },
     {
       "name": "mcp__codex_apps__vercel_list_projects",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "vercel: operation list_projects. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "vercel"
     },
     {
       "name": "mcp__codex_apps__vercel_list_teams",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "vercel: operation list_teams. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "vercel"
     },
     {
       "name": "mcp__codex_apps__vercel_list_toolbar_threads",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "vercel: operation list_toolbar_threads. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "vercel"
     },
     {
       "name": "mcp__codex_apps__vercel_reply_to_toolbar_thread",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "vercel: operation reply_to_toolbar_thread. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "vercel"
     },
     {
       "name": "mcp__codex_apps__vercel_search_vercel_documentation",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "vercel: operation search_vercel_documentation. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "vercel"
     },
     {
       "name": "mcp__codex_apps__vercel_web_fetch_vercel_url",
       "status": "requires-service-adapter-and-authentication",
-      "route": "MCP connection where the service exposes a supported endpoint; verify each tool separately"
+      "route": "vercel: operation web_fetch_vercel_url. Requires a supported vendor API/MCP operation, user-owned connection and service scopes; use approved mcp_call only after real server discovery and verified semantic/schema mapping. No connector credential/session reuse and no verified per-operation adapter yet. See TOOL-PARITY-PLAN.md.",
+      "serviceFamily": "vercel"
     },
     {
       "name": "mcp__node_repl__js",
-      "status": "not-yet-implemented"
+      "status": "not-yet-implemented",
+      "route": "Sandboxed terminal supports nonpersistent Node scripts; a persistent Node REPL with isolated state, output/image limits, cancellation and cleanup remains unimplemented."
     },
     {
       "name": "mcp__node_repl__js_add_node_module_dir",
-      "status": "not-yet-implemented"
+      "status": "not-yet-implemented",
+      "route": "Requires a sandboxed persistent Node session with validated workspace-only module directories; no arbitrary host module path grants."
     },
     {
       "name": "mcp__node_repl__js_reset",
-      "status": "not-yet-implemented"
+      "status": "not-yet-implemented",
+      "route": "Requires persistent Node sessions; existing task-owned shell process_stop is not REPL state reset."
     },
     {
       "name": "mcp__openai_artifact_template_picker__choose_artifact_template",
-      "status": "not-yet-implemented"
+      "status": "not-yet-implemented",
+      "route": "Requires a LocalBot template catalog and explicit choice workflow, workspace-safe copied resources and provenance; Codex personal template host APIs are unavailable."
     },
     {
       "name": "mcp__openai_artifact_template_picker__list_artifact_templates",
-      "status": "not-yet-implemented"
+      "status": "not-yet-implemented",
+      "route": "Requires a configured LocalBot template directory/catalog with safe discovery and metadata validation."
     },
     {
       "name": "read_mcp_resource",
@@ -1320,7 +1545,8 @@
     },
     {
       "name": "request_plugin_install",
-      "status": "not-yet-implemented"
+      "status": "not-yet-implemented",
+      "route": "Requires a LocalBot plugin manifest, trusted install sources, reviewable permissions, version pinning, install rollback and explicit user installation action."
     },
     {
       "name": "update_goal",
@@ -1381,5 +1607,73 @@
     "ask_user",
     "react"
   ],
-  "verifiedIntegrationTransport": "MCP Streamable HTTP 2025-11-25 plus 2025-06-18/2025-03-26 negotiation"
+  "verifiedIntegrationTransport": "MCP Streamable HTTP 2025-11-25 plus 2025-06-18/2025-03-26 negotiation",
+  "controlCount": 13,
+  "controlTools": [
+    {
+      "name": "functions.exec",
+      "status": "partial-equivalent",
+      "route": "LocalBot engine dispatches audited tool calls sequentially; process_start/terminal execute sandboxed commands. No arbitrary privileged JavaScript orchestration runtime."
+    },
+    {
+      "name": "functions.wait",
+      "status": "partial-equivalent",
+      "route": "process_poll supports cancellable bounded waits for owned process sessions. No persisted JavaScript execution cells."
+    },
+    {
+      "name": "functions.request_user_input",
+      "status": "partial-equivalent",
+      "route": "ask_user persists a question and stops in awaiting_input; next user message continues context. No Plan-mode multi-choice form."
+    },
+    {
+      "name": "functions.request_user_input_async",
+      "status": "not-yet-implemented",
+      "route": "ask_user suspends work; an asynchronous question queue with multiple-choice answers and task wakeups is not implemented."
+    },
+    {
+      "name": "clock.sleep",
+      "status": "not-yet-implemented",
+      "route": "No general agent sleep capability; process_poll waits for process activity only. A future delay must share task cancellation and runtime limits."
+    },
+    {
+      "name": "collaboration.followup_task",
+      "status": "not-yet-implemented",
+      "route": "Needs owned child-run records, explicit dispatch authorization and idempotent follow-up delivery; existing sequential project routing is not child-agent orchestration."
+    },
+    {
+      "name": "collaboration.interrupt_agent",
+      "status": "partial-equivalent",
+      "route": "Runtime cancellation stops a whole task and owned process sessions; individual delegated-agent interruption is not available as an agent tool."
+    },
+    {
+      "name": "collaboration.list_agents",
+      "status": "partial-equivalent",
+      "route": "list_agents returns configured contacts with pagination and current-conversation membership, not live delegated child-agent trees."
+    },
+    {
+      "name": "collaboration.send_message",
+      "status": "not-yet-implemented",
+      "route": "Needs task-owned child-agent mailboxes, bounded queued messages, delivery receipts and cancellation handling."
+    },
+    {
+      "name": "collaboration.spawn_agent",
+      "status": "not-yet-implemented",
+      "route": "Needs task-owned child agents and shared-workspace scheduling. Existing project team routing runs configured contacts sequentially, not arbitrary subagents."
+    },
+    {
+      "name": "collaboration.wait_agent",
+      "status": "not-yet-implemented",
+      "route": "Needs cancellable mailbox/state notifications for delegated children; list_tasks offers recorded states only."
+    },
+    {
+      "name": "mcp__cua_repl.js",
+      "status": "not-yet-implemented",
+      "route": "Needs an explicitly configured browser/native automation adapter with platform permissions, target ownership, screenshots and cancellation; no reuse of Codex session UI tools."
+    },
+    {
+      "name": "mcp__cua_repl.js_reset",
+      "status": "not-yet-implemented",
+      "route": "Depends on a LocalBot-owned computer-use session lifecycle; no such session exists yet."
+    }
+  ]
 }
