@@ -634,5 +634,13 @@ test('failed verification exposes saved artifacts and records live generation ph
   assert.equal(saved.attachments[0].name,'game.html');
   assert.match(await readFile(saved.attachments[0].path,'utf8'),/Saved game/);
   assert.equal(f.store.snapshot().activeRuns.length,0);
+  // Simulate the orphaned output left by an older release, then reopen twice.
+  f.store.exec('UPDATE artifacts SET messageId=NULL WHERE id=?',saved.attachments[0].id);
+  for(let i=0;i<2;i++){
+   const reopened=new Store(f.store.dir);
+   assert.equal(reopened.taskMessages(t.id).flatMap(m=>m.attachments).length,1);
+   assert.equal(reopened.task(t.id).status,'failed');
+   reopened.db.close();
+  }
  }finally{await f.close();}
 });

@@ -264,3 +264,7 @@ User requested race-game failure diagnosis, compact title-only chats below colla
 - Live exact-prompt game run wrote HTML and executed tests, then failed on malformed nested JSON. Codex provider now retries one invalid JSON decision with explicit correction feedback; validates all calls before returning any for execution. Completed actions are preserved in context, permission/transport errors are not retried.
 - 99 runtime tests pass, including bounded format retry and non-retry for permission errors.
 - Original user game (Neon Apex) was opened in the browser: canvas renders, race distance advances, collision ends race, Race Again resets the run. Original source preserved.
+
+### 2026-09-17 — Existing project recovery
+- Installed CLI build completed the user's original game follow-up through native composer: read_file + approved run_tests, exit 0, syntax and start/collision/end/restart source checks all OK. This is source validation; actual start/collision/restart browser interaction was checked separately.
+- Added idempotent recovery for historical orphaned attachments on terminal runs. Existing content and task status are not rewritten. Reopening the store twice is covered by the test.

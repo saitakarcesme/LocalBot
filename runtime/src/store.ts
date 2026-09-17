@@ -36,6 +36,13 @@ export class Store {
       CREATE INDEX IF NOT EXISTS messages_conversation ON messages(conversationId,createdAt);
       CREATE INDEX IF NOT EXISTS runs_task ON runs(taskId);
       PRAGMA user_version=1;`);
+    // Recover attachments saved by older releases before a terminal run failed.
+    // Do not attach in-flight output or alter existing message content/status.
+    this.db.exec(`UPDATE artifacts SET messageId=(
+      SELECT m.id FROM messages m WHERE m.runId=artifacts.runId AND m.role='assistant'
+      ORDER BY m.rowid DESC LIMIT 1)
+      WHERE messageId IS NULL AND runId IN (SELECT id FROM runs WHERE status IN ('failed','cancelled','completed'))
+      AND EXISTS(SELECT 1 FROM messages m WHERE m.runId=artifacts.runId AND m.role='assistant')`);
     chmodSync(join(dir, "localbot.sqlite"), 0o600);
   }
   all(sql: string, ...args: any[]): any[] {
