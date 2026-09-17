@@ -196,7 +196,7 @@ enum Keychain {
     guard connection != nil else { return }
     do {
       let s = try JSONDecoder().decode(Snapshot.self, from: await request("/snapshot"))
-      connected = true
+      if !connected { connected = true }
       let update = snapshotCursor.receive(instanceId: s.instanceId, revision: s.revision)
       guard update != .unchanged else { return }
       let previous = Dictionary(uniqueKeysWithValues: tasks.map { ($0.id, $0.status) })
@@ -236,7 +236,7 @@ enum Keychain {
       }
       if let selected { showingArchived = selected.archived == true }
       await refreshConversation()
-    } catch { connected = false }
+    } catch { if connected { connected = false } }
   }
   func refreshConversation() async {
     guard let id = selectedId else { return }
