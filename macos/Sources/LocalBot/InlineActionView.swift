@@ -74,20 +74,30 @@ struct MessageActivityPanel: View {
   let actions: [Activity]
   @State private var expanded = false
   private var active: Bool { actions.contains { ["pending", "running"].contains($0.status) } }
+  private func terminalOutput(_ output: String) -> String {
+    guard let data = output.data(using: .utf8),
+      let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return output }
+    let fields = ["stdout", "stderr", "content", "summary", "error", "message"]
+      .compactMap { object[$0] as? String }.filter { !$0.isEmpty }
+    if !fields.isEmpty { return fields.joined(separator: "\n") }
+    guard let pretty = try? JSONSerialization.data(withJSONObject: object, options: [.prettyPrinted, .sortedKeys]),
+      let text = String(data: pretty, encoding: .utf8) else { return output }
+    return text
+  }
   private var transcript: String {
     actions.map { action in
       let args = (action.arguments.data(using: .utf8).flatMap { try? JSONSerialization.jsonObject(with: $0) }) as? [String: Any] ?? [:]
       let detail = ["command", "path", "query", "url"].compactMap { args[$0] as? String }.joined(separator: " ")
       let content = (args["content"] as? String).map { "\n" + String($0.prefix(16000)) } ?? ""
       return "$ " + action.name + (detail.isEmpty ? "" : " " + detail) + content
-        + (action.output.map { "\n" + String($0.suffix(16000)) } ?? "") + "\n[" + action.status + "]"
+        + (action.output.map { "\n" + String(terminalOutput($0).suffix(16000)) } ?? "") + "\n[" + action.status + "]"
     }.joined(separator: "\n\n")
   }
   var body: some View {
     Button { expanded.toggle() } label: {
       HStack(spacing: 8) {
         Image(systemName: "terminal")
-        Text(active ? "Working · " + (actions.last?.name ?? "") : "\(actions.count) actions")
+        Text(active ? "Working · " + (actions.last?.name ?? "") : "\(actions.count) action\(actions.count == 1 ? "" : "s")")
           .lineLimit(1).truncationMode(.tail).modifier(ActivityShimmer(active: active))
         Spacer(minLength: 0)
         Image(systemName: "chevron.up").font(.system(size: 9))
@@ -105,9 +115,9 @@ struct MessageActivityPanel: View {
           }.font(.caption).padding(12)
           Divider()
           ScrollViewReader { proxy in
-            ScrollView([.vertical, .horizontal]) {
+            ScrollView(.vertical) {
               VStack(alignment: .leading, spacing: 0) {
-                Text(transcript).font(.system(size: 11, design: .monospaced)).textSelection(.enabled)
+                Text(transcript).frame(maxWidth: .infinity, alignment: .leading).font(.system(size: 11, design: .monospaced)).textSelection(.enabled)
                 Color.clear.frame(height: 1).id("terminalEnd")
               }.padding(12)
             }.defaultScrollAnchor(.bottom)

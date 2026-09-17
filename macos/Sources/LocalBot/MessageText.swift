@@ -20,7 +20,7 @@ struct MessageText: View {
                   .buttonStyle(.plain).help("Copy code").accessibilityLabel("Copy code")
               }
               ScrollView(.horizontal) {
-                Text(verbatim: section.text).font(.system(size: 12, design: .monospaced))
+                Text(verbatim: section.text).font(.system(size: messageFontSize - 2, design: .monospaced))
                   .fixedSize(horizontal: true, vertical: true).textSelection(.enabled)
               }
             }.padding(9).background(.black.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
