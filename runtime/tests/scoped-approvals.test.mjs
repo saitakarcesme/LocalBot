@@ -32,3 +32,10 @@ test('terminal output arrives before completion',async()=>{
  const result=await executeTool(store.agent('coder'),'terminal',{command:'printf first; sleep 1; printf second'},new AbortController().signal,undefined,output=>{if(output.includes('first')&&!finished)first=true;});finished=true;
  assert.equal(first,true);assert.match(result.output,/firstsecond/);store.db.close();
 });
+test('an empty automatic direct chat chooses its agent and a content-only title',async()=>{
+ const dir=await mkdtemp(join(tmpdir(),'localbot-auto-direct-'));const store=new Store(dir);store.seed(dir);
+ const factory=()=>({capabilities:()=>({images:false}),generate:async(messages,tools)=>tools.some(t=>t.function.name==='organize')?{content:'',calls:[{id:'route',type:'function',function:{name:'organize',arguments:JSON.stringify({title:'Saat kontrolü',members:['assistant']})}}]}:{content:'Ready',calls:[]}});
+ const engine=new Engine(store,()=>{},factory);const c=store.createConversation('New conversation',[],null,true);const t=engine.enqueue(c.id,'Saati kontrol et');
+ await wait(()=>store.task(t.id).status==='completed');await wait(()=>engine.active.size===0&&!engine.pumping);
+ assert.deepEqual(store.conversation(c.id).members,['assistant']);assert.equal(store.conversation(c.id).title,'Saat kontrolü');assert.equal(store.messages(c.id).at(-1).agentId,'assistant');store.db.close();
+});
