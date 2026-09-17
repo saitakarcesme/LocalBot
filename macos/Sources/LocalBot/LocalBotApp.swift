@@ -403,7 +403,7 @@ struct ConversationView: View {
     }
   }
   var progressIndicator: some View {
-    HStack(spacing: 8) {
+    HStack(spacing: 7) {
       if let activeAgent { Avatar(agent: activeAgent, size: 25) }
       switch progress {
       case .typing:
@@ -420,7 +420,7 @@ struct ConversationView: View {
       case .hidden: EmptyView()
       }
       Spacer()
-    }.padding(.horizontal, 22).padding(.top, 5)
+    }.padding(.horizontal, 24).padding(.top, 5)
   }
   var activeRun: ActiveRun? {
     model.activeRuns.first { $0.taskId == model.activeTask?.id }
