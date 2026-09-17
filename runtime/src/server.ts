@@ -305,7 +305,7 @@ const server = createServer(async (req, res) => {
       const b = await body(req);
       if (
         !Array.isArray(b.members) ||
-        (!b.members.length && !b.projectId) ||
+        (!b.members.length && b.automatic !== true) ||
         b.members.length > 8
       )
         throw new Error("Select 1–8 agents");

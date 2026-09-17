@@ -366,21 +366,52 @@ enum Keychain {
       if search == query { searchResults = results }
     } catch { self.error = error.localizedDescription }
   }
+  @Published var attaching = false
+  @Published var creatingConversation = false
+  func newConversation(projectId: String? = nil) async {
+    guard !creatingConversation else { return }
+    creatingConversation = true
+    defer { creatingConversation = false }
+    do {
+      let data = try await request("/conversations", body: ["title": "New conversation", "members": [String](), "automatic": true, "projectId": projectId as Any? ?? NSNull()])
+      let conversation = try JSONDecoder().decode(Conversation.self, from: data)
+      showingArchived = false
+      search = ""
+      await refresh()
+      selectedId = conversation.id
+    } catch { self.error = error.localizedDescription }
+  }
   func attach() async -> [Artifact] {
+    guard !attaching else { return [] }
+    attaching = true
+    defer { attaching = false }
     let panel = NSOpenPanel()
     panel.allowsMultipleSelection = true
     panel.canChooseDirectories = false
-    guard panel.runModal() == .OK else { return [] }
+    let response: NSApplication.ModalResponse = await withCheckedContinuation { continuation in
+      if let window = NSApp.keyWindow {
+        panel.beginSheetModal(for: window) { continuation.resume(returning: $0) }
+      } else {
+        panel.begin { continuation.resume(returning: $0) }
+      }
+    }
+    guard response == .OK else { return [] }
+    guard panel.urls.count <= 8 else {
+      error = "Choose up to 8 attachments at a time."
+      return []
+    }
     var results: [Artifact] = []
     do {
       for url in panel.urls {
+        let data = try await Task.detached(priority: .userInitiated) {
         let size = (try url.resourceValues(forKeys: [.fileSizeKey])).fileSize ?? 0
         guard size <= 10_000_000 else {
           throw NSError(
             domain: "LocalBot", code: 3,
             userInfo: [NSLocalizedDescriptionKey: "Attachments must be smaller than 10 MB."])
         }
-        let data = try Data(contentsOf: url)
+        return try Data(contentsOf: url)
+        }.value
         results.append(
           try JSONDecoder().decode(
             Artifact.self,

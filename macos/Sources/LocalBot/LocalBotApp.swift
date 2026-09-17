@@ -18,7 +18,7 @@ import SwiftUI
     .windowToolbarStyle(.unified)
     .commands {
       CommandGroup(replacing: .newItem) {
-        Button("New Conversation") { model.showNew = true }.keyboardShortcut("n")
+        Button("New Conversation") { Task { await model.newConversation() } }.keyboardShortcut("n")
         Button("New Project") { model.showProject = true }.keyboardShortcut("n", modifiers: [.command, .shift])
       }
       CommandGroup(replacing: .appSettings) {
@@ -102,7 +102,7 @@ struct MainView: View {
               )) {
                 conversationRows(model.visibleConversations.filter { $0.projectId == project.id })
                 if !model.showingArchived {
-                  Button { model.newConversationProjectId = project.id; model.showNew = true } label: {
+                  Button { Task { await model.newConversation(projectId: project.id) } } label: {
                     Label("New conversation", systemImage: "plus").font(.caption)
                   }.buttonStyle(.borderless).foregroundStyle(.secondary).selectionDisabled()
                 }
@@ -167,7 +167,7 @@ struct MainView: View {
       .toolbar {
         ToolbarItemGroup {
           Button {
-            model.showNew = true
+            Task { await model.newConversation() }
           } label: {
             Image(systemName: "square.and.pencil")
           }.help("New conversation (⌘N)")
@@ -475,7 +475,7 @@ struct ConversationView: View {
           Task { attachments += await model.attach() }
         } label: {
           Image(systemName: "plus").font(.system(size: 18)).frame(width: 30, height: 32)
-        }.buttonStyle(.plain).foregroundStyle(.secondary).help("Attach files")
+        }.buttonStyle(.plain).foregroundStyle(.secondary).help("Attach files").disabled(model.attaching)
         HStack(alignment: .bottom, spacing: 8) {
           TextField("Message", text: $draft, axis: .vertical).lineLimit(1...7).textFieldStyle(
             .plain
