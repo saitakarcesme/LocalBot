@@ -268,3 +268,9 @@ User requested race-game failure diagnosis, compact title-only chats below colla
 ### 2026-09-17 — Existing project recovery
 - Installed CLI build completed the user's original game follow-up through native composer: read_file + approved run_tests, exit 0, syntax and start/collision/end/restart source checks all OK. This is source validation; actual start/collision/restart browser interaction was checked separately.
 - Added idempotent recovery for historical orphaned attachments on terminal runs. Existing content and task status are not rewritten. Reopening the store twice is covered by the test.
+
+### 2026-09-17 — Bound CLI output generation
+- The second isolated exact-prompt test hit its 15-minute overall deadline while the model kept streaming a single decision, with no HTML saved. This test failed; it is not counted as successful project delivery.
+- Added a CLI decision character budget derived from generation settings (16–64 KB), enforced on streamed deltas and final output. Oversized, unexecuted decisions get one smaller-step retry; completed actions are not replayed. Prompt requests a compact working first version before optional polish.
+- Smoke configuration now matches the installed 4,000-token setting. 100 runtime tests and tool inventory gate pass. New live validation is pending.
+- Native project disclosure collapse/expand, selection preservation, direct/project chat navigation, grouped messages, live phase/elapsed/approval, inspectable command output, and recovered HTML attachment verified in installed build 05cfbce.

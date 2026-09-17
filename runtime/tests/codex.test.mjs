@@ -25,7 +25,7 @@ test("CLI transport correlates requests and rejects timed out, cancelled and dis
   } finally { rpc.close(); }
 });
 
-import { CodexProvider } from "../dist/codex-provider.js";
+import { CodexProvider, DecisionSizeError, decisionCharacterLimit } from "../dist/codex-provider.js";
 test("malformed decisions are regenerated once without replaying completed actions", async () => {
   const provider = new CodexProvider({}); let attempts = 0; const phases = [];
   const history = [{role:"tool",content:"Saved index.html",tool_call_id:"saved"}];
@@ -47,4 +47,12 @@ test("malformed decisions are regenerated once without replaying completed actio
   provider.generateDecision=async()=>{attempts++;throw new Error("Permission denied")};
   await assert.rejects(provider.generate([],[],new AbortController().signal),/Permission denied/);
   assert.equal(attempts,1);
+});
+
+test("CLI decision budget is bounded and oversized decisions are retried before execution", async()=>{
+ assert.equal(decisionCharacterLimit(4000),16000);assert.equal(decisionCharacterLimit(8000),32000);
+ assert.equal(decisionCharacterLimit(1e8),64000);assert.equal(decisionCharacterLimit(NaN),16000);
+ const provider=new CodexProvider({});let attempts=0;
+ provider.generateDecision=async messages=>{if(++attempts===1)throw new DecisionSizeError("Oversized");assert.match(messages.at(-1).content,/split larger work/);return{content:"Compact version saved",calls:[]}};
+ assert.equal((await provider.generate([],[],new AbortController().signal)).calls.length,0);assert.equal(attempts,2);
 });

@@ -4,7 +4,7 @@ import {join} from 'node:path';import {tmpdir} from 'node:os';
 import {Store} from '../runtime/dist/store.js';import {Engine} from '../runtime/dist/engine.js';
 const root=await mkdtemp(join(tmpdir(),'localbot-game-delivery-'));const workspace=join(root,'game');await mkdir(workspace);
 const store=new Store(join(root,'data'));store.seed(workspace);
-store.saveProvider({...store.provider('local'),kind:'codex',model:'gpt-5.6-sol',timeout:900,contextLength:24000,maxTokens:8000});
+store.saveProvider({...store.provider('local'),kind:'codex',model:'gpt-5.6-sol',timeout:900,contextLength:24000,maxTokens:4000});
 for(const a of store.agents())store.saveAgent({...a,autonomy:'trusted',maxSteps:16,permissions:{filesystem:'write',terminal:true,git:false,web:false}});
 const project=store.createProject('Game',workspace);const conversation=store.createConversation('New game',[],project.id,true);const engine=new Engine(store);
 const task=engine.enqueue(conversation.id,'I want you to create a single html file web game 2d racing game is good');
