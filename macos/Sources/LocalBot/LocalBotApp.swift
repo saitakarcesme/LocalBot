@@ -392,6 +392,7 @@ struct ConversationView: View {
       }
     }
     .navigationTitle("")
+    .toolbarBackground(.hidden, for: .windowToolbar)
     .toolbar {
       ToolbarItem(placement: .principal) {
         Menu {

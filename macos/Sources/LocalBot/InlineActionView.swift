@@ -105,7 +105,7 @@ struct MessageActivityPanel: View {
         .frame(width: 256, height: 32).contentShape(Rectangle())
         .background(.quaternary.opacity(0.4), in: RoundedRectangle(cornerRadius: 10))
     }.buttonStyle(.plain).foregroundStyle(.secondary)
-      .popover(isPresented: $expanded, arrowEdge: .bottom) {
+      .popover(isPresented: $expanded, arrowEdge: .top) {
         VStack(spacing: 0) {
           HStack {
             Label(active ? "Live activity" : "Activity", systemImage: "terminal")
