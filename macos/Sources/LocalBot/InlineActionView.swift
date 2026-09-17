@@ -74,30 +74,46 @@ struct MessageActivityPanel: View {
   let actions: [Activity]
   @State private var expanded = false
   private var active: Bool { actions.contains { ["pending", "running"].contains($0.status) } }
+  private var transcript: String {
+    actions.map { action in
+      let args = (action.arguments.data(using: .utf8).flatMap { try? JSONSerialization.jsonObject(with: $0) }) as? [String: Any] ?? [:]
+      let detail = ["command", "path", "query", "url"].compactMap { args[$0] as? String }.joined(separator: " ")
+      let content = (args["content"] as? String).map { "\n" + String($0.prefix(16000)) } ?? ""
+      return "$ " + action.name + (detail.isEmpty ? "" : " " + detail) + content
+        + (action.output.map { "\n" + String($0.suffix(16000)) } ?? "") + "\n[" + action.status + "]"
+    }.joined(separator: "\n\n")
+  }
   var body: some View {
-    VStack(alignment: .leading, spacing: 0) {
-      Button { withAnimation(.easeInOut(duration: 0.2)) { expanded.toggle() } } label: {
-        HStack(spacing: 7) {
-          Image(systemName: active ? "sparkle" : "checkmark.circle")
-          Text(active ? "Working · " + (actions.last?.name.replacingOccurrences(of: "_", with: " ") ?? "") : "\(actions.count) action\(actions.count == 1 ? "" : "s")")
-            .font(.system(size: 11, weight: .medium)).modifier(ActivityShimmer(active: active))
-          Spacer()
-          Image(systemName: expanded ? "chevron.up" : "chevron.down").font(.caption2)
-        }.padding(.horizontal, 12).padding(.vertical, 9).contentShape(Rectangle())
-      }.buttonStyle(.plain).foregroundStyle(.secondary)
-      if expanded {
-        ScrollViewReader { proxy in
-          ScrollView {
-            VStack(alignment: .leading, spacing: 8) {
-              ForEach(actions) { action in InlineActionView(action: action, initiallyExpanded: true) }
-              Color.clear.frame(height: 1).id("activityEnd")
-            }.padding(10)
-          }.frame(height: 240)
-            .defaultScrollAnchor(.bottom)
-            .onChange(of: actions.last?.output) { _, _ in if active { proxy.scrollTo("activityEnd", anchor: .bottom) } }
-        }
+    Button { expanded.toggle() } label: {
+      HStack(spacing: 8) {
+        Image(systemName: "terminal")
+        Text(active ? "Working · " + (actions.last?.name ?? "") : "\(actions.count) actions")
+          .lineLimit(1).truncationMode(.tail).modifier(ActivityShimmer(active: active))
+        Spacer(minLength: 0)
+        Image(systemName: "chevron.up").font(.system(size: 9))
+      }.font(.system(size: 11, weight: .medium)).padding(.horizontal, 12)
+        .frame(width: 256, height: 32).contentShape(Rectangle())
+        .background(.quaternary.opacity(0.4), in: RoundedRectangle(cornerRadius: 10))
+    }.buttonStyle(.plain).foregroundStyle(.secondary)
+      .popover(isPresented: $expanded, arrowEdge: .bottom) {
+        VStack(spacing: 0) {
+          HStack {
+            Label(active ? "Live activity" : "Activity", systemImage: "terminal")
+              .modifier(ActivityShimmer(active: active))
+            Spacer()
+            Button { expanded = false } label: { Image(systemName: "xmark") }.buttonStyle(.plain)
+          }.font(.caption).padding(12)
+          Divider()
+          ScrollViewReader { proxy in
+            ScrollView([.vertical, .horizontal]) {
+              VStack(alignment: .leading, spacing: 0) {
+                Text(transcript).font(.system(size: 11, design: .monospaced)).textSelection(.enabled)
+                Color.clear.frame(height: 1).id("terminalEnd")
+              }.padding(12)
+            }.defaultScrollAnchor(.bottom)
+              .onChange(of: transcript) { _, _ in if active { proxy.scrollTo("terminalEnd", anchor: .bottom) } }
+          }
+        }.frame(width: 480, height: 280)
       }
-    }.background(.quaternary.opacity(0.4), in: RoundedRectangle(cornerRadius: 12))
-      .overlay(RoundedRectangle(cornerRadius: 12).stroke(.quaternary, lineWidth: 0.5))
   }
 }
