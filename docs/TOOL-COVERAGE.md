@@ -1,19 +1,21 @@
 # Tool coverage inventory
 
-Captured target: **269 Codex tools**. Registered LocalBot tools: **33**.
+Captured target: **269 Codex tools**. Registered LocalBot tools: **35**.
 
 These counts summarize the inventory labels. They do not prove functional parity, successful authentication, or completion. LocalBot tools and target entries are different sets; the built-in count is not a coverage numerator.
 
 | Inventory label | Count |
 | --- | ---: |
 | Listed as implemented | 4 |
-| Partial equivalent | 9 |
+| Partial equivalent | 12 |
 | Not implemented | 7 |
-| LocalBot counterpart required | 30 |
+| LocalBot counterpart required | 27 |
 | Service adapter and authentication required | 219 |
 
 ## Registered LocalBot tools
 
+- `list_conversations`
+- `rename_conversation`
 - `list_tasks`
 - `read_activity`
 - `list_agents`

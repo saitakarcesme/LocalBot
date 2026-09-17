@@ -1,3 +1,4 @@
+import { conversationTool } from "./conversation-tools.js";
 import { isDeepStrictEqual } from "node:util";
 import { agentStepLimit } from "./run-limits.js";
 import { codexInput } from "./image-input.js";
@@ -619,6 +620,8 @@ export class Engine {
                 const searchProvider = this.makeProvider(config, this.secrets.get(config.id));
                 if (!searchProvider.search) throw new Error("Selected provider does not support web search");
                 result = JSON.stringify(await searchProvider.search(args.query, signal));
+              } else if (name === "list_conversations" || name === "rename_conversation") {
+                result = JSON.stringify(conversationTool(this.store, taskId, name, args, signal));
               } else if (name === "list_tasks") {
                 result = JSON.stringify(this.store.listTasks(taskId, args.scope, args.state, args.before));
               } else if (name === "read_activity") {
