@@ -24,6 +24,7 @@ export class Store {
       CREATE TABLE IF NOT EXISTS threads(id TEXT PRIMARY KEY, conversationId TEXT NOT NULL REFERENCES conversations(id), title TEXT NOT NULL, createdAt TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS tasks(id TEXT PRIMARY KEY, conversationId TEXT NOT NULL REFERENCES conversations(id), threadId TEXT REFERENCES threads(id), messageId TEXT NOT NULL, prompt TEXT NOT NULL, status TEXT NOT NULL, createdAt TEXT NOT NULL, updatedAt TEXT NOT NULL, error TEXT);
       CREATE TABLE IF NOT EXISTS runs(id TEXT PRIMARY KEY, taskId TEXT NOT NULL REFERENCES tasks(id), agentId TEXT NOT NULL, status TEXT NOT NULL, checkpoint TEXT NOT NULL DEFAULT '[]', createdAt TEXT NOT NULL, updatedAt TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS run_progress(runId TEXT PRIMARY KEY REFERENCES runs(id), phase TEXT NOT NULL, updatedAt TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS messages(id TEXT PRIMARY KEY, conversationId TEXT NOT NULL REFERENCES conversations(id), taskId TEXT, runId TEXT, agentId TEXT, role TEXT NOT NULL, content TEXT NOT NULL, createdAt TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS reactions(messageId TEXT NOT NULL REFERENCES messages(id), actor TEXT NOT NULL, emoji TEXT NOT NULL, PRIMARY KEY(messageId,actor));
       CREATE TABLE IF NOT EXISTS message_requests(id TEXT PRIMARY KEY, taskId TEXT NOT NULL REFERENCES tasks(id), fingerprint TEXT NOT NULL);
@@ -363,7 +364,7 @@ export class Store {
       projects: this.projects(),
       goals: this.all("SELECT * FROM goals ORDER BY updatedAt DESC LIMIT 200"),
       integrations: this.integrations(),
-      activeRuns: this.all("SELECT id,taskId,agentId,status FROM runs WHERE status IN ('running','awaiting_approval')"),
+      activeRuns: this.all("SELECT r.id,r.taskId,r.agentId,r.status,p.phase,p.updatedAt AS progressAt FROM runs r LEFT JOIN run_progress p ON p.runId=r.id WHERE r.status IN ('running','awaiting_approval')"),
       conversations: this.conversations(),
       tasks: this.all(`SELECT * FROM tasks WHERE status IN ('queued','running','awaiting_approval','awaiting_input')
         UNION ALL SELECT * FROM (SELECT * FROM tasks WHERE status NOT IN ('queued','running','awaiting_approval','awaiting_input')

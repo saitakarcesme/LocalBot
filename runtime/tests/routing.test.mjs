@@ -611,3 +611,28 @@ test('attachment-only project messages provide scoped metadata to routing and co
   assert(f.store.taskMessages(task.id).some(m=>m.content.includes('incelememi mi')));
  }finally{await f.close();}
 });
+
+test('failed verification exposes saved artifacts and records live generation phase',async()=>{
+ let calls=0;
+ const makeProvider=()=>({capabilities:()=>({images:false,tools:true,streaming:false}),async generate(messages,tools,signal,progress){
+  calls++;
+  if(calls===1){
+   await new Promise(r=>setTimeout(r,1050));progress?.('Writing response');
+   assert.equal(f.store.snapshot().activeRuns[0].phase,'Writing response');
+   return{content:'',calls:[{id:'save',function:{name:'write_file',arguments:JSON.stringify({path:'game.html',content:'<!doctype html><title>Saved game</title>'})}}]};
+  }
+  throw new Error('Model response exceeded test deadline');
+ }});
+ const f=await setup(async(body,res)=>reply(res,{content:'unused'}),makeProvider);
+ try{
+  f.store.saveAgent({...f.store.agent('coder'),autonomy:'trusted'});
+  const c=f.store.createConversation('Saved files',['coder']);const t=f.engine.enqueue(c.id,'Create the game');
+  await until(()=>f.store.task(t.id).status==='failed');
+  const messages=f.store.taskMessages(t.id);
+  const saved=messages.find(m=>m.attachments.length);
+  assert(saved);assert.match(saved.content,/Verification did not finish/);
+  assert.equal(saved.attachments[0].name,'game.html');
+  assert.match(await readFile(saved.attachments[0].path,'utf8'),/Saved game/);
+  assert.equal(f.store.snapshot().activeRuns.length,0);
+ }finally{await f.close();}
+});

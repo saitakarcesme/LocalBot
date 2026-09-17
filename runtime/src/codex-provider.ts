@@ -32,11 +32,12 @@ export class CodexProvider implements ModelProvider {
       return { ok: true, models: models.data.map((m: any) => m.model) as string[] };
     } finally { rpc.close(); }
   }
-  async generate(messages: Chat[], tools: ToolDefinition[], signal: AbortSignal): Promise<Generation> {
+  async generate(messages: Chat[], tools: ToolDefinition[], signal: AbortSignal, onProgress?: (phase: string) => void): Promise<Generation> {
     const input = await codexInput(messages, tools);
     signal.throwIfAborted();
     const rpc = new CodexRPC();
-    const deadline = AbortSignal.any([signal, AbortSignal.timeout(this.config.timeout * 1000)]);
+    const timeout = AbortSignal.timeout(this.config.timeout * 1000);
+    const deadline = AbortSignal.any([signal, timeout]);
     try {
       await rpc.initialize(deadline);
       const account = await rpc.request("account/read", { refreshToken: false }, deadline);
@@ -58,6 +59,8 @@ export class CodexProvider implements ModelProvider {
         rpc.onClose = error => { deadline.removeEventListener("abort", abort); reject(error); };
         rpc.onNotification = (method, params) => {
           if (params.threadId !== thread.id) return;
+          if (method === "item/agentMessage/delta") onProgress?.("Writing response");
+          else if (method.startsWith("item/reasoning")) onProgress?.("Thinking through the next step");
           if (method === "item/completed" && params.item?.type === "agentMessage") answer = params.item.text;
           if (method === "turn/completed") {
             deadline.removeEventListener("abort", abort);
@@ -80,6 +83,10 @@ export class CodexProvider implements ModelProvider {
         if (!args || Array.isArray(args) || typeof args !== "object") throw new Error("Invalid Codex tool arguments");
         return { id: randomUUID(), type: "function" as const, function: { name: call.name, arguments: call.arguments } };
       }) };
+    } catch (error) {
+      if (!signal.aborted && timeout.aborted)
+        throw new Error(`Model response exceeded ${this.config.timeout}s. Saved files and completed actions are preserved. Increase Timeout in Model Settings, then send a follow-up to continue verification.`);
+      throw error;
     } finally { rpc.close(); }
   }
 }

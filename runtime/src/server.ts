@@ -332,7 +332,7 @@ const server = createServer(async (req, res) => {
         endpoint: String(b.endpoint),
         model: String(b.model ?? "").slice(0, 150),
         contextLength: Math.floor(bounded(b.contextLength, 2048, 131072, 4096)),
-        timeout: bounded(b.timeout, 10, 1800, 180),
+        timeout: bounded(b.timeout, 10, 1800, b.kind === "codex" ? 900 : 180),
         concurrency: Math.floor(bounded(b.concurrency, 1, 4, 1)),
         temperature: bounded(b.temperature, 0, 2, 0.3),
         maxTokens: Math.floor(bounded(b.maxTokens, 128, 16000, 1200)),

@@ -15,6 +15,7 @@ export interface ModelProvider {
     messages: Chat[],
     tools: ToolDefinition[],
     signal: AbortSignal,
+    onProgress?: (phase: string) => void,
   ): Promise<Generation>;
   capabilities(): { tools: boolean; streaming: boolean; images: boolean };
 }

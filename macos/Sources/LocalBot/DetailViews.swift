@@ -531,6 +531,9 @@ struct SettingsView: View {
         Text("Anthropic (optional)").tag("anthropic")
         Text("Codex subscription").tag("codex")
       }.pickerStyle(.segmented)
+        .onChange(of: editing?.kind) { _, kind in
+          if kind == "codex", editing?.timeout == 180 { editing?.timeout = 900 }
+        }
       if editing?.kind == "codex" {
         Text("Uses the ChatGPT account signed in to Codex CLI on this Mac.")
           .font(.caption).foregroundStyle(.secondary)

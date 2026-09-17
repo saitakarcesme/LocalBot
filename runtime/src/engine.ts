@@ -453,10 +453,18 @@ export class Engine {
             runId,
           );
           const available = this.availableTools(this.store.agent(agentId), config);
+          let lastProgress = 0;
+          const reportProgress = (phase: string) => {
+            if (Date.now() - lastProgress < 1000) return;
+            lastProgress = Date.now();
+            this.store.exec("INSERT INTO run_progress VALUES(?,?,?) ON CONFLICT(runId) DO UPDATE SET phase=excluded.phase,updatedAt=excluded.updatedAt", runId, phase, now());
+            this.changed();
+          };
+          reportProgress("Thinking through the next step");
           const output = await this.makeProvider(
             config,
             this.secrets.get(config.id),
-          ).generate(messages, available, signal);
+          ).generate(messages, available, signal, reportProgress);
           signal.throwIfAborted();
           messages.push({
             role: "assistant",
@@ -732,6 +740,11 @@ export class Engine {
           now(),
           runId,
         );
+      }
+      if (runId && this.store.get("SELECT id FROM artifacts WHERE runId=? AND messageId IS NULL", runId)) {
+        const agentId = this.store.get("SELECT agentId FROM runs WHERE id=?", runId).agentId;
+        const messageId = this.store.addMessage(task.conversationId, "assistant", "Saved files are available below. Verification did not finish.", { taskId, runId, agentId });
+        this.store.exec("UPDATE artifacts SET messageId=? WHERE runId=? AND messageId IS NULL", messageId, runId);
       }
       this.store.addMessage(task.conversationId, "system", text, { taskId });
     } finally {
