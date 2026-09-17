@@ -103,10 +103,7 @@ struct MainView: View {
               } header: {
                 HStack(spacing: 6) {
                   Button {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                      if !collapsedProjects.insert(project.id).inserted { collapsedProjects.remove(project.id) }
-                    }
-                    UserDefaults.standard.set(Array(collapsedProjects), forKey: "collapsedProjects")
+                    toggleProject(project.id)
                   } label: {
                     HStack(spacing: 6) {
                       Image(systemName: "chevron.right").font(.system(size: 9, weight: .semibold))
@@ -119,6 +116,9 @@ struct MainView: View {
                   Button { model.editingProject = project } label: { Image(systemName: "ellipsis") }
                     .buttonStyle(.plain).help("Project details").accessibilityLabel("Project details: " + project.name)
                 }.selectionDisabled().padding(.vertical, 5)
+                  .accessibilityElement(children: .combine)
+                  .accessibilityAction(named: Text(collapsedProjects.contains(project.id) ? "Expand project" : "Collapse project")) { toggleProject(project.id) }
+                  .accessibilityAction(named: Text("Project details")) { model.editingProject = project }
               }
             }
             Section(model.showingArchived ? "Archived conversations" : "Recents") {
@@ -208,6 +208,12 @@ struct MainView: View {
     .onReceive(NotificationCenter.default.publisher(for: .init("FocusSearch"))) { _ in
       searchFocused = true
     }
+  }
+  private func toggleProject(_ id: String) {
+    withAnimation(.easeInOut(duration: 0.2)) {
+      if !collapsedProjects.insert(id).inserted { collapsedProjects.remove(id) }
+    }
+    UserDefaults.standard.set(Array(collapsedProjects), forKey: "collapsedProjects")
   }
   @ViewBuilder func conversationRows(_ conversations: [Conversation]) -> some View {
             ForEach(conversations) { c in
@@ -648,6 +654,5 @@ struct ScrollPositionObserver: ViewModifier {
 
 func sameMessageGroup(_ first: ChatMessage, _ second: ChatMessage) -> Bool {
   first.role != "system" && first.role == second.role && first.agentId == second.agentId
-    && first.taskId == second.taskId
     && abs(dateFrom(second.createdAt).timeIntervalSince(dateFrom(first.createdAt))) < 300
 }

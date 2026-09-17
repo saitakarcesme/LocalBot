@@ -70,7 +70,7 @@ struct ActivityView: View {
       VStack(alignment: .leading, spacing: 8) {
         HStack(spacing: 9) {
           if let run = activeRun { Avatar(agent: model.agent(run.agentId), size: 28) }
-          else { Image(systemName: model.activeTask == nil ? "checkmark.circle" : "clock").foregroundStyle(.secondary) }
+          else { Image(systemName: model.activeTask != nil ? "clock" : (model.currentTasks.first?.status == "failed" ? "exclamationmark.circle" : "checkmark.circle")).foregroundStyle(.secondary) }
           VStack(alignment: .leading, spacing: 3) {
             Text(phase).font(.system(size: 13, weight: .semibold))
             if let run = activeRun { Text(model.agent(run.agentId)?.name ?? "Agent").font(.caption).foregroundStyle(.secondary) }
@@ -133,6 +133,7 @@ struct ActivityView: View {
           if let goal = model.goals.first(where: { $0.conversationId == model.selectedId }) {
             Text("Goal · " + goal.status).font(.headline).padding(.top, 8)
             Text(goal.objective).font(.caption).textSelection(.enabled)
+            if !goal.evidence.isEmpty { Text(goal.evidence).font(.caption).foregroundStyle(.secondary).textSelection(.enabled) }
           }
           if !model.currentTasks.isEmpty {
             Text("Task history").font(.headline).padding(.top, 8)
