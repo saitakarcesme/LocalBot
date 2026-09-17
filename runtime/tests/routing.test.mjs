@@ -129,19 +129,19 @@ test('local direct chats get stable request titles without extra inference or te
  let requests=0;
  const f=await setup(async(body,res)=>{requests++;assert(!body.tools.some(t=>t.function.name==='organize'));reply(res,{content:'İncelendi.'});});
  try{
-  const c=f.store.createConversation('Mira',['researcher']);
+  const c=f.store.createConversation('Athena',['researcher']);
   const first=f.engine.enqueue(c.id,'  SQLite WAL\n  eşzamanlılık 🚀  ');
   await until(()=>f.store.task(first.id).status==='completed');
-  assert.equal(f.store.conversation(c.id).title,'Mira · SQLite WAL eşzamanlılık 🚀');
+  assert.equal(f.store.conversation(c.id).title,'Athena · SQLite WAL eşzamanlılık 🚀');
   assert.deepEqual(f.store.conversation(c.id).members,['researcher']);
   const second=f.engine.enqueue(c.id,'Başka bir ayrıntıyı da incele');
   await until(()=>f.store.task(second.id).status==='completed');
-  assert.equal(f.store.conversation(c.id).title,'Mira · SQLite WAL eşzamanlılık 🚀');
+  assert.equal(f.store.conversation(c.id).title,'Athena · SQLite WAL eşzamanlılık 🚀');
   assert.equal(requests,2);
-  const long=f.store.createConversation('Mira',['researcher']);
+  const long=f.store.createConversation('Athena',['researcher']);
   const third=f.engine.enqueue(long.id,'🚀'.repeat(100));
   await until(()=>f.store.task(third.id).status==='completed');
-  assert.equal(f.store.conversation(long.id).title,'Mira · '+'🚀'.repeat(79)+'…');
+  assert.equal(f.store.conversation(long.id).title,'Athena · '+'🚀'.repeat(79)+'…');
   const manual=f.store.createConversation('Kendi başlığım',['researcher']);
   f.store.exec('UPDATE conversation_context SET titled=1 WHERE conversationId=?',manual.id);
   const fourth=f.engine.enqueue(manual.id,'Bunu incele');await until(()=>f.store.task(fourth.id).status==='completed');
@@ -391,10 +391,10 @@ test('direct title failures preserve actual work while routing failures and canc
   f.store.saveProvider({...f.store.provider('local'),kind:'codex'});
   for(const failure of ['missing','malformed','throw']){
    mode=failure;
-   const c=f.store.createConversation('Mira',['researcher']);
+   const c=f.store.createConversation('Athena',['researcher']);
    const task=f.engine.enqueue(c.id,'Clock '+failure);
    await until(()=>f.store.task(task.id).status==='completed');
-   assert.equal(f.store.conversation(c.id).title,'Mira · Clock '+failure);
+   assert.equal(f.store.conversation(c.id).title,'Athena · Clock '+failure);
    assert.deepEqual(f.store.conversation(c.id).members,['researcher']);
    const call=f.store.get('SELECT t.* FROM tool_calls t JOIN runs r ON r.id=t.runId WHERE r.taskId=?',task.id);
    assert.equal(call.name,'current_time');assert.equal(call.status,'completed');
@@ -648,14 +648,14 @@ test('failed verification exposes saved artifacts and records live generation ph
 test('read-only researcher hands observed results to a writable teammate without asking for broader permissions',async()=>{
  const steps={researcher:0,coder:0};
  const f=await setup(async(body,res)=>reply(res,{content:'unused'}),()=>({capabilities:()=>({tools:true,images:false,streaming:false}),async generate(messages,tools){
-  const research=messages[0].content.includes('You are Mira,');const role=research?'researcher':'coder';
+  const research=messages[0].content.includes('You are Athena,');const role=research?'researcher':'coder';
   assert.match(messages[0].content,/responsible only for your role/);
   assert.match(messages.at(-1).content + messages[0].content,/role-specific stage|handoff/);
   if(research){
    assert(!tools.some(t=>t.function.name==='write_file'));
-   assert.match(messages[0].content,/Later teammates:.*Alex.*write_file/);
+   assert.match(messages[0].content,/Later teammates:.*Thor.*write_file/);
    if(++steps[role]===1)return{content:'I will inspect the brief.',calls:[{id:'research-read',function:{name:'read_file',arguments:JSON.stringify({path:'brief.txt'})}}]};
-   return{content:'Research complete: use a canvas. Alex can implement it.',calls:[]};
+   return{content:'Research complete: use a canvas. Thor can implement it.',calls:[]};
   }
   assert(messages.some(m=>m.content.includes('use a canvas')));
   if(++steps[role]===1)return{content:'I will implement the researched approach.',calls:[{id:'build-write',function:{name:'write_file',arguments:JSON.stringify({path:'index.html',content:'<!doctype html><canvas></canvas>'})}}]};

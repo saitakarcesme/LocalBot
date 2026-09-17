@@ -513,7 +513,7 @@ export class Store {
     const roles = [
       [
         "coder",
-        "Alex",
+        "Thor",
         "hammer.fill",
         "blue",
         "Developer",
@@ -521,7 +521,7 @@ export class Store {
       ],
       [
         "researcher",
-        "Mira",
+        "Athena",
         "sparkle.magnifyingglass",
         "purple",
         "Researcher",
@@ -529,7 +529,7 @@ export class Store {
       ],
       [
         "reviewer",
-        "Robin",
+        "Zeus",
         "checkmark.shield.fill",
         "orange",
         "Reviewer",
@@ -537,7 +537,7 @@ export class Store {
       ],
       [
         "tester",
-        "Sam",
+        "Freya",
         "testtube.2",
         "green",
         "Tester",
@@ -545,7 +545,7 @@ export class Store {
       ],
       [
         "assistant",
-        "Personal Assistant",
+        "Hermes",
         "person.fill",
         "pink",
         "Assistant",
