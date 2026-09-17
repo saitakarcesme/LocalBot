@@ -30,7 +30,10 @@ struct InlineActionView: View {
       if expanded {
         ScrollView([.horizontal, .vertical]) {
           VStack(alignment: .leading, spacing: 12) {
-            Text(String(action.arguments.prefix(16000)))
+            if let command = arguments["command"] { Text(command) }
+            if let path = arguments["path"] { Text(path).foregroundStyle(.secondary) }
+            if let content = arguments["content"] { Text(String(content.prefix(16000))) }
+            else { Text(String(action.arguments.prefix(16000))) }
             if let output = action.output { Text(String(output.suffix(16000))) }
           }.font(.system(size: 11, design: .monospaced)).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading)
         }.frame(maxHeight: 220)

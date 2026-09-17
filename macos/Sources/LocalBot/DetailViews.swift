@@ -95,36 +95,10 @@ struct ActivityView: View {
         LazyVStack(alignment: .leading, spacing: 10) {
           if model.activity.isEmpty { Text("Actions appear here as work happens.").font(.callout).foregroundStyle(.secondary).padding(.vertical, 12) }
           ForEach(Array(model.activity.reversed())) { action in
-            VStack(alignment: .leading, spacing: 8) {
-              Button {
-                withAnimation(.easeInOut(duration: 0.15)) {
-                  if !expanded.insert(action.id).inserted { expanded.remove(action.id) }
-                }
-              } label: {
-                HStack(alignment: .top, spacing: 9) {
-                  if action.status == "running" || action.status == "pending" { ProgressView().controlSize(.small) }
-                  else { Image(systemName: action.status == "completed" ? "checkmark.circle.fill" : "exclamationmark.circle.fill").foregroundStyle(action.status == "completed" ? .green : .orange) }
-                  VStack(alignment: .leading, spacing: 4) {
-                    Text(summary(action)).font(.system(size: 12, weight: .medium)).lineLimit(2).multilineTextAlignment(.leading)
-                    Text("\(model.agent(action.agentId)?.name ?? "Agent") · \(action.name.replacingOccurrences(of: "_", with: " "))")
-                      .font(.caption2).foregroundStyle(.secondary)
-                    HStack {
-                      Text(action.status.capitalized)
-                      Spacer()
-                      Text(dateFrom(action.createdAt), style: .time)
-                    }.font(.caption2).foregroundStyle(.tertiary)
-                  }
-                  Spacer(minLength: 0)
-                  Image(systemName: expanded.contains(action.id) ? "chevron.down" : "chevron.right").font(.caption2).foregroundStyle(.secondary)
-                }.contentShape(Rectangle())
-              }.buttonStyle(.plain)
-              if expanded.contains(action.id) {
-                Text(action.arguments + "\n\n" + (action.output ?? "Running…"))
-                  .font(.system(size: 10, design: .monospaced)).textSelection(.enabled)
-                  .frame(maxWidth: .infinity, alignment: .leading).padding(8)
-                  .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 8))
-              }
-            }.padding(10).background(.quaternary.opacity(0.25), in: RoundedRectangle(cornerRadius: 10))
+            VStack(alignment: .leading, spacing: 2) {
+              Text(model.agent(action.agentId)?.name ?? "Agent").font(.caption2).foregroundStyle(.tertiary)
+              InlineActionView(action: action)
+            }
           }
           let files = model.messages.flatMap(\.attachments)
           if !files.isEmpty {
