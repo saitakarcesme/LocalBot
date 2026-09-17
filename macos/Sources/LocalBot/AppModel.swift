@@ -383,28 +383,17 @@ enum Keychain {
       selectedId = conversation.id
     } catch { self.error = error.localizedDescription }
   }
-  func attach() async -> [Artifact] {
+  func attach(urls: [URL]) async -> [Artifact] {
     guard !attaching else { return [] }
     attaching = true
     defer { attaching = false }
-    let panel = NSOpenPanel()
-    panel.allowsMultipleSelection = true
-    panel.canChooseDirectories = false
-    let response: NSApplication.ModalResponse = await withCheckedContinuation { continuation in
-      if let window = NSApp.keyWindow {
-        panel.beginSheetModal(for: window) { continuation.resume(returning: $0) }
-      } else {
-        panel.begin { continuation.resume(returning: $0) }
-      }
-    }
-    guard response == .OK else { return [] }
-    guard panel.urls.count <= 8 else {
+    guard urls.count <= 8 else {
       error = "Choose up to 8 attachments at a time."
       return []
     }
     var results: [Artifact] = []
     do {
-      for url in panel.urls {
+      for url in urls {
         let data = try await Task.detached(priority: .userInitiated) {
         let size = (try url.resourceValues(forKeys: [.fileSizeKey])).fileSize ?? 0
         guard size <= 10_000_000 else {

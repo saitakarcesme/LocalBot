@@ -275,6 +275,7 @@ struct ConversationView: View {
   var conversation: Conversation
   @State var draft = ""
   @State var attachments: [Artifact] = []
+  @State private var showingAttachments = false
   @State var following = true
   @State var initialScroll = true
   @FocusState var composing: Bool
@@ -491,10 +492,13 @@ struct ConversationView: View {
       }
       HStack(alignment: .bottom, spacing: 10) {
         Button {
-          Task { attachments += await model.attach() }
+          showingAttachments = true
         } label: {
           Image(systemName: "plus").font(.system(size: 18)).frame(width: 30, height: 32)
         }.buttonStyle(.plain).foregroundStyle(.secondary).help("Attach files").disabled(model.attaching)
+        .sheet(isPresented: $showingAttachments) {
+          AttachmentPicker { urls in attachments += await model.attach(urls: urls) }
+        }
         HStack(alignment: .bottom, spacing: 8) {
           TextField("Message", text: $draft, axis: .vertical).lineLimit(1...7).textFieldStyle(
             .plain
