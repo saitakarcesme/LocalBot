@@ -722,7 +722,7 @@ struct AvatarStack: View {
 struct TransparentWindowChrome: NSViewRepresentable {
   func makeNSView(context: Context) -> ChromeView { ChromeView() }
   func updateNSView(_ view: ChromeView, context: Context) {}
-  final class ChromeView: NSView {
+  final class ChromeView: NSVisualEffectView {
     private var observers: [NSObjectProtocol] = []
     override func viewDidMoveToWindow() {
       super.viewDidMoveToWindow()
@@ -737,6 +737,11 @@ struct TransparentWindowChrome: NSViewRepresentable {
       }
     }
     private func configure(_ window: NSWindow) {
+      material = .underWindowBackground
+      blendingMode = .behindWindow
+      state = .active
+      window.backgroundColor = .clear
+      window.isOpaque = false
       window.styleMask.insert(.fullSizeContentView)
       window.titlebarAppearsTransparent = true
       window.toolbarStyle = .unified
