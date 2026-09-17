@@ -723,11 +723,25 @@ struct TransparentWindowChrome: NSViewRepresentable {
   func makeNSView(context: Context) -> ChromeView { ChromeView() }
   func updateNSView(_ view: ChromeView, context: Context) {}
   final class ChromeView: NSView {
+    private var observers: [NSObjectProtocol] = []
     override func viewDidMoveToWindow() {
       super.viewDidMoveToWindow()
-      window?.titlebarAppearsTransparent = true
-      window?.toolbarStyle = .unified
-      window?.titlebarSeparatorStyle = .none
+      observers.forEach(NotificationCenter.default.removeObserver)
+      observers.removeAll()
+      guard let window else { return }
+      configure(window)
+      for name in [NSWindow.didEnterFullScreenNotification, NSWindow.didExitFullScreenNotification] {
+        observers.append(NotificationCenter.default.addObserver(forName: name, object: window, queue: .main) { [weak self, weak window] _ in
+          MainActor.assumeIsolated { if let window { self?.configure(window) } }
+        })
+      }
     }
+    private func configure(_ window: NSWindow) {
+      window.styleMask.insert(.fullSizeContentView)
+      window.titlebarAppearsTransparent = true
+      window.toolbarStyle = .unified
+      window.titlebarSeparatorStyle = .none
+    }
+    deinit { observers.forEach(NotificationCenter.default.removeObserver) }
   }
 }
