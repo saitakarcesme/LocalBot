@@ -36,6 +36,7 @@ export class Engine {
     if (!runConfig && agent.model) config.model = agent.model;
     const model = this.makeProvider(config, this.secrets.get(config.id));
     return definitions.filter(t => allowed(agent, t.function.name)
+      && (t.function.name !== "get_usage_limits" || !!model.usage)
       && (t.function.name !== "web_search" || !!model.search)
       && (t.function.name !== "view_image" || model.capabilities().images));
   }
@@ -627,6 +628,10 @@ export class Engine {
                 return;
               } else if (name === "create_goal") {
                 result = JSON.stringify(this.store.createGoal(c.id, args.objective));
+              } else if (name === "get_usage_limits") {
+                const usageProvider = this.makeProvider(config, this.secrets.get(config.id));
+                if (!usageProvider.usage) throw new Error("Selected provider does not support subscription usage");
+                result = JSON.stringify(await usageProvider.usage(signal));
               } else if (name === "web_search") {
                 const searchProvider = this.makeProvider(config, this.secrets.get(config.id));
                 if (!searchProvider.search) throw new Error("Selected provider does not support web search");

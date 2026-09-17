@@ -325,3 +325,5 @@ User requested race-game failure diagnosis, compact title-only chats below colla
 ## Tool parity branch — conversation metadata (2026-09-17)
 
 Created isolated `codex/localbot-tool-parity`. Added project-scoped conversation discovery with bounded pagination/archive filtering and current-conversation renaming with Ask-mode approval, expected-title conflict detection, cancellation and durable metadata. Three focused tests pass, including engine approval with a concurrent user rename. No macOS source, installed application, user runtime database or Codex credentials accessed. Full inventory parity remains incomplete; 35 registered tools are not 35/269 coverage.
+
+Tool parity checkpoint 2: `get_usage_limits` uses the official read-only Codex CLI account method through the provider interface, with no local-to-cloud fallback. Controlled adapter/engine tests pass, and a live CLI read returned validated windows without storing personal account values. ChatGPT credentials remain owned by CLI. Credit/reset fields and remote-host selection remain explicitly partial.

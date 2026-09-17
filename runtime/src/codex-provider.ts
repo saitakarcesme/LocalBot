@@ -1,3 +1,4 @@
+import { codexUsage } from "./codex-usage.js";
 import { codexSearch } from "./codex-search.js";
 import { codexInput } from "./image-input.js";
 import { CodexRPC } from "./codex-rpc.js";
@@ -24,7 +25,9 @@ const responseSchema = {
 export class CodexProvider implements ModelProvider {
   constructor(private config: ProviderConfig) {}
   capabilities() { return { tools: true, streaming: false, images: true }; }
+  usage(signal: AbortSignal) { return codexUsage(this.config, signal); }
   search(query: string, signal: AbortSignal, onProgress?: (output: string) => void) { return codexSearch(this.config, query, signal, undefined, onProgress); }
+
   async health(signal?: AbortSignal) {
     const rpc = new CodexRPC();
     try {

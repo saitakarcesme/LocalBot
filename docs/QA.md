@@ -258,3 +258,7 @@ Clean source commit7b19ae1 produced `~/Library/Caches/LocalBot/AppBuild/LocalBot
 ### Conversation tool counterparts — 2026-09-17
 
 Three focused regressions pass: project/projectless metadata isolation, archive filters and cursor pagination; bounded/stale/cancelled rename and SQLite reopen; actual engine dispatch and approval with concurrent rename refusal. Test fixtures use temporary databases and a local mock provider. No installed UI or real subscription invocation was performed for these tools.
+
+### Subscription usage counterpart — 2026-09-17
+
+The official installed CLI generated protocol and [App Server documentation](https://learn.chatgpt.com/docs/app-server) confirm `account/rateLimits/read`. A direct read through the new adapter succeeded against existing ChatGPT CLI authentication, returning a legacy snapshot and two buckets; personal values were not saved. No inference turn, credential file read, credit redemption or API-key use. Four focused tests verify normalized/null windows, malformed input, permissions/provider capability, API-auth refusal, error redaction, cancellation, timeout and child cleanup. Native UI and conversational live GPT execution remain unverified for this tool.
