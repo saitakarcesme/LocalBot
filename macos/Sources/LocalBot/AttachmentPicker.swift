@@ -32,7 +32,7 @@ struct AttachmentPicker: View {
         TextField("Folder or file path", text: $location).textFieldStyle(.roundedBorder).onSubmit { reload() }
         Button("Go") { reload() }.disabled(loading)
       }
-      List(entries, selection: $selection) { entry in
+      List(entries.filter { !foldersOnly || $0.directory }, selection: $selection) { entry in
         HStack {
           Label(entry.name, systemImage: entry.directory ? "folder" : "doc")
           Spacer()
@@ -44,7 +44,7 @@ struct AttachmentPicker: View {
       if loading { ProgressView("Reading folder…").controlSize(.small) }
       if let error { Text(error).font(.caption).foregroundStyle(.orange) }
       HStack {
-        Text("Choose up to 8 files, 10 MB each. Use Go to open a folder or select a file by path.").font(.caption).foregroundStyle(.secondary)
+        Text(foldersOnly ? "Open the folder you want, then choose Use this folder." : "Choose up to 8 files, 10 MB each. Use Go to open a folder or select a file by path.").font(.caption).foregroundStyle(.secondary)
         Spacer()
         if importing { ProgressView().controlSize(.small) }
         Button(foldersOnly ? "Use this folder" : "Attach") {
