@@ -1,3 +1,4 @@
+import { conversationTool } from "./conversation-tools.js";
 import { isDeepStrictEqual } from "node:util";
 import { agentStepLimit } from "./run-limits.js";
 import { codexInput } from "./image-input.js";
@@ -634,6 +635,8 @@ export class Engine {
                   this.store.exec("UPDATE tool_calls SET output=?,updatedAt=? WHERE id=? AND status='running'", output.slice(-16000), now(), callId);
                   this.changed();
                 }));
+              } else if (name === "list_conversations" || name === "rename_conversation") {
+                result = JSON.stringify(conversationTool(this.store, taskId, name, args, signal));
               } else if (name === "list_tasks") {
                 result = JSON.stringify(this.store.listTasks(taskId, args.scope, args.state, args.before));
               } else if (name === "read_activity") {

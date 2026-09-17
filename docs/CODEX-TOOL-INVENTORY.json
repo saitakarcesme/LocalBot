@@ -100,8 +100,8 @@
     },
     {
       "name": "mcp__codex_app__list_archived_threads",
-      "status": "requires-localbot-counterpart",
-      "route": "Codex desktop host APIs cannot be copied into another application"
+      "status": "partial-equivalent",
+      "route": "list_conversations with state archived: scoped metadata pagination; no cross-project desktop access."
     },
     {
       "name": "mcp__codex_app__list_projects",
@@ -110,8 +110,8 @@
     },
     {
       "name": "mcp__codex_app__list_threads",
-      "status": "requires-localbot-counterpart",
-      "route": "Codex desktop host APIs cannot be copied into another application"
+      "status": "partial-equivalent",
+      "route": "list_conversations: bounded ten-record pages of current metadata scoped to the calling conversation or its project; archive filters and owned cursors. Global cross-project desktop visibility is intentionally unavailable."
     },
     {
       "name": "mcp__codex_app__load_workspace_dependencies",
@@ -141,7 +141,7 @@
     {
       "name": "mcp__codex_app__read_thread",
       "status": "partial-equivalent",
-      "route": "search_history locates source excerpts; read_history reads five-message pages or complete single-message text through 2,000-Unicode-character chunks. Owned cursors, current/same-project conversations only, before current task. No cross-project or attachment-body access."
+      "route": "read_history and list_tasks: bounded task-relative messages/status within current conversation or project; no arbitrary cross-project access or remote host access."
     },
     {
       "name": "mcp__codex_app__read_thread_terminal",
@@ -180,8 +180,8 @@
     },
     {
       "name": "mcp__codex_app__set_thread_title",
-      "status": "requires-localbot-counterpart",
-      "route": "Codex desktop host APIs cannot be copied into another application"
+      "status": "partial-equivalent",
+      "route": "rename_conversation: current conversation only; Ask-mode approval, exact expected_title conflict detection, bounded title, cancellation and durable metadata. Renaming another conversation is intentionally unavailable."
     },
     {
       "name": "mcp__codex_app__share_thread",
@@ -1344,6 +1344,8 @@
     }
   ],
   "localbotBuiltins": [
+    "list_conversations",
+    "rename_conversation",
     "list_tasks",
     "read_activity",
     "list_agents",

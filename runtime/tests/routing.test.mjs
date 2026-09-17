@@ -673,3 +673,31 @@ test('read-only researcher hands observed results to a writable teammate without
   assert.match(await readFile(join(f.store.agent('coder').workspace,'index.html'),'utf8'),/<canvas>/);
  }finally{await f.close();}
 });
+
+test('conversation rename dispatch waits for exact approval and rejects stale titles',async()=>{
+ const f=await setup(async(body,res)=>{
+  if(body.messages.some(m=>m.role==='tool'))reply(res,{content:'Checked.'});
+  else reply(res,{content:'',tool_calls:[{function:{name:'rename_conversation',arguments:{title:'Approved title',expected_title:'Original'}}}]});
+ });
+ try {
+  const contact=f.store.agent('coder');contact.autonomy='ask';f.store.saveAgent(contact);
+  const c=f.store.createConversation('Original',['coder']);
+  // Prevent the independent automatic naming step from changing the test's precondition.
+  f.store.exec('UPDATE conversation_context SET titled=1 WHERE conversationId=?',c.id);
+  const first=f.engine.enqueue(c.id,'Rename this conversation');
+  await until(()=>f.store.get("SELECT id FROM approvals WHERE taskId=? AND status='pending'",first.id));
+  assert.equal(f.store.conversation(c.id).title,'Original');
+  f.store.exec('UPDATE conversations SET title=? WHERE id=?','Concurrent user title',c.id);
+  f.engine.decide(f.store.get("SELECT id FROM approvals WHERE taskId=? AND status='pending'",first.id).id,true);
+  await until(()=>f.store.task(first.id).status==='completed_with_errors');
+  assert.equal(f.store.conversation(c.id).title,'Concurrent user title');
+  const failed=f.store.get('SELECT t.* FROM tool_calls t JOIN runs r ON r.id=t.runId WHERE r.taskId=?',first.id);
+  assert.equal(failed.status,'failed');assert.match(failed.output,/title changed/);
+  f.store.exec('UPDATE conversations SET title=? WHERE id=?','Original',c.id);
+  const second=f.engine.enqueue(c.id,'Rename after refresh');
+  await until(()=>f.store.get("SELECT id FROM approvals WHERE taskId=? AND status='pending'",second.id));
+  f.engine.decide(f.store.get("SELECT id FROM approvals WHERE taskId=? AND status='pending'",second.id).id,true);
+  await until(()=>f.store.task(second.id).status==='completed');
+  assert.equal(f.store.conversation(c.id).title,'Approved title');
+ } finally {await f.close();}
+});

@@ -254,3 +254,7 @@ Swift checks verify running/approval tasks outrank newer queued messages, queued
 ### Signed cache bundle — 2026-09-16
 
 Clean source commit7b19ae1 produced `~/Library/Caches/LocalBot/AppBuild/LocalBot.app`, outside synced Documents. Strict deep codesign verification and27 signed-file hashes passed. The packaged real subscription/restart/retry regression passed using this new location. Manifest records sourceDirty=false and build time; it verifies integrity, not publisher trust. Installed app remained running, so no replacement or native window validation was performed.
+
+### Conversation tool counterparts — 2026-09-17
+
+Three focused regressions pass: project/projectless metadata isolation, archive filters and cursor pagination; bounded/stale/cancelled rename and SQLite reopen; actual engine dispatch and approval with concurrent rename refusal. Test fixtures use temporary databases and a local mock provider. No installed UI or real subscription invocation was performed for these tools.
