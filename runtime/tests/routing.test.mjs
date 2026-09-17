@@ -701,3 +701,19 @@ test('conversation rename dispatch waits for exact approval and rejects stale ti
   assert.equal(f.store.conversation(c.id).title,'Approved title');
  } finally {await f.close();}
 });
+
+test('subscription usage dispatch obeys provider capability and current web permission',async()=>{
+ let usageCalls=0;
+ const fake={capabilities:()=>({tools:true,streaming:false,images:false}),health:async()=>({ok:true,models:[]}),
+  usage:async signal=>{signal.throwIfAborted();usageCalls++;return {rateLimits:null};},
+  generate:async(messages,tools)=>messages.some(m=>m.role==='tool')?{content:'Checked',calls:[]}:{content:'',calls:[{id:'usage',type:'function',function:{name:'get_usage_limits',arguments:'{}'}}]}};
+ const f=await setup(async()=>{},()=>fake);
+ try {
+  const contact=f.store.agent('researcher');contact.permissions.web=true;f.store.saveAgent(contact);
+  const c=f.store.createConversation('Usage',['researcher']);f.store.exec('UPDATE conversation_context SET titled=1 WHERE conversationId=?',c.id);
+  const first=f.engine.enqueue(c.id,'Read usage');await until(()=>f.store.task(first.id).status==='completed');assert.equal(usageCalls,1);
+  contact.permissions.web=false;f.store.saveAgent(contact);
+  const second=f.engine.enqueue(c.id,'Read usage again');await until(()=>f.store.task(second.id).status==='completed_with_errors');assert.equal(usageCalls,1);
+  const call=f.store.get('SELECT t.* FROM tool_calls t JOIN runs r ON r.id=t.runId WHERE r.taskId=?',second.id);assert.match(call.output,/Permission denied/);
+ }finally{await f.close();}
+});

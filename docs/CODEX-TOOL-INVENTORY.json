@@ -90,8 +90,8 @@
     },
     {
       "name": "mcp__codex_app__get_usage_limits",
-      "status": "requires-localbot-counterpart",
-      "route": "Codex desktop host APIs cannot be copied into another application"
+      "status": "partial-equivalent",
+      "route": "get_usage_limits reads official Codex CLI account/rateLimits/read after ChatGPT authentication, with Web permission, bounded deadline, cancellation, response validation and error redaction. Returns account-wide primary/secondary and per-limit windows; omits credit balance/reset-credit details and remote-host selection."
     },
     {
       "name": "mcp__codex_app__handoff_thread",
@@ -1344,6 +1344,7 @@
     }
   ],
   "localbotBuiltins": [
+    "get_usage_limits",
     "list_conversations",
     "rename_conversation",
     "list_tasks",
