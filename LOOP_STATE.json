@@ -34,7 +34,7 @@
   "v0_2": {
     "status": "core_implemented_live_verified_tool_parity_in_progress",
     "updated_at": "2026-09-17T09:50:35.541Z",
-    "runtime_tests_passed": 105,
+    "runtime_tests_passed": 107,
     "real_subscription_agents_verified": 5,
     "real_project": "Focus Ledger",
     "project_tests_passed": 5,
@@ -62,7 +62,7 @@
     "tests_passed": 101,
     "packaged_runtime_subscription_verified": true,
     "built_app": "~/Library/Caches/LocalBot/AppBuild/LocalBot.app",
-    "installed_source_commit": "0e47709a5aaf45162ba3db43869a834cf777ad90",
+    "installed_source_commit": "efd162f6858d4cdfbf36d8b78912a6568b3af340",
     "native_handoff_verified": true
   },
   "sept17_fixes": {
@@ -121,5 +121,19 @@
     "native_attachment_import_verified": true,
     "real_cli_automatic_routing_verified": true,
     "known_limit": "Legacy folder pickers still use macOS OpenPanel; Full access is workspace-scoped."
+  },
+  "sept17_mythology": {
+    "status": "installed",
+    "source": "efd162f",
+    "runtime_tests": 107,
+    "goal_loop_started": false,
+    "native_verified": [
+      "project previews",
+      "message layout",
+      "activity expansion",
+      "project folder picker"
+    ],
+    "default_project_directory_verified": true,
+    "hover_pointer_test": "implemented; native automation has no hover API"
   }
 }
