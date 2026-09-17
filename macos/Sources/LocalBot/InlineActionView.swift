@@ -15,6 +15,12 @@ struct InlineActionView: View {
     let detail = arguments["command"] ?? arguments["path"] ?? arguments["query"] ?? arguments["url"] ?? ""
     return action.name.replacingOccurrences(of: "_", with: " ") + (detail.isEmpty ? "" : " · " + detail)
   }
+  private func readable(_ value: String) -> String {
+    guard let data = value.data(using: .utf8), let object = try? JSONSerialization.jsonObject(with: data),
+      let pretty = try? JSONSerialization.data(withJSONObject: object, options: [.prettyPrinted, .sortedKeys, .fragmentsAllowed]),
+      let text = String(data: pretty, encoding: .utf8) else { return value }
+    return text
+  }
   var body: some View {
     VStack(alignment: .leading, spacing: 6) {
       Button { withAnimation(.easeInOut(duration: 0.18)) { expanded.toggle() } } label: {
@@ -29,13 +35,13 @@ struct InlineActionView: View {
         Text(String(output.suffix(1200))).font(.system(size: 10, design: .monospaced)).lineLimit(6).textSelection(.enabled)
       }
       if expanded || initiallyExpanded {
-        ScrollView([.horizontal, .vertical]) {
+        ScrollView(.vertical) {
           VStack(alignment: .leading, spacing: 12) {
             if let command = arguments["command"] { Text(command) }
             if let path = arguments["path"] { Text(path).foregroundStyle(.secondary) }
             if let content = arguments["content"] { Text(String(content.prefix(16000))) }
-            else { Text(String(action.arguments.prefix(16000))) }
-            if let output = action.output { Text(String(output.suffix(16000))) }
+            else { Text(readable(String(action.arguments.prefix(16000)))) }
+            if let output = action.output { Text(readable(String(output.suffix(16000)))) }
           }.font(.system(size: 11, design: .monospaced)).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading)
         }.frame(maxHeight: 220)
         Text(action.status.capitalized).font(.caption2).foregroundStyle(.secondary)

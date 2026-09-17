@@ -12,7 +12,7 @@ struct HoverMessageText: NSViewRepresentable {
     view.textContainer?.widthTracksTextView = true
     view.isHorizontallyResizable = false
     view.isVerticallyResizable = true
-    view.linkTextAttributes = [.foregroundColor: NSColor.linkColor, .underlineStyle: 0, .cursor: NSCursor.pointingHand]
+    view.linkTextAttributes = [.foregroundColor: NSColor.linkColor, .cursor: NSCursor.pointingHand]
     return view
   }
   func updateNSView(_ view: LinkTextView, context: Context) {
