@@ -274,3 +274,9 @@ User requested race-game failure diagnosis, compact title-only chats below colla
 - Added a CLI decision character budget derived from generation settings (16–64 KB), enforced on streamed deltas and final output. Oversized, unexecuted decisions get one smaller-step retry; completed actions are not replayed. Prompt requests a compact working first version before optional polish.
 - Smoke configuration now matches the installed 4,000-token setting. 100 runtime tests and tool inventory gate pass. New live validation is pending.
 - Native project disclosure collapse/expand, selection preservation, direct/project chat navigation, grouped messages, live phase/elapsed/approval, inspectable command output, and recovered HTML attachment verified in installed build 05cfbce.
+
+### 2026-09-17 — Final bounded handoff
+- Exact original one-sentence prompt now completes from an empty workspace in 109.285 seconds with authenticated gpt-5.6-sol through Codex CLI: list_files, write_file, read_file, run_tests; 8,680-byte single index.html; JavaScript syntax OK, task completed. Browser separately verified rendering, start, score progression, collision and restart.
+- Installed signed source bb03d35; verified all 27 manifest files. Provider timeout 900s survived relaunch; no active installed tasks. Temporary browser and two test HTTP servers closed.
+- Native folder selection, collapse/expand, selection retention and persisted collapse state verified after restart. Activity shows live agent phase, elapsed time, approvals, action details/output and saved files. Original user game verification completed without rewriting its source.
+- 100 runtime tests pass. All code microcommits pushed. This is a bounded release handoff, not completion or restart of the broad goal/tool-parity roadmap.
