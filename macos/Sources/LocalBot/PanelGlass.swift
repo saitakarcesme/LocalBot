@@ -2,17 +2,14 @@ import AppKit
 import SwiftUI
 
 /// Use the same native glass family as the navigation sidebar, with a vibrancy fallback.
-struct PanelGlass: NSViewRepresentable {
-  func makeNSView(context: Context) -> NSView {
+struct PanelGlass: ViewModifier {
+  func body(content: Content) -> some View {
     if #available(macOS 26.0, *) {
-      let view = NSGlassEffectView(); view.style = .regular; view.cornerRadius = 22
-      return view
+      content.glassEffect(.regular, in: RoundedRectangle(cornerRadius: 22))
+    } else {
+      content.background(.regularMaterial, in: RoundedRectangle(cornerRadius: 22))
     }
-    let view = NSVisualEffectView()
-    view.material = .sidebar; view.blendingMode = .behindWindow; view.state = .active
-    return view
   }
-  func updateNSView(_ view: NSView, context: Context) {}
 }
 struct PanelResizeHandle: NSViewRepresentable {
   var resize: (Double) -> Void

@@ -398,7 +398,7 @@ struct ConversationView: View {
           else { WorkspacePanel(state: model.workspace) }
         }
         .frame(width: min(max(280, panelWidth), max(280, geometry.size.width - 280)))
-        .background(PanelGlass())
+        .modifier(PanelGlass())
         .clipShape(RoundedRectangle(cornerRadius: 22))
         .overlay(RoundedRectangle(cornerRadius: 22).strokeBorder(.primary.opacity(0.12), lineWidth: 0.7))
         .padding(.trailing, 10).padding(.bottom, 10).padding(.top, 4)
