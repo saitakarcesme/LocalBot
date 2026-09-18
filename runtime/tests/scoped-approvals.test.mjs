@@ -39,3 +39,18 @@ test('an empty automatic direct chat chooses its agent and a content-only title'
  await wait(()=>store.task(t.id).status==='completed');await wait(()=>engine.active.size===0&&!engine.pumping);
  assert.deepEqual(store.conversation(c.id).members,['assistant']);assert.equal(store.conversation(c.id).title,'Saat kontrolü');assert.equal(store.messages(c.id).at(-1).agentId,'assistant');store.db.close();
 });
+test('routing retries a missing metadata call without running task tools',async()=>{
+ const dir=await mkdtemp(join(tmpdir(),'localbot-routing-retry-'));const store=new Store(dir);store.seed(dir);let routes=0,answers=0;
+ const factory=()=>({capabilities:()=>({images:false}),generate:async(messages,tools)=>{
+  if(tools.some(t=>t.function.name==='organize')){
+   if(++routes===1)return{content:'Ready',calls:[]};
+   assert.match(messages.at(-1).content,/internal conversation metadata/);
+   return{content:'',calls:[{id:'route',type:'function',function:{name:'organize',arguments:JSON.stringify({title:'Simple reply',members:['assistant']})}}]};
+  }
+  answers++;return{content:'side chat ready',calls:[]};
+ }});
+ const engine=new Engine(store,()=>{},factory);const c=store.createConversation('New conversation',[],null,true);const t=engine.enqueue(c.id,'Only reply side chat ready. Do not use tools.');
+ await wait(()=>store.task(t.id).status==='completed');await wait(()=>engine.active.size===0&&!engine.pumping);
+ assert.equal(routes,2);assert.equal(answers,1);assert.equal(store.messages(c.id).at(-1).content,'side chat ready');
+ assert.equal(store.all('SELECT * FROM tool_calls').length,0);store.db.close();
+});
