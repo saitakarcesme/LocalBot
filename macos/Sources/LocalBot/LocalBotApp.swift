@@ -798,6 +798,10 @@ struct TransparentWindowChrome: NSViewRepresentable {
       window.styleMask.insert(.fullSizeContentView)
       window.titlebarAppearsTransparent = true
       window.toolbarStyle = .unified
+      window.toolbar?.isVisible = true
+      if window.styleMask.contains(.fullScreen), NSApp.presentationOptions.contains(.autoHideToolbar) {
+        NSApp.presentationOptions.remove(.autoHideToolbar)
+      }
       window.titlebarSeparatorStyle = .none
     }
     deinit { observers.forEach(NotificationCenter.default.removeObserver) }
