@@ -65,7 +65,7 @@ struct BrowserPane: View {
         Button { if session.loading { session.web.stopLoading() } else { session.web.reload() } } label: { Image(systemName: session.loading ? "xmark" : "arrow.clockwise") }.help("Reload or stop")
       }.buttonStyle(.plain).padding(10)
       if let error = session.error { Text(error).font(.caption).foregroundStyle(.orange).textSelection(.enabled).padding(8) }
-      BrowserSurface(session: session)
+      BrowserSurface(session: session).frame(maxWidth: .infinity, maxHeight: .infinity)
     }
   }
 }
