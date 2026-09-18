@@ -3,6 +3,22 @@ import AppKit
 @testable import LocalBot
 
 final class PanelTests: XCTestCase {
+  @MainActor func testReusedMessageLayoutMatchesFreshLayoutAcrossSidebarWidths() {
+    let view = LinkTextView(frame: .zero, textContainer: nil)
+    let text = NSAttributedString(string: String(repeating: "A longer message with links and source details. ", count: 100), attributes: [.font: NSFont.systemFont(ofSize: 14)])
+    view.measurementStorage.setAttributedString(text)
+    for width in [240.0, 530, 310, 530, 240] {
+      view.measurementContainer.containerSize = CGSize(width: width, height: .greatestFiniteMagnitude)
+      view.measurementLayout.ensureLayout(for: view.measurementContainer)
+      let fresh = NSTextStorage(attributedString: text)
+      let layout = NSLayoutManager()
+      let container = NSTextContainer(size: CGSize(width: width, height: .greatestFiniteMagnitude))
+      container.lineFragmentPadding = 0
+      fresh.addLayoutManager(layout); layout.addTextContainer(container)
+      layout.ensureLayout(for: container)
+      XCTAssertEqual(view.measurementLayout.usedRect(for: view.measurementContainer).height, layout.usedRect(for: container).height, accuracy: 0.5)
+    }
+  }
   @MainActor func testFileDraftSurvivesSwitchingAndClosingOtherTabs() {
     let state = WorkspaceState()
     let files = WorkspaceTab(.files, workspace: "/tmp")
