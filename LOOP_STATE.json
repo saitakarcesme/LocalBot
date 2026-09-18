@@ -151,5 +151,16 @@
     "tool_branch": "codex/localbot-tool-parity",
     "tool_branch_merged": false,
     "goal_resumed": false
+  },
+  "research_activity_repair": {
+    "status": "core_installed_live_verified_title_package_pending",
+    "installed_source": "d364c720e215149afd9d4abe73c01fd5538590d5",
+    "pending_package_source": "b27b95bcfd6e18622d50d03c53d01c9a523cb7b7",
+    "tests_passed": 110,
+    "research_task": "881f1991-2c37-4975-926c-c1cc6bbaee65",
+    "research_result": "completed with official semester subject list",
+    "working_checkout": "/Users/ibrahimsaitakarcesme/LocalBot-repair",
+    "original_checkout": "iCloud dataless; hydration requested; preserved",
+    "goal_resumed": false
   }
 }
