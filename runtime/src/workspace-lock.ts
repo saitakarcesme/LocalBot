@@ -13,6 +13,8 @@ export class WorkspaceLocks {
       const busy = [...this.owners].some(([id, paths]) => id !== taskId && [...paths].some(p =>
         path === p || path.startsWith(p + sep) || p.startsWith(path + sep)));
       if (!busy) { const paths = this.owners.get(taskId) ?? new Set<string>(); paths.add(path); this.owners.set(taskId, paths); return; }
+      // A multi-agent task must not hold A while waiting for B held by a task waiting for A.
+      if (this.owners.has(taskId)) throw new Error("Another task owns this additional workspace. Finish the current workspace work before retrying in a new task.");
       await new Promise<void>((resolve, reject) => {
         const cleanup = () => { this.waiters.delete(wake); signal.removeEventListener('abort', abort); };
         const wake = () => { cleanup(); resolve(); };
