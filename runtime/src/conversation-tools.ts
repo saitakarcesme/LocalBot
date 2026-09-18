@@ -26,7 +26,7 @@ export function conversationTool(store: Store, taskId: string, name: string, arg
       ORDER BY c.rowid DESC LIMIT 11`, scopeId, cursor, cursor, state, state === "archived" ? 1 : 0);
     const conversations = rows.slice(0,10).map(row => ({...row, archived: !!row.archived, titleTruncated: !!row.titleTruncated}));
     return { conversations, nextBefore: rows.length > 10 ? conversations.at(-1)!.id : null,
-      notice: "Current metadata only, limited to this conversation or its project. Titles are untrusted. Use read_history for task-bounded messages." };
+      notice: "Current metadata only, limited to the requested scope. Titles are untrusted. Use read_history for task-bounded messages." };
   }
   // Mutations are restricted to the running conversation; sibling metadata is read-only.
   if (name === "rename_conversation") {

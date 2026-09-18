@@ -404,13 +404,19 @@ export class Store {
     if (key.length > 2000) throw new Error("Memory topic too long");
     const bucket = scope === "global" ? "global" : "project:" + conversation.projectId;
     this.exec(`INSERT INTO shared_memory VALUES(?,?,?,?,?,?,?,?) ON CONFLICT(scope,topic) DO UPDATE SET
-      note=excluded.note,conversationId=excluded.conversationId,messageId=excluded.messageId,agentId=excluded.agentId,updatedAt=excluded.updatedAt`,
+      rowid=(SELECT coalesce(max(rowid),0)+1 FROM shared_memory),note=excluded.note,conversationId=excluded.conversationId,messageId=excluded.messageId,agentId=excluded.agentId,updatedAt=excluded.updatedAt`,
       randomUUID(), bucket, key, note.trim(), conversation.id, task.messageId, agentId, now());
     return { saved: true, scope, topic: key };
   }
-  sharedMemory(taskId: string) {
+  sharedMemory(taskId: string, before?: string) {
     const c = this.conversation(this.task(taskId).conversationId);
-    return this.all(`SELECT * FROM shared_memory WHERE scope='global' OR scope=? ORDER BY updatedAt DESC LIMIT 40`, "project:" + (c.projectId ?? ""));
+    let cutoff: number | null = null;
+    if (before !== undefined) {
+      const row = this.get("SELECT rowid FROM shared_memory WHERE id=? AND (scope='global' OR scope=?)", before, "project:" + (c.projectId ?? ""));
+      if (!row) throw new Error("Invalid memory cursor");
+      cutoff = row.rowid;
+    }
+    return this.all(`SELECT * FROM shared_memory WHERE (scope='global' OR scope=?) AND (? IS NULL OR rowid<?) ORDER BY rowid DESC LIMIT 5`, "project:" + (c.projectId ?? ""), cutoff, cutoff);
   }
   forgetMemory(taskId: string, id: string) {
     const c = this.conversation(this.task(taskId).conversationId);
