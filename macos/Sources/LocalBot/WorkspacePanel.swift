@@ -124,7 +124,7 @@ struct WorkspacePanel: View {
                 .contextMenu { Button("Close tab") { close(tab) } }
             }
           }
-        }
+        }.frame(height: 28)
         Menu { ForEach(WorkspaceKind.allCases, id: \.self) { kind in
           Button { model.openWorkspace(kind) } label: { Label(kind.rawValue, systemImage: kind.icon) }
         } } label: { Image(systemName: "plus").frame(width: 24, height: 28) }

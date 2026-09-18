@@ -391,13 +391,15 @@ struct ConversationView: View {
           a in ApprovalCard(approval: a)
         }
         composer
-      }.background(Color(nsColor: .textBackgroundColor)).transaction { $0.animation = nil }
+      }.frame(width: max(0, geometry.size.width - (!isSideChat && model.rightPanel != nil
+        ? min(max(280, panelWidth), max(280, geometry.size.width - 360)) + 10 : 0)))
+        .clipped().background(Color(nsColor: .textBackgroundColor)).transaction { $0.animation = nil }
       if !isSideChat, let panel = model.rightPanel {
         Group {
           if panel == .activity { ActivityView() }
           else { WorkspacePanel(state: model.workspace) }
         }
-        .frame(width: min(max(280, panelWidth), max(280, geometry.size.width - 280)))
+        .frame(width: min(max(280, panelWidth), max(280, geometry.size.width - 360)))
         .modifier(PanelGlass())
         .clipShape(RoundedRectangle(cornerRadius: 22))
         .overlay(RoundedRectangle(cornerRadius: 22).strokeBorder(.primary.opacity(0.12), lineWidth: 0.7))
