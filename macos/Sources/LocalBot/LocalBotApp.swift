@@ -411,7 +411,8 @@ struct ConversationView: View {
         .modifier(PanelGlass())
         .clipShape(RoundedRectangle(cornerRadius: 22))
         .overlay(RoundedRectangle(cornerRadius: 22).strokeBorder(.primary.opacity(0.12), lineWidth: 0.7))
-        .padding(.trailing, 10).padding(.bottom, 10).padding(.top, 4)
+        .padding(.trailing, 10).padding(.bottom, 10).padding(.top, 8)
+        .ignoresSafeArea(.container, edges: .top)
         .overlay(alignment: .leading) {
           PanelResizeHandle { delta in panelWidth = max(280, min(900, panelWidth - delta)) }.frame(width: 8)
         }
@@ -451,7 +452,7 @@ struct ConversationView: View {
         }.menuStyle(.borderlessButton).padding(.horizontal, 12).frame(maxWidth: model.rightPanel != nil ? 240 : 420)
       }
       if model.rightPanel == nil {
-        ToolbarItem { RightPanelControls() }
+        ToolbarItem { RightPanelControls().padding(.horizontal, 12).fixedSize() }
       }
     }
     }
