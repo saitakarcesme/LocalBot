@@ -225,5 +225,16 @@
       "all motion states not individually visually sampled",
       "fullscreen shortcut had no observed effect"
     ]
+  },
+  "sidebar_top_edge": {
+    "status": "installed_visually_verified",
+    "source": "717d106",
+    "verified": [
+      "full height right glass",
+      "collapsed icon inset",
+      "open close controls",
+      "fading titlebar material"
+    ],
+    "goal_resumed": false
   }
 }
