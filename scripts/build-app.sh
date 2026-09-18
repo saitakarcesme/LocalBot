@@ -3,11 +3,14 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 npm run build
 SWIFT_BUILD_DIR="${LOCALBOT_SWIFT_BUILD_DIR:-$HOME/Library/Caches/LocalBot/SwiftBuild}"
-swift build --package-path macos --scratch-path "$SWIFT_BUILD_DIR" -j 1
+GITHUB_ACTIONS=true swift build --package-path macos --scratch-path "$SWIFT_BUILD_DIR" -j 1
 APP_BUILD_DIR="${LOCALBOT_APP_BUILD_DIR:-$HOME/Library/Caches/LocalBot/AppBuild}"
 APP="$APP_BUILD_DIR/LocalBot.app"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources/runtime"
 cp "$SWIFT_BUILD_DIR/debug/LocalBot" "$APP/Contents/MacOS/LocalBot"
+for resource in "$SWIFT_BUILD_DIR"/debug/*.bundle; do
+  if [ -d "$resource" ]; then cp -R "$resource" "$APP/Contents/Resources/"; fi
+done
 cp runtime/dist/*.js "$APP/Contents/Resources/runtime/"
 NODE_VERSION=22.22.2
 NODE_ARCH="$(uname -m)"

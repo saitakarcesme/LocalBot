@@ -1,3 +1,8 @@
 // swift-tools-version: 6.0
 import PackageDescription
-let package = Package(name: "LocalBot", platforms: [.macOS(.v14)], products: [.executable(name: "LocalBot", targets: ["LocalBot"])], targets: [.executableTarget(name: "LocalBot", swiftSettings: [.swiftLanguageMode(.v5)])])
+let package = Package(
+  name: "LocalBot", platforms: [.macOS(.v14)],
+  products: [.executable(name: "LocalBot", targets: ["LocalBot"])],
+  dependencies: [.package(url: "https://github.com/migueldeicaza/SwiftTerm.git", exact: "1.13.0")],
+  targets: [.executableTarget(name: "LocalBot", dependencies: [.product(name: "SwiftTerm", package: "SwiftTerm")], swiftSettings: [.swiftLanguageMode(.v5)])]
+)
