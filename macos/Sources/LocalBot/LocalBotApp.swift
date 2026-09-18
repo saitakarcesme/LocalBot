@@ -188,7 +188,7 @@ struct MainView: View {
       }
     } detail: {
       if let c = model.selected {
-        ConversationView(conversation: c).id(c.id)
+        ConversationView(conversation: c)
       } else {
         ContentUnavailableView(
           "Your agents, one conversation away", systemImage: "bubble.left.and.bubble.right",
@@ -477,6 +477,10 @@ struct ConversationView: View {
     .onAppear {
       draft = UserDefaults.standard.string(forKey: "draft.\(conversation.id)") ?? ""
       composing = true
+    }
+    .onChange(of: conversation.id) { _, id in
+      draft = UserDefaults.standard.string(forKey: "draft.\(id)") ?? ""
+      attachments = []; following = true; initialScroll = true
     }
     .onChange(of: draft) { _, new in
       UserDefaults.standard.set(new, forKey: "draft.\(conversation.id)")
