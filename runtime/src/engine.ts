@@ -1,3 +1,4 @@
+import { WorkspaceLocks } from "./workspace-lock.js";
 import { conversationTool } from "./conversation-tools.js";
 import { isDeepStrictEqual } from "node:util";
 import { agentStepLimit } from "./run-limits.js";
@@ -22,6 +23,7 @@ export class Engine {
   private approvals = new Map<string, (allow: boolean) => void>();
   secrets = new Map<string, string>();
   private pumping = false;
+  private workspaceLocks = new WorkspaceLocks();
   private reservations = new Map<
     string,
     { providers: Set<string>; workspaces: string[] }
@@ -196,18 +198,7 @@ export class Engine {
             [...providers].some(
               (id) =>
                 busy.filter((r) => r.providers.has(id)).length >=
-                this.store.provider(id).concurrency,
-            )
-          )
-            continue;
-          if (
-            busy.some((r) =>
-              r.workspaces.some((w) =>
-                workspaces.some(
-                  (x) =>
-                    x === w || x.startsWith(w + "/") || w.startsWith(x + "/"),
-                ),
-              ),
+                (this.store.provider(id).kind === "codex" ? Math.max(2, this.store.provider(id).concurrency) : this.store.provider(id).concurrency),
             )
           )
             continue;
@@ -218,6 +209,7 @@ export class Engine {
         if (!chosen || !resources) break;
         this.reservations.set(chosen.id, resources);
         void this.run(chosen.id).finally(() => {
+          this.workspaceLocks.release(chosen.id);
           this.reservations.delete(chosen.id);
           void this.pump();
         });
@@ -587,6 +579,9 @@ export class Engine {
                   deniedActions.add(actionKey);
                   throw new Error("User denied this action. Do not retry it without a new explicit request.");
                 }
+              }
+              if (["write_file", "edit_file", "apply_patch", "terminal", "process_start", "process_input", "git", "mcp_call"].includes(name)) {
+                await this.workspaceLocks.acquire(taskId, agent.workspace, signal);
               }
               const afterApproval = this.store.agent(agentId);
               if ((project?.workspace ?? afterApproval.workspace) !== agent.workspace)

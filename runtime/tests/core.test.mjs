@@ -424,7 +424,7 @@ test("explicit tool requests cannot finish with fabricated text alone", async ()
   );
   mode = "tools";
 });
-test("overlapping workspaces serialize even when provider concurrency is raised", async () => {
+test("separate conversations reach approval concurrently in the same workspace", async () => {
   mode = "tools";
   const config = store.provider("local");
   store.saveProvider({ ...config, concurrency: 2 });
@@ -434,7 +434,7 @@ test("overlapping workspaces serialize even when provider concurrency is raised"
   const t1 = e.enqueue(c1.id, "Save a file"),
     t2 = e.enqueue(c2.id, "Save a file");
   await wait(() => store.task(t1.id).status === "awaiting_approval");
-  assert.equal(store.task(t2.id).status, "queued");
+  await wait(() => store.task(t2.id).status === "awaiting_approval");
   e.cancel(t1.id);
   await wait(() => store.task(t2.id).status === "awaiting_approval");
   e.cancel(t2.id);
