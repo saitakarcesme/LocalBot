@@ -182,8 +182,8 @@ struct TerminalPane: View {
         Spacer()
         Button("Focus terminal") { if let view = tab.terminal { view.window?.makeFirstResponder(view) } }
           .buttonStyle(PanelButtonStyle()).font(.caption)
-      }.padding(8)
-      TerminalSurface(tab: tab, openLink: { model.openInBrowser($0) }).frame(maxWidth: .infinity, maxHeight: .infinity)
+      }.padding(.horizontal, 16).padding(.vertical, 10)
+      TerminalSurface(tab: tab, openLink: { model.openInBrowser($0) }).padding(.horizontal, 14).padding(.vertical, 10).frame(maxWidth: .infinity, maxHeight: .infinity)
     }
   }
 }
