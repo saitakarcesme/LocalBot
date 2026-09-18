@@ -42,14 +42,14 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
 <plist version="1.0"><dict>
 <key>CFBundleName</key><string>LocalBot</string><key>CFBundleDisplayName</key><string>LocalBot</string>
 <key>CFBundleIdentifier</key><string>app.localbot.mac</string><key>CFBundleExecutable</key><string>LocalBot</string>
-<key>CFBundleIconFile</key><string>LocalBot</string>
+<key>CFBundleIconFile</key><string>LocalBotMascot</string>
 <key>CFBundlePackageType</key><string>APPL</string><key>CFBundleShortVersionString</key><string>0.2.0</string>
-<key>CFBundleVersion</key><string>2</string><key>LSMinimumSystemVersion</key><string>14.0</string>
+<key>CFBundleVersion</key><string>3</string><key>LSMinimumSystemVersion</key><string>14.0</string>
 <key>NSHighResolutionCapable</key><true/><key>NSAppTransportSecurity</key><dict><key>NSAllowsLocalNetworking</key><true/><key>NSAllowsArbitraryLoadsInWebContent</key><true/></dict>
 </dict></plist>
 PLIST
 swift scripts/make-icon.swift build/LocalBot.iconset
-iconutil -c icns build/LocalBot.iconset -o "$APP/Contents/Resources/LocalBot.icns"
+iconutil -c icns build/LocalBot.iconset -o "$APP/Contents/Resources/LocalBotMascot.icns"
 node scripts/write-build-manifest.mjs "$APP" --metadata
 xattr -cr "$APP"
 codesign --force --deep --sign - "$APP"
