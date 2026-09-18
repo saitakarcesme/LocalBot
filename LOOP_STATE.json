@@ -247,5 +247,12 @@
       "sidebar collapse reopen",
       "signed package verification"
     ]
+  },
+  "native_toolbar_hit_testing": {
+    "status": "installed_ax_and_visual_verified",
+    "source": "5adf7c0",
+    "native_tests": 7,
+    "goal_resumed": false,
+    "remaining_verification": "coordinate mouse click / frame-rate measurement blocked by CUA noWindowsAvailable"
   }
 }
