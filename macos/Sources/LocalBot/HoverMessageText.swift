@@ -58,8 +58,15 @@ final class LinkTextView: NSTextView {
   let measurementStorage = NSTextStorage()
   let measurementLayout = NSLayoutManager()
   let measurementContainer = NSTextContainer(size: .zero)
+  private let displayStorage = NSTextStorage()
   override init(frame: NSRect, textContainer: NSTextContainer?) {
-    super.init(frame: frame, textContainer: textContainer)
+    let displayContainer = textContainer ?? NSTextContainer(size: CGSize(width: 530, height: .greatestFiniteMagnitude))
+    if textContainer == nil {
+      let displayLayout = NSLayoutManager()
+      displayStorage.addLayoutManager(displayLayout)
+      displayLayout.addTextContainer(displayContainer)
+    }
+    super.init(frame: frame, textContainer: displayContainer)
     measurementContainer.lineFragmentPadding = 0
     measurementStorage.addLayoutManager(measurementLayout)
     measurementLayout.addTextContainer(measurementContainer)
