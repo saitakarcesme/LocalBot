@@ -18,6 +18,7 @@ enum WorkspaceKind: String, CaseIterable {
   var browser: BrowserSession?
   var terminal: LocalProcessTerminalView?
   var chat: AppModel?
+  var hasUnsavedChanges = false
   init(_ kind: WorkspaceKind, workspace: String) { self.kind = kind; self.workspace = workspace }
   func close() {
     browser?.web.stopLoading()
@@ -28,6 +29,13 @@ enum WorkspaceKind: String, CaseIterable {
 @MainActor final class WorkspaceState: ObservableObject {
   @Published var tabs: [WorkspaceTab] = []
   @Published var selected: UUID?
+  private var shutdownObserver: NSObjectProtocol?
+  init() {
+    shutdownObserver = NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification, object: nil, queue: .main) { [weak self] _ in
+      MainActor.assumeIsolated { self?.tabs.forEach { $0.close() } }
+    }
+  }
+  deinit { if let shutdownObserver { NotificationCenter.default.removeObserver(shutdownObserver) } }
   func add(_ tab: WorkspaceTab) { tabs.append(tab); selected = tab.id }
   func close(_ tab: WorkspaceTab) {
     tab.close(); tabs.removeAll { $0.id == tab.id }
@@ -83,6 +91,8 @@ extension AppModel {
 struct WorkspacePanel: View {
   @EnvironmentObject var model: AppModel
   @ObservedObject var state: WorkspaceState
+  @State private var pendingClose: WorkspaceTab?
+  @State private var confirmDiscard = false
   var body: some View {
     VStack(spacing: 0) {
       HStack(spacing: 10) {
@@ -99,7 +109,7 @@ struct WorkspacePanel: View {
             ForEach(state.tabs) { tab in
               HStack(spacing: 6) {
                 Button { state.selected = tab.id } label: { Label(tab.kind.rawValue, systemImage: tab.kind.icon) }.buttonStyle(.plain)
-                Button { state.close(tab) } label: { Image(systemName: "xmark").font(.system(size: 8)) }.buttonStyle(.plain).help("Close tab")
+                Button { if tab.hasUnsavedChanges { pendingClose = tab; confirmDiscard = true } else { state.close(tab) } } label: { Image(systemName: "xmark").font(.system(size: 8)) }.buttonStyle(.plain).help("Close tab")
               }.font(.caption).padding(8).background(state.selected == tab.id ? Color.primary.opacity(0.1) : .clear, in: RoundedRectangle(cornerRadius: 8))
             }
           }.padding(.horizontal, 8)
@@ -126,6 +136,10 @@ struct WorkspacePanel: View {
         }.frame(maxWidth: .infinity, maxHeight: .infinity)
       }
     }.background(.regularMaterial)
+      .confirmationDialog("Discard unsaved file changes and close this tab?", isPresented: $confirmDiscard) {
+        Button("Discard changes", role: .destructive) { if let pendingClose { state.close(pendingClose) }; pendingClose = nil }
+        Button("Cancel", role: .cancel) { pendingClose = nil }
+      }
       .dropDestination(for: String.self) { values, _ in
         guard let value = values.first, value.hasPrefix("localbot-conversation:") else { return false }
         model.openWorkspace(.chat, conversationId: String(value.dropFirst(22)))
@@ -139,7 +153,7 @@ struct WorkspaceTabView: View {
     switch tab.kind {
     case .browser: if let browser = tab.browser { BrowserPane(session: browser) }
     case .terminal: TerminalPane(tab: tab)
-    case .files: WorkspaceFiles(root: tab.workspace)
+    case .files: WorkspaceFiles(root: tab.workspace, dirtyChanged: { tab.hasUnsavedChanges = $0 })
     case .review: WorkspaceReview(root: tab.workspace)
     case .chat: if let model = tab.chat { SideChatPane(model: model) }
     }

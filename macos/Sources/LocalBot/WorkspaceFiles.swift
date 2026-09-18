@@ -37,6 +37,7 @@ enum WorkspaceDisk {
 struct WorkspaceFiles: View {
   @EnvironmentObject var model: AppModel
   let root: String
+  var dirtyChanged: (Bool) -> Void = { _ in }
   @State private var folder: URL?
   @State private var entries: [WorkspaceEntry] = []
   @State private var selected: URL?
@@ -69,7 +70,8 @@ struct WorkspaceFiles: View {
           Button { choose(entry) } label: { Label(entry.url.lastPathComponent, systemImage: entry.directory ? "folder" : "doc.text").frame(maxWidth: .infinity, alignment: .leading) }.buttonStyle(.plain)
         }.listStyle(.plain)
       }
-    }.task { if folder == nil { list(URL(fileURLWithPath: root)) } }
+    }.onChange(of: dirty) { _, value in dirtyChanged(value) }
+      .task { if folder == nil { list(URL(fileURLWithPath: root)) } }
       .confirmationDialog("Discard unsaved changes?", isPresented: $showDiscard) {
         Button("Discard", role: .destructive) { content = original; if let pending { load(pending) } }
         Button("Cancel", role: .cancel) { pending = nil }
