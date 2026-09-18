@@ -58,9 +58,16 @@ struct Avatar: View {
   var agent: Agent?
   var group = false
   var size: CGFloat = 40
+  var motion: LocalBotAnimation? = nil
+  var palette: LocalBotPalette {
+    switch agent?.color { case "purple": return .lavender; case "orange": return .peach
+    case "green": return .mint; case "pink": return .rose; default: return group ? .lilac : .sky }
+  }
   var body: some View {
-    BotMark(tint: group ? .indigo : agent?.tint ?? .gray)
-      .frame(width: size, height: size).clipShape(Circle()).accessibilityHidden(true)
+    Group {
+      if let motion { LocalBotMascot(state: motion, color: palette) }
+      else { LocalBotDrawing(pose: LocalBotMotion.neutral, color: palette) }
+    }.frame(width: size, height: size).accessibilityHidden(true)
   }
 }
 struct TypingDots: View {
@@ -395,7 +402,8 @@ struct ConversationView: View {
         ? min(max(280, panelWidth), max(280, geometry.size.width - 360)) + 10 : 0)))
         .clipped().background(Color(nsColor: .textBackgroundColor)).transaction { $0.animation = nil }
       if !isSideChat, let panel = model.rightPanel {
-        Group {
+        VStack(spacing: 0) {
+          HStack { Spacer(); RightPanelControls() }.padding(.horizontal, 16).padding(.vertical, 10)
           if panel == .activity { ActivityView() }
           else { WorkspacePanel(state: model.workspace) }
         }
@@ -426,7 +434,7 @@ struct ConversationView: View {
     .toolbarBackground(.hidden, for: .windowToolbar)
     .toolbar {
       if !isSideChat {
-      ToolbarItem(placement: .principal) {
+      ToolbarItem(placement: .navigation) {
         Menu {
           ForEach(members) { a in Button("\(a.name) · \(a.role)") { model.editingAgent = a } }
         } label: {
@@ -440,26 +448,10 @@ struct ConversationView: View {
               ).font(.system(size: 10)).foregroundStyle(.secondary)
             }
           }
-        }.menuStyle(.borderlessButton).frame(maxWidth: model.rightPanel != nil ? 180 : 420)
+        }.menuStyle(.borderlessButton).padding(.horizontal, 12).frame(maxWidth: model.rightPanel != nil ? 240 : 420)
       }
-      ToolbarItem {
-        Button {
-          model.showActivity.toggle()
-        } label: {
-          Image(systemName: "sidebar.right")
-        }.help("Activity and artifacts")
-      }
-      ToolbarItem {
-        Button { model.rightPanel = model.rightPanel == .workspace ? nil : .workspace } label: {
-          Image(systemName: "rectangle.split.2x1")
-        }.help("Workspace: terminal, browser, files, review and side chat")
-      }
-      ToolbarItem {
-        Menu {
-          ForEach(members) { a in Button(a.name) { model.editingAgent = a } }
-        } label: {
-          Image(systemName: "info.circle")
-        }.help("Contact details")
+      if model.rightPanel == nil {
+        ToolbarItem { RightPanelControls() }
       }
     }
     }
@@ -477,7 +469,7 @@ struct ConversationView: View {
   }
   var progressIndicator: some View {
     HStack(spacing: 7) {
-      if let activeAgent { Avatar(agent: activeAgent, size: 25) }
+      if let activeAgent { Avatar(agent: activeAgent, size: 32, motion: progress == .approval ? .needsInput : (model.activity.last?.status == "running" && model.activity.last?.name != "thinking" ? .working : .thinking)) }
       switch progress {
       case .typing:
         TypingDots().accessibilityLabel("\(activeAgent?.name ?? "Agent") is typing")
@@ -488,8 +480,8 @@ struct ConversationView: View {
       case .sending:
         Text("Sending…").font(.caption).foregroundStyle(.secondary)
       case .preparing:
-        Text(conversation.automatic == 1 ? "Choosing your team…" : "Preparing…")
-          .font(.caption).foregroundStyle(.secondary)
+        Image(systemName: "sparkles").font(.system(size: 16)).foregroundStyle(.secondary)
+          .modifier(ActivityShimmer(active: true)).accessibilityLabel("Preparing your team")
       case .hidden: EmptyView()
       }
       Spacer()
@@ -602,7 +594,13 @@ struct MessageBubble: View {
   var group: Bool
   var beginsGroup = true
   var endsGroup = true
+  @State private var bubbleWidth: CGFloat = 256
   var outgoing: Bool { message.role == "user" }
+  var avatarMotion: LocalBotAnimation? {
+    guard message.id == model.messages.last(where: { $0.role == "assistant" })?.id, model.activeTask != nil else { return nil }
+    if model.activeTask?.status == "awaiting_approval" { return .needsInput }
+    return actions.last?.status == "running" && actions.last?.name != "thinking" ? .working : .thinking
+  }
   var actions: [Activity] {
     guard message.role == "assistant", let run = message.runId else { return [] }
     let next = model.messages.first { $0.runId == run && $0.role == "assistant" && $0.createdAt > message.createdAt }
@@ -615,11 +613,11 @@ struct MessageBubble: View {
         .center
       ).padding(.horizontal, 40).textSelection(.enabled)
     } else {
-      HStack(alignment: .bottom, spacing: 7) {
+      HStack(alignment: .top, spacing: 7) {
         if outgoing {
           Spacer(minLength: 12)
-        } else if group {
-          Avatar(agent: model.agent(message.agentId), size: 25).opacity(endsGroup ? 1 : 0)
+        } else {
+          Avatar(agent: model.agent(message.agentId), size: 32, motion: avatarMotion).padding(.top, group && beginsGroup ? 16 : 2)
         }
         VStack(alignment: outgoing ? .trailing : .leading, spacing: 4) {
           if group && !outgoing && beginsGroup {
@@ -636,9 +634,11 @@ struct MessageBubble: View {
                   ? Color(nsColor: .systemBlue)
                   : (colorScheme == .dark ? Color(white: 0.23) : Color(white: 0.9)),
                 in: RoundedRectangle(cornerRadius: 18)
-              ).fixedSize(horizontal: false, vertical: true).zIndex(1)
+              ).fixedSize(horizontal: false, vertical: true)
+              .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { bubbleWidth = $0 }
+              .zIndex(1)
           }
-          if !actions.isEmpty { MessageActivityPanel(actions: actions).zIndex(0) }
+          if !actions.isEmpty { MessageActivityPanel(actions: actions, width: bubbleWidth * 0.9).zIndex(0) }
           }
           ForEach(message.attachments) { a in
             Button {
@@ -656,6 +656,13 @@ struct MessageBubble: View {
               }
             }.padding(.horizontal, 8).padding(.vertical, 3).background(.quaternary, in: Capsule())
               .padding(.horizontal, 6)
+          }
+          if !outgoing {
+            Button {
+              NSPasteboard.general.clearContents()
+              NSPasteboard.general.setString(message.content, forType: .string)
+            } label: { Image(systemName: "doc.on.doc").font(.system(size: 10)).frame(width: 24, height: 22) }
+              .buttonStyle(PanelButtonStyle()).foregroundStyle(.secondary).help("Copy response").accessibilityLabel("Copy response")
           }
           if endsGroup { HStack(spacing: 8) {
             Text(dateFrom(message.createdAt), style: .time).font(.system(size: 9)).foregroundStyle(
@@ -754,7 +761,6 @@ struct AvatarStack: View {
       }
       ForEach(Array(agents.prefix(3).enumerated()), id: \.element.id) { index, agent in
         Avatar(agent: agent, size: size)
-          .overlay(Circle().stroke(.background, lineWidth: 2))
           .offset(x: CGFloat(index) * size * 0.36)
       }
     }.frame(width: size * (1 + CGFloat(max(0, min(3, agents.count) - 1)) * 0.36), height: size)

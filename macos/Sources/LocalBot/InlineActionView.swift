@@ -72,18 +72,19 @@ struct ActivityShimmer: ViewModifier {
 
 struct MessageActivityPanel: View {
   let actions: [Activity]
+  var width: CGFloat = 256
   @State private var expanded = false
   private var active: Bool { actions.contains { ["pending", "running"].contains($0.status) } }
   var body: some View {
     Button { expanded.toggle() } label: {
       HStack(spacing: 8) {
-        Image(systemName: "terminal")
-        Text(active ? (actions.last?.name == "thinking" ? "Thinking" : "Working · " + (actions.last?.name ?? "")) : "View activity")
+        Image(systemName: ActivityLabel.icon(actions.last?.name ?? ""))
+        Text(ActivityLabel.title(actions.last?.name ?? ""))
           .lineLimit(1).truncationMode(.tail).modifier(ActivityShimmer(active: active))
         Spacer(minLength: 0)
         Image(systemName: "chevron.up").font(.system(size: 9))
       }.font(.system(size: 11, weight: .medium)).padding(.horizontal, 12)
-        .padding(.top, 12).frame(width: 256, height: 44).contentShape(Rectangle())
+        .padding(.top, 12).frame(width: max(80, width), height: 44).contentShape(Rectangle())
         .background(.quaternary.opacity(0.4), in: RoundedRectangle(cornerRadius: 10))
     }.buttonStyle(.plain).foregroundStyle(.secondary)
       .popover(isPresented: $expanded, arrowEdge: .top) {
