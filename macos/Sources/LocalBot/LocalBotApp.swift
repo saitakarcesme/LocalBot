@@ -603,7 +603,7 @@ struct MessageBubble: View {
       return actions.last?.status == "running" && actions.last?.name != "thinking" ? .working : .thinking
     }
     guard abs(dateFrom(message.createdAt).timeIntervalSinceNow) < 4, model.activeTask == nil else { return nil }
-    let status = model.currentTasks.last?.status ?? ""
+    let status = model.currentTasks.first(where: { $0.id == message.taskId })?.status ?? ""
     if status == "cancelled" { return .stopped }
     if status.contains("error") || status == "failed" { return .error }
     return status == "completed" ? .success : nil
