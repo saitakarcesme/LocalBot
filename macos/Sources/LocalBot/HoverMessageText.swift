@@ -35,20 +35,17 @@ struct HoverMessageText: NSViewRepresentable {
       result.append(NSAttributedString(string: String(parsed[run.range].characters), attributes: attributes))
     }
     view.textStorage?.setAttributedString(result)
+    view.measurementStorage.setAttributedString(result)
   }
   func sizeThatFits(_ proposal: ProposedViewSize, nsView: LinkTextView, context: Context) -> CGSize? {
-    guard let storage = nsView.textStorage else { return nil }
+    guard nsView.textStorage != nil else { return nil }
     // SwiftUI probes several widths. Measure a separate layout so a discarded
     // narrow proposal cannot leave the displayed text container one glyph wide.
     let width = max(1, proposal.width ?? 530)
     if let cached = nsView.measurements[width] { return cached }
-    let measurement = NSTextStorage(attributedString: storage)
-    let layout = NSLayoutManager()
-    let container = NSTextContainer(size: CGSize(width: max(1, proposal.width ?? 530), height: .greatestFiniteMagnitude))
-    container.lineFragmentPadding = 0
-    measurement.addLayoutManager(layout); layout.addTextContainer(container)
-    layout.ensureLayout(for: container)
-    let size = layout.usedRect(for: container).size
+    nsView.measurementContainer.containerSize = CGSize(width: width, height: .greatestFiniteMagnitude)
+    nsView.measurementLayout.ensureLayout(for: nsView.measurementContainer)
+    let size = nsView.measurementLayout.usedRect(for: nsView.measurementContainer).size
     let result = CGSize(width: ceil(size.width), height: ceil(size.height))
     if nsView.measurements.count > 32 { nsView.measurements.removeAll() }
     nsView.measurements[width] = result
@@ -57,6 +54,17 @@ struct HoverMessageText: NSViewRepresentable {
 }
 
 final class LinkTextView: NSTextView {
+  // Reuse one TextKit graph while native split-view animation proposes widths.
+  let measurementStorage = NSTextStorage()
+  let measurementLayout = NSLayoutManager()
+  let measurementContainer = NSTextContainer(size: .zero)
+  override init(frame: NSRect, textContainer: NSTextContainer?) {
+    super.init(frame: frame, textContainer: textContainer)
+    measurementContainer.lineFragmentPadding = 0
+    measurementStorage.addLayoutManager(measurementLayout)
+    measurementLayout.addTextContainer(measurementContainer)
+  }
+  required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
   var openLink: ((URL) -> Void)?
   override func clicked(onLink link: Any, at charIndex: Int) {
     if let url = link as? URL { openLink?(url) }
