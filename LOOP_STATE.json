@@ -187,5 +187,24 @@
       "physical drag and divider gesture: desktop control interrupted"
     ],
     "remaining_parity": "External vendor/host adapters still incomplete"
+  },
+  "workspace_glass_redesign": {
+    "status": "installed_verified_with_physical_drag_check_pending",
+    "source_commit": "5ea321a",
+    "native_tests": 6,
+    "preview_100_repeats_ms_before": 4603,
+    "preview_100_repeats_ms_after": "3–5",
+    "verified": [
+      "native glass normal and fullscreen",
+      "compact project rows with supplied colored logo",
+      "browser navigation and retained tab session",
+      "real PTY output",
+      "expandable activity output",
+      "file draft state retention"
+    ],
+    "not_verified": [
+      "physical divider drag: CUA noWindowsAvailable",
+      "frame-rate benchmark / exhaustive cursor hover matrix"
+    ]
   }
 }
