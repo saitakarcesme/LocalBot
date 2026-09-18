@@ -2,6 +2,7 @@ import SwiftUI
 import AppKit
 
 struct HoverMessageText: NSViewRepresentable {
+  @EnvironmentObject var model: AppModel
   var content: String
   var fontSize: CGFloat = 14
   func makeNSView(context: Context) -> LinkTextView {
@@ -17,6 +18,7 @@ struct HoverMessageText: NSViewRepresentable {
     return view
   }
   func updateNSView(_ view: LinkTextView, context: Context) {
+    view.openLink = { url in model.openInBrowser(url) }
     guard view.source != content || view.renderedFontSize != fontSize else { return }
     view.source = content
     view.renderedFontSize = fontSize
@@ -49,6 +51,11 @@ struct HoverMessageText: NSViewRepresentable {
 }
 
 final class LinkTextView: NSTextView {
+  var openLink: ((URL) -> Void)?
+  override func clicked(onLink link: Any, at charIndex: Int) {
+    if let url = link as? URL { openLink?(url) }
+    else if let value = link as? String, let url = URL(string: value) { openLink?(url) }
+  }
   var source = ""
   var renderedFontSize: CGFloat = 0
   private var hoverRange: NSRange?
