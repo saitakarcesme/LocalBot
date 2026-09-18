@@ -78,7 +78,6 @@ extension AppModel {
       child.connection = connection
       child.selectedId = conversationId
       await child.refresh()
-      child.start()
       let tab = WorkspaceTab(.chat, workspace: workspacePath)
       tab.chat = child; workspace.add(tab); rightPanel = .workspace
       await refresh()
@@ -169,7 +168,8 @@ struct SideChatPane: View {
       if let conversation = model.selected {
         ConversationView(conversation: conversation, isSideChat: true).environmentObject(model).id(conversation.id)
       } else { ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity) }
-    }
+    }.onAppear { model.start() }
+      .onDisappear { model.polling?.cancel(); model.polling = nil }
   }
 }
 struct TerminalPane: View {
