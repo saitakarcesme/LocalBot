@@ -183,7 +183,7 @@ const server = createServer(async (req, res) => {
         res,
         200,
         store.all(
-          "SELECT t.*,r.agentId,r.taskId FROM tool_calls t JOIN runs r ON r.id=t.runId JOIN tasks task ON task.id=r.taskId WHERE task.conversationId=? ORDER BY t.createdAt",
+          "SELECT t.*,r.agentId,r.taskId FROM (SELECT * FROM tool_calls UNION ALL SELECT * FROM run_events) t JOIN runs r ON r.id=t.runId JOIN tasks task ON task.id=r.taskId WHERE task.conversationId=? ORDER BY t.createdAt",
           u.searchParams.get("conversationId") ?? "",
         ),
       );

@@ -35,7 +35,7 @@ export class CodexProvider implements ModelProvider {
       return { ok: true, models: models.data.map((m: any) => m.model) as string[] };
     } finally { rpc.close(); }
   }
-  async generate(messages: Chat[], tools: ToolDefinition[], signal: AbortSignal, onProgress?: (phase: string) => void): Promise<Generation> {
+  async generate(messages: Chat[], tools: ToolDefinition[], signal: AbortSignal, onProgress?: (phase: string, summary?: string) => void): Promise<Generation> {
     // Validate the complete decision before exposing any calls to the executor.
     // A malformed JSON decision can be regenerated safely: none of its actions ran.
     for (let attempt = 0; ; attempt++) {
@@ -47,7 +47,7 @@ export class CodexProvider implements ModelProvider {
       }
     }
   }
-  protected async generateDecision(messages: Chat[], tools: ToolDefinition[], signal: AbortSignal, onProgress?: (phase: string) => void): Promise<Generation> {
+  protected async generateDecision(messages: Chat[], tools: ToolDefinition[], signal: AbortSignal, onProgress?: (phase: string, summary?: string) => void): Promise<Generation> {
     const characterLimit = decisionCharacterLimit(this.config.maxTokens);
     const input = await codexInput(messages, tools);
     signal.throwIfAborted();
@@ -71,6 +71,7 @@ export class CodexProvider implements ModelProvider {
       const finished = new Promise<string>((resolve, reject) => {
         let answer = "";
         let receivedCharacters = 0;
+        let summary = "";
         const abort = () => { reject(deadline.reason); rpc.close(); };
         deadline.addEventListener("abort", abort, { once: true });
         rpc.onClose = error => { deadline.removeEventListener("abort", abort); reject(error); };
@@ -86,7 +87,12 @@ export class CodexProvider implements ModelProvider {
             }
             onProgress?.("Writing response");
           }
-          else if (method.startsWith("item/reasoning")) onProgress?.("Thinking through the next step");
+          else if (method === "item/reasoning/summaryTextDelta" && typeof params.delta === "string") {
+            summary = (summary + params.delta).slice(-12000);
+            onProgress?.("Thinking", summary);
+          } else if (method === "item/reasoning/summaryPartAdded") {
+            summary = (summary + "\n").slice(-12000);
+          } else if (method === "item/started" && params.item?.type === "reasoning") onProgress?.("Thinking");
           if (method === "item/completed" && params.item?.type === "agentMessage") answer = params.item.text;
           if (method === "turn/completed") {
             deadline.removeEventListener("abort", abort);
@@ -98,7 +104,7 @@ export class CodexProvider implements ModelProvider {
       // Attach rejection handling before starting the turn to avoid unhandled aborts.
       finished.catch(() => {});
       await rpc.request("turn/start", {
-        threadId: thread.id, environments: [], outputSchema: responseSchema,
+        threadId: thread.id, environments: [], outputSchema: responseSchema, summary: "auto",
         input,
       }, deadline);
       const answer = await finished;

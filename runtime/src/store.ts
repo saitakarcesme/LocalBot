@@ -25,6 +25,7 @@ export class Store {
       CREATE TABLE IF NOT EXISTS threads(id TEXT PRIMARY KEY, conversationId TEXT NOT NULL REFERENCES conversations(id), title TEXT NOT NULL, createdAt TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS tasks(id TEXT PRIMARY KEY, conversationId TEXT NOT NULL REFERENCES conversations(id), threadId TEXT REFERENCES threads(id), messageId TEXT NOT NULL, prompt TEXT NOT NULL, status TEXT NOT NULL, createdAt TEXT NOT NULL, updatedAt TEXT NOT NULL, error TEXT);
       CREATE TABLE IF NOT EXISTS runs(id TEXT PRIMARY KEY, taskId TEXT NOT NULL REFERENCES tasks(id), agentId TEXT NOT NULL, status TEXT NOT NULL, checkpoint TEXT NOT NULL DEFAULT '[]', createdAt TEXT NOT NULL, updatedAt TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS run_events(id TEXT PRIMARY KEY,runId TEXT NOT NULL REFERENCES runs(id),name TEXT NOT NULL,arguments TEXT NOT NULL DEFAULT '{}',status TEXT NOT NULL,output TEXT,createdAt TEXT NOT NULL,updatedAt TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS run_progress(runId TEXT PRIMARY KEY REFERENCES runs(id), phase TEXT NOT NULL, updatedAt TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS messages(id TEXT PRIMARY KEY, conversationId TEXT NOT NULL REFERENCES conversations(id), taskId TEXT, runId TEXT, agentId TEXT, role TEXT NOT NULL, content TEXT NOT NULL, createdAt TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS reactions(messageId TEXT NOT NULL REFERENCES messages(id), actor TEXT NOT NULL, emoji TEXT NOT NULL, PRIMARY KEY(messageId,actor));
@@ -473,6 +474,7 @@ export class Store {
       );
       this.exec("UPDATE runs SET status='interrupted',updatedAt=? WHERE status IN ('running','awaiting_approval')", date);
       this.exec("UPDATE tool_calls SET status='interrupted',updatedAt=? WHERE status IN ('running','pending')", date);
+      this.exec("UPDATE run_events SET status='interrupted',updatedAt=? WHERE status='running'", date);
       this.exec("UPDATE approvals SET status='expired' WHERE status='pending'");
     });
   }
