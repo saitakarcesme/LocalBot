@@ -462,7 +462,8 @@ struct ConversationView: View {
     return nil
   }
   var progress: ConversationProgress.Indicator {
-    ConversationProgress.indicator(task: model.activeTask, run: activeRun, sending: model.sending && model.sendingConversationId == conversation.id)
+    if model.activity.contains(where: { $0.taskId == model.activeTask?.id && $0.name != "thinking" && $0.status == "running" }) { return .hidden }
+    return ConversationProgress.indicator(task: model.activeTask, run: activeRun, sending: model.sending && model.sendingConversationId == conversation.id)
   }
   var emptyConversation: some View {
     VStack(spacing: 12) {
