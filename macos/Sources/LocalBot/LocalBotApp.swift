@@ -59,12 +59,8 @@ struct Avatar: View {
   var group = false
   var size: CGFloat = 40
   var body: some View {
-    ZStack {
-      Circle().fill((group ? Color.indigo : agent?.tint ?? .gray).gradient)
-      Image(systemName: group ? "person.2.fill" : agent?.avatar ?? "person.fill").font(
-        .system(size: size * 0.43, weight: .medium)
-      ).foregroundStyle(.white)
-    }.frame(width: size, height: size).accessibilityHidden(true)
+    BotMark(tint: group ? .indigo : agent?.tint ?? .gray)
+      .frame(width: size, height: size).clipShape(Circle()).accessibilityHidden(true)
   }
 }
 struct TypingDots: View {
@@ -198,7 +194,7 @@ struct MainView: View {
     .overlay {
       if !model.hasLoaded {
         VStack(spacing: 18) {
-          Image(systemName: "bubble.left.and.bubble.right.fill").font(.system(size: 68)).foregroundStyle(.blue.gradient)
+          BotMark(tint: .blue).frame(width: 88, height: 88).clipShape(RoundedRectangle(cornerRadius: 22))
           Text("LocalBot").font(.largeTitle.bold())
           Text("Your team, right here.").foregroundStyle(.secondary)
           ProgressView().controlSize(.small)
@@ -395,7 +391,7 @@ struct ConversationView: View {
           a in ApprovalCard(approval: a)
         }
         composer
-      }.background(Color(nsColor: .textBackgroundColor))
+      }.background(Color(nsColor: .textBackgroundColor)).transaction { $0.animation = nil }
       if !isSideChat, let panel = model.rightPanel {
         Group {
           if panel == .activity { ActivityView() }
@@ -412,6 +408,7 @@ struct ConversationView: View {
         .transition(.opacity.combined(with: .offset(x: 14)))
       }
     }
+    .animation(.easeInOut(duration: 0.18), value: model.rightPanel)
     .overlay(alignment: .trailing) {
       if !isSideChat && model.rightPanel == nil {
         Color.clear.frame(width: 32).dropDestination(for: String.self) { values, _ in
