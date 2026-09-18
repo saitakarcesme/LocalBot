@@ -9,7 +9,12 @@ APP="$APP_BUILD_DIR/LocalBot.app"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources/runtime"
 cp "$SWIFT_BUILD_DIR/debug/LocalBot" "$APP/Contents/MacOS/LocalBot"
 for resource in "$SWIFT_BUILD_DIR"/debug/*.bundle; do
-  if [ -d "$resource" ]; then cp -R "$resource" "$APP/Contents/Resources/"; chmod -R u+w "$APP/Contents/Resources/$(basename "$resource")"; fi
+  if [ -d "$resource" ]; then
+    target="$APP/Contents/Resources/$(basename "$resource")"
+    if [ -d "$target" ]; then chmod -R u+w "$target"; fi
+    cp -R "$resource" "$APP/Contents/Resources/"
+    chmod -R u+w "$target"
+  fi
 done
 cp runtime/dist/*.js "$APP/Contents/Resources/runtime/"
 NODE_VERSION=22.22.2
