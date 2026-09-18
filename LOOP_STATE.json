@@ -193,7 +193,7 @@
     "source_commit": "5ea321a",
     "native_tests": 6,
     "preview_100_repeats_ms_before": 4603,
-    "preview_100_repeats_ms_after": "3\u20135",
+    "preview_100_repeats_ms_after": "3–5",
     "verified": [
       "native glass normal and fullscreen",
       "compact project rows with supplied colored logo",
@@ -254,5 +254,15 @@
     "native_tests": 7,
     "goal_resumed": false,
     "remaining_verification": "coordinate mouse click / frame-rate measurement blocked by CUA noWindowsAvailable"
+  },
+  "side_chat_shared_memory": {
+    "date": "2026-09-19",
+    "status": "implemented_tested_install_pending_active_user_task",
+    "code_commit": "57f922d",
+    "runtime_tests_passed": 128,
+    "focused_tests_passed": 5,
+    "registered_tools": 38,
+    "blocking_task": "game4 racing game awaiting write_file approval",
+    "notes": "User decision pending: preserve active task or stop it to install. No autonomous loop started."
   }
 }
