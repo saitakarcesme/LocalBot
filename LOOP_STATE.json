@@ -162,5 +162,30 @@
     "working_checkout": "/Users/ibrahimsaitakarcesme/LocalBot-repair",
     "original_checkout": "iCloud dataless; hydration requested; preserved",
     "goal_resumed": false
+  },
+  "workspace_panels": {
+    "status": "installed_live_verified_with_drag_gesture_check_pending",
+    "installed_source": "be001ab0eaa18481967d7cd605ed58251d094734",
+    "runtime_tests_passed": 123,
+    "native_tests_passed": 3,
+    "built_in_tools": 36,
+    "tool_branch_completed_changes_integrated": true,
+    "goal_resumed": false,
+    "working_checkout": "/Users/ibrahimsaitakarcesme/LocalBot-repair",
+    "verified": [
+      "Shift+Return newline",
+      "PTY commands and Ctrl-C",
+      "embedded HTTPS and back navigation",
+      "message link opens internally",
+      "Files opens actual HTML and launches embedded browser",
+      "independent main and side chat responses in same project",
+      "horizontal activity scrolling",
+      "fullscreen toolbar and header",
+      "mutually exclusive right panels"
+    ],
+    "not_verified": [
+      "physical drag and divider gesture: desktop control interrupted"
+    ],
+    "remaining_parity": "External vendor/host adapters still incomplete"
   }
 }
