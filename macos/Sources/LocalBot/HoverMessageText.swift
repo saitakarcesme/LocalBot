@@ -60,7 +60,7 @@ final class LinkTextView: NSTextView {
   let measurementContainer = NSTextContainer(size: .zero)
   private let displayStorage = NSTextStorage()
   override init(frame: NSRect, textContainer: NSTextContainer?) {
-    let displayContainer = textContainer ?? NSTextContainer(size: CGSize(width: 530, height: .greatestFiniteMagnitude))
+    let displayContainer = textContainer ?? NSTextContainer(size: CGSize(width: 530, height: CGFloat.greatestFiniteMagnitude))
     if textContainer == nil {
       let displayLayout = NSLayoutManager()
       displayStorage.addLayoutManager(displayLayout)
