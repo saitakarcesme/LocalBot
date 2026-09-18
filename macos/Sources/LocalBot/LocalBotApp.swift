@@ -617,7 +617,7 @@ struct MessageBubble: View {
     } else {
       HStack(alignment: .bottom, spacing: 7) {
         if outgoing {
-          Spacer(minLength: 80)
+          Spacer(minLength: 12)
         } else if group {
           Avatar(agent: model.agent(message.agentId), size: 25).opacity(endsGroup ? 1 : 0)
         }
@@ -684,8 +684,8 @@ struct MessageBubble: View {
               }
             }
           }
-        if !outgoing { Spacer(minLength: 80) }
-      }.padding(.horizontal, 24)
+        if !outgoing { Spacer(minLength: 12) }
+      }.padding(.horizontal, 16)
     }
   }
 }
