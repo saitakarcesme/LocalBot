@@ -513,13 +513,9 @@ struct ConversationView: View {
           AttachmentPicker { urls in attachments += await model.attach(urls: urls) }
         }
         HStack(alignment: .bottom, spacing: 8) {
-          TextField("Message", text: $draft, axis: .vertical).lineLimit(1...7).textFieldStyle(
-            .plain
-          ).font(.system(size: messageFontSize)).focused($composing)
-            .onKeyPress(keys: [.return]) { event in
-              if event.modifiers.contains(.shift) { return .ignored }
-              send()
-              return .handled
+          ComposerEditor(text: $draft, fontSize: messageFontSize, send: send)
+            .overlay(alignment: .topLeading) {
+              if draft.isEmpty { Text("Message").foregroundStyle(.tertiary).allowsHitTesting(false).padding(.top, 2) }
             }.padding(.vertical, 9)
           if let t = model.stoppableTask {
             Button {
