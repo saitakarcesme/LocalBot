@@ -403,7 +403,7 @@ struct ConversationView: View {
         composer
       }.frame(width: max(0, geometry.size.width - (!isSideChat && model.rightPanel != nil
         ? min(max(280, panelWidth), max(280, geometry.size.width - 360)) + 10 : 0)))
-        .clipped().background(Color(nsColor: .textBackgroundColor), ignoresSafeAreaEdges: []).transaction { $0.animation = nil }
+        .background(Color(nsColor: .textBackgroundColor), ignoresSafeAreaEdges: []).transaction { $0.animation = nil }
       if !isSideChat, let panel = model.rightPanel {
         VStack(spacing: 0) {
           Color.clear.frame(height: 38).accessibilityHidden(true)
