@@ -193,7 +193,7 @@ struct TerminalSurface: NSViewRepresentable {
   func makeNSView(context: Context) -> LocalProcessTerminalView {
     if let existing = tab.terminal { return existing }
     let view = WorkspaceTerminalView(frame: NSRect(x: 0, y: 0, width: 500, height: 500))
-    view.openLinkInside = openLink
+    view.routeLinks(openLink)
     view.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
     view.nativeForegroundColor = .textColor; view.nativeBackgroundColor = .textBackgroundColor
     view.startProcess(executable: "/bin/zsh", args: ["-l"], currentDirectory: tab.workspace)
@@ -204,8 +204,22 @@ struct TerminalSurface: NSViewRepresentable {
 }
 
 final class WorkspaceTerminalView: LocalProcessTerminalView {
-  var openLinkInside: ((URL) -> Void)?
-  override func requestOpenLink(source: TerminalView, link: String, params: [String: String]) {
-    if let url = URL(string: link) { openLinkInside?(url) }
+  private var linkDelegate: TerminalLinkDelegate?
+  func routeLinks(_ open: @escaping (URL) -> Void) {
+    let proxy = TerminalLinkDelegate(owner: self, open: open)
+    linkDelegate = proxy; terminalDelegate = proxy
   }
+}
+final class TerminalLinkDelegate: TerminalViewDelegate {
+  weak var owner: LocalProcessTerminalView?
+  let open: (URL) -> Void
+  init(owner: LocalProcessTerminalView, open: @escaping (URL) -> Void) { self.owner = owner; self.open = open }
+  func sizeChanged(source: TerminalView, newCols: Int, newRows: Int) { owner?.sizeChanged(source: source, newCols: newCols, newRows: newRows) }
+  func setTerminalTitle(source: TerminalView, title: String) { owner?.setTerminalTitle(source: source, title: title) }
+  func hostCurrentDirectoryUpdate(source: TerminalView, directory: String?) { owner?.hostCurrentDirectoryUpdate(source: source, directory: directory) }
+  func send(source: TerminalView, data: ArraySlice<UInt8>) { owner?.send(source: source, data: data) }
+  func scrolled(source: TerminalView, position: Double) { owner?.scrolled(source: source, position: position) }
+  func rangeChanged(source: TerminalView, startY: Int, endY: Int) { owner?.rangeChanged(source: source, startY: startY, endY: endY) }
+  func clipboardCopy(source: TerminalView, content: Data) { owner?.clipboardCopy(source: source, content: content) }
+  func requestOpenLink(source: TerminalView, link: String, params: [String: String]) { if let url = URL(string: link) { open(url) } }
 }
