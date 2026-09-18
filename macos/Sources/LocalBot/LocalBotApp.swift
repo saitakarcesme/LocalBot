@@ -388,7 +388,7 @@ struct ConversationView: View {
       }.background(Color(nsColor: .textBackgroundColor))
       if model.showActivity {
         Divider()
-        ActivityView().frame(width: 310)
+        ActivityView().frame(width: 310).padding(.top, 8)
       }
     }
     .navigationTitle("")
@@ -401,14 +401,14 @@ struct ConversationView: View {
           HStack(spacing: 9) {
             AvatarStack(agents: members, size: 28)
             VStack(alignment: .leading, spacing: 1) {
-              Text(conversation.title).font(.headline)
+              Text(conversation.title).font(.headline).lineLimit(1).truncationMode(.tail)
               Text(
                 members.count > 1
                   ? members.map(\.name).joined(separator: ", ") : members.first?.role ?? "Agent"
               ).font(.system(size: 10)).foregroundStyle(.secondary)
             }
           }
-        }.menuStyle(.borderlessButton).fixedSize()
+        }.menuStyle(.borderlessButton).frame(maxWidth: model.showActivity ? 260 : 420)
       }
       ToolbarItem {
         Button {
@@ -587,6 +587,7 @@ struct MessageBubble: View {
             Text(model.agent(message.agentId)?.name ?? "Agent").font(.system(size: 10))
               .foregroundStyle(.secondary).padding(.leading, 9)
           }
+          VStack(alignment: .center, spacing: -8) {
           if !message.content.isEmpty {
             MessageText(content: message.content, formatted: !outgoing).font(.system(size: 14)).padding(
               .horizontal, 13
@@ -596,9 +597,10 @@ struct MessageBubble: View {
                   ? Color(nsColor: .systemBlue)
                   : (colorScheme == .dark ? Color(white: 0.23) : Color(white: 0.9)),
                 in: RoundedRectangle(cornerRadius: 18)
-              ).fixedSize(horizontal: false, vertical: true)
+              ).fixedSize(horizontal: false, vertical: true).zIndex(1)
           }
-          if !actions.isEmpty { MessageActivityPanel(actions: actions).padding(.top, -3) }
+          if !actions.isEmpty { MessageActivityPanel(actions: actions).padding(.top, 6).zIndex(0) }
+          }
           ForEach(message.attachments) { a in
             Button {
               model.openArtifact(a)

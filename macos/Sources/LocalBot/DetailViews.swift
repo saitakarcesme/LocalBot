@@ -42,86 +42,22 @@ struct ApprovalCard: View {
 }
 struct ActivityView: View {
   @EnvironmentObject var model: AppModel
-  @State private var expanded: Set<String> = []
-  var activeRun: ActiveRun? { model.activeRuns.first { $0.taskId == model.activeTask?.id } }
-  var workingAction: Activity? { model.activity.last { $0.status == "running" || $0.status == "pending" } }
-  var phase: String {
-    guard let task = model.activeTask else { return model.currentTasks.first?.status == "failed" ? "Work interrupted" : "Up to date" }
-    if task.status == "awaiting_approval" { return "Waiting for your approval" }
-    if task.status == "queued" { return "Queued" }
-    if let action = workingAction { return action.name.replacingOccurrences(of: "_", with: " ").capitalized }
-    return activeRun?.phase ?? "Choosing the team"
-  }
-  func summary(_ action: Activity) -> String {
-    guard let data = action.arguments.data(using: .utf8),
-      let args = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return action.name }
-    for key in ["path", "command", "query", "url", "question", "tool"] {
-      if let value = args[key] as? String { return key == "path" ? URL(fileURLWithPath: value).lastPathComponent : value }
-    }
-    return action.name.replacingOccurrences(of: "_", with: " ")
+  var footer: String {
+    model.currentTasks.prefix(8).reversed().map { "# task [" + $0.status + "] " + $0.prompt + ($0.error.map { "\n" + $0 } ?? "") }.joined(separator: "\n")
   }
   var body: some View {
-    VStack(alignment: .leading, spacing: 0) {
+    VStack(spacing: 0) {
       HStack {
-        Text("Activity").font(.headline)
+        Text("Activity").font(.system(size: 12, design: .monospaced))
         Spacer()
-        Text("\(model.activity.count) actions").font(.caption).foregroundStyle(.secondary)
-        Button { model.showActivity = false } label: { Image(systemName: "xmark") }.buttonStyle(.plain).help("Close Activity")
-      }.padding(16)
-      VStack(alignment: .leading, spacing: 8) {
-        HStack(spacing: 9) {
-          if let run = activeRun { Avatar(agent: model.agent(run.agentId), size: 28) }
-          else { Image(systemName: model.activeTask != nil ? "clock" : (model.currentTasks.first?.status == "failed" ? "exclamationmark.circle" : "checkmark.circle")).foregroundStyle(.secondary) }
-          VStack(alignment: .leading, spacing: 3) {
-            Text(phase).font(.system(size: 13, weight: .semibold))
-            if let run = activeRun { Text(model.agent(run.agentId)?.name ?? "Agent").font(.caption).foregroundStyle(.secondary) }
-          }
-          Spacer()
-          if model.activeTask != nil { ProgressView().controlSize(.small) }
-        }
         if let task = model.activeTask {
-          TimelineView(.periodic(from: .now, by: 1)) { timeline in
-            Text("Elapsed \(Int(max(0, timeline.date.timeIntervalSince(dateFrom(task.createdAt)))))s")
-              .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
-          }
-          Button("Stop task") { Task { await model.post("/cancel", ["taskId": task.id]) } }.buttonStyle(.borderless).font(.caption)
-        } else if let error = model.currentTasks.first?.error {
-          Text(error).font(.caption).foregroundStyle(.orange).textSelection(.enabled)
-          Text("Completed actions and saved files remain available.").font(.caption).foregroundStyle(.secondary)
+          Button("Stop") { Task { await model.post("/cancel", ["taskId": task.id]) } }.buttonStyle(.plain)
         }
-      }.padding(12).background(Color.accentColor.opacity(0.08), in: RoundedRectangle(cornerRadius: 12)).padding(.horizontal, 12).padding(.bottom, 12)
+        Button { model.showActivity = false } label: { Image(systemName: "xmark") }.buttonStyle(.plain).help("Close Activity")
+      }.padding(12)
       Divider()
-      ScrollView {
-        LazyVStack(alignment: .leading, spacing: 10) {
-          if model.activity.isEmpty { Text("Actions appear here as work happens.").font(.callout).foregroundStyle(.secondary).padding(.vertical, 12) }
-          ForEach(Array(model.activity.reversed())) { action in
-            VStack(alignment: .leading, spacing: 2) {
-              Text(model.agent(action.agentId)?.name ?? "Agent").font(.caption2).foregroundStyle(.tertiary)
-              InlineActionView(action: action)
-            }
-          }
-          let files = model.messages.flatMap(\.attachments)
-          if !files.isEmpty {
-            Text("Saved files").font(.headline).padding(.top, 8)
-            ForEach(files) { file in Button { model.openArtifact(file) } label: { Label(file.name, systemImage: "doc") }.buttonStyle(.borderless) }
-          }
-          if let goal = model.goals.first(where: { $0.conversationId == model.selectedId }) {
-            Text("Goal · " + goal.status).font(.headline).padding(.top, 8)
-            Text(goal.objective).font(.caption).textSelection(.enabled)
-            if !goal.evidence.isEmpty { Text(goal.evidence).font(.caption).foregroundStyle(.secondary).textSelection(.enabled) }
-          }
-          if !model.currentTasks.isEmpty {
-            Text("Task history").font(.headline).padding(.top, 8)
-            ForEach(model.currentTasks.prefix(8)) { task in
-              VStack(alignment: .leading, spacing: 4) {
-                Text(task.prompt).font(.caption).lineLimit(2)
-                Text(task.status.replacingOccurrences(of: "_", with: " ")).font(.caption2).foregroundStyle(.secondary)
-              }.padding(.vertical, 4)
-            }
-          }
-        }.padding(12)
-      }
-    }.background(.regularMaterial)
+      TerminalTranscript(actions: model.activity, footer: footer)
+    }.background(Color(nsColor: .textBackgroundColor))
   }
 }
 struct NewConversationView: View {
