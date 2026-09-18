@@ -380,3 +380,9 @@ Streaming checkpoint requested by the concurrent UI task: fixed dropped trailing
 - Installation pending: existing game4 racing-game task is awaiting write_file approval. Do not interrupt or restart the live runtime without user direction. No real-model recall success is claimed yet.
 
 - Follow-up: user authorized cancelling game4 and installing. Signed source6932a66 installed,37 hashes verified. Real subscription Thor/Athena chats in the same verification project were simultaneously running and both completed read_memory successfully. Verification chats archived. Persistence/replacement/forgetting are covered by runtime tests; live test was read-only.
+
+### 2026-09-19 — Abandoned blank conversations and iPhone Remote plan
+- API-created conversations are marked as drafts until the first persisted message. Atomic discard refuses conversations with messages, tasks, goals or memory references and leaves seeded contacts intact. Migration adopts only older automatic untitled New conversation placeholders.
+- Mac removes unused drafts when leaving a conversation, closing a side-chat tab, or starting again. A weak registry protects conversations open in another AppModel; nonempty UserDefaults composer drafts are preserved.
+- 132 runtime tests and 8 native tests pass. Signed sourcea6c2bec installed,37 file hashes verified. In live UI: created blank chat vanished on navigation; a typed unsent test draft survived navigation and restored exactly; clearing that test draft and leaving removed its conversation. Existing sent chats preserved.
+- User selected iPhone for LocalBot Remote. Proposed native client, paired gateway, durable sync/outbox, approval handling, files/memory, followed by encrypted internet relay and APNs. Plan: docs/LOCALBOT-REMOTE-IPHONE-PLAN.md. Remote access is not implemented or enabled by this change.
