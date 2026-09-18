@@ -296,6 +296,8 @@ struct ConversationView: View {
   @EnvironmentObject var model: AppModel
   var conversation: Conversation
   var isSideChat = false
+  @AppStorage("workspacePanelWidth") private var panelWidth = 440.0
+  @State private var resizeOrigin: Double?
   @State var draft = ""
   @State var attachments: [Artifact] = []
   @State private var showingAttachments = false
@@ -403,10 +405,20 @@ struct ConversationView: View {
           WorkspacePanel(state: model.workspace).opacity(model.rightPanel == .workspace ? 1 : 0)
             .allowsHitTesting(model.rightPanel == .workspace).accessibilityHidden(model.rightPanel != .workspace)
         }
-        .frame(width: model.rightPanel == nil ? 0 : min(560, max(280, geometry.size.width * 0.46)))
+        .frame(width: model.rightPanel == nil ? 0 : min(max(280, panelWidth), max(280, geometry.size.width - 280)))
         .clipped()
         .background(.regularMaterial)
-        .overlay(alignment: .leading) { if model.rightPanel != nil { Divider() } }
+        .overlay(alignment: .leading) {
+          if model.rightPanel != nil {
+            Rectangle().fill(Color.primary.opacity(0.1)).frame(width: 1)
+            Color.clear.frame(width: 7).contentShape(Rectangle())
+              .onHover { if $0 { NSCursor.resizeLeftRight.push() } else { NSCursor.pop() } }
+              .gesture(DragGesture().onChanged { value in
+                if resizeOrigin == nil { resizeOrigin = panelWidth }
+                panelWidth = max(280, min(900, (resizeOrigin ?? panelWidth) - value.translation.width))
+              }.onEnded { _ in resizeOrigin = nil })
+          }
+        }
       }
     }
     .animation(.easeInOut(duration: 0.2), value: model.rightPanel)

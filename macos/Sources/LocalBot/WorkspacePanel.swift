@@ -157,7 +157,21 @@ struct SideChatPane: View {
     }
   }
 }
-struct TerminalPane: NSViewRepresentable {
+struct TerminalPane: View {
+  let tab: WorkspaceTab
+  var body: some View {
+    VStack(spacing: 0) {
+      HStack {
+        Text(URL(fileURLWithPath: tab.workspace).lastPathComponent).font(.caption).lineLimit(1)
+        Spacer()
+        Button("Focus terminal") { if let view = tab.terminal { view.window?.makeFirstResponder(view) } }
+          .buttonStyle(.plain).font(.caption)
+      }.padding(8)
+      TerminalSurface(tab: tab).frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+  }
+}
+struct TerminalSurface: NSViewRepresentable {
   let tab: WorkspaceTab
   func makeNSView(context: Context) -> LocalProcessTerminalView {
     if let existing = tab.terminal { return existing }
