@@ -83,7 +83,7 @@ struct MessageActivityPanel: View {
         Spacer(minLength: 0)
         Image(systemName: "chevron.up").font(.system(size: 9))
       }.font(.system(size: 11, weight: .medium)).padding(.horizontal, 12)
-        .frame(width: 256, height: 32).contentShape(Rectangle())
+        .padding(.top, 12).frame(width: 256, height: 44).contentShape(Rectangle())
         .background(.quaternary.opacity(0.4), in: RoundedRectangle(cornerRadius: 10))
     }.buttonStyle(.plain).foregroundStyle(.secondary)
       .popover(isPresented: $expanded, arrowEdge: .top) {
@@ -107,7 +107,7 @@ enum ActivityText {
   static func terminalOutput(_ output: String) -> String {
     guard let data = output.data(using: .utf8),
       let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return output }
-    let fields = ["stdout", "stderr", "content", "summary", "error", "message"]
+    let fields = ["stdout", "stderr", "output", "content", "summary", "error", "message"]
       .compactMap { object[$0] as? String }.filter { !$0.isEmpty }
     if !fields.isEmpty { return fields.joined(separator: "\n") }
     guard let pretty = try? JSONSerialization.data(withJSONObject: object, options: [.prettyPrinted, .sortedKeys]),
@@ -129,16 +129,6 @@ struct TerminalTranscript: View {
   var footer = ""
   private var transcript: String { ActivityText.transcript(actions) + (footer.isEmpty ? "" : "\n\n" + footer) }
   var body: some View {
-    ScrollViewReader { proxy in
-      ScrollView(.vertical) {
-        VStack(alignment: .leading, spacing: 0) {
-          Text(transcript.isEmpty ? "Waiting for activity…" : transcript)
-            .font(.system(size: 11, design: .monospaced)).textSelection(.enabled)
-            .frame(maxWidth: .infinity, alignment: .leading).fixedSize(horizontal: false, vertical: true)
-          Color.clear.frame(height: 1).id("terminalEnd")
-        }.padding(12).frame(maxWidth: .infinity, alignment: .topLeading)
-      }.defaultScrollAnchor(.top)
-        .onChange(of: transcript) { _, _ in proxy.scrollTo("terminalEnd", anchor: .bottom) }
-    }
+    TranscriptView(text: transcript.isEmpty ? "Waiting for activity…" : transcript)
   }
 }

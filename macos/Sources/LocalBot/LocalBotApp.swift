@@ -585,7 +585,7 @@ struct MessageBubble: View {
             Text(model.agent(message.agentId)?.name ?? "Agent").font(.system(size: 10))
               .foregroundStyle(.secondary).padding(.leading, 9)
           }
-          VStack(alignment: .center, spacing: -8) {
+          VStack(alignment: .center, spacing: -18) {
           if !message.content.isEmpty {
             MessageText(content: message.content, formatted: !outgoing).font(.system(size: 14)).padding(
               .horizontal, 13
@@ -597,7 +597,7 @@ struct MessageBubble: View {
                 in: RoundedRectangle(cornerRadius: 18)
               ).fixedSize(horizontal: false, vertical: true).zIndex(1)
           }
-          if !actions.isEmpty { MessageActivityPanel(actions: actions).padding(.top, 6).zIndex(0) }
+          if !actions.isEmpty { MessageActivityPanel(actions: actions).zIndex(0) }
           }
           ForEach(message.attachments) { a in
             Button {
