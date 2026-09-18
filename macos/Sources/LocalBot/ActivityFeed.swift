@@ -66,8 +66,8 @@ struct ActivityEventRow: View {
 }
 enum ActivityPreview {
   static func make(_ output: String) -> String {
-    let lines = output.split(separator: "\n", omittingEmptySubsequences: true).prefix(4)
+    let lines = output.prefix(1200).split(separator: "\n", omittingEmptySubsequences: true).prefix(4)
     let text = lines.map { String($0.prefix(180)) }.joined(separator: "\n")
-    return text + (text.count < output.count ? " …" : "")
+    return text + (text.utf8.count < output.utf8.count ? " …" : "")
   }
 }
