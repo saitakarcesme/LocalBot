@@ -15,6 +15,10 @@ import SwiftUI
         .task {
           model.start()
           NSApp.setActivationPolicy(.regular)
+          if let iconURL = Bundle.main.url(forResource: "LocalBot", withExtension: "icns"),
+            let icon = NSImage(contentsOf: iconURL) {
+            NSApp.applicationIconImage = icon
+          }
           NSApp.activate(ignoringOtherApps: true)
         }
     }
