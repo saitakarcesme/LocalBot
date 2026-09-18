@@ -236,5 +236,16 @@
       "fading titlebar material"
     ],
     "goal_resumed": false
+  },
+  "continuous_glass": {
+    "status": "installed_visually_verified",
+    "source": "9f99959",
+    "goal_resumed": false,
+    "checks": [
+      "common upper backing",
+      "native regular glass",
+      "sidebar collapse reopen",
+      "signed package verification"
+    ]
   }
 }

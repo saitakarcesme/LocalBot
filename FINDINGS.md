@@ -359,3 +359,8 @@ Streaming checkpoint requested by the concurrent UI task: fixed dropped trailing
 - Right glass surface now ignores only the top container safe area with an8pt outer inset, aligning its controls with the titlebar and removing the dead band. Collapsed toolbar controls have12pt horizontal interior clearance and fixed intrinsic sizing.
 - Native toolbar stays transparent so it cannot cover the right controls. A hit-test-transparent ultra-thin material overlay across the conversation title region fades at its bottom edge. Verified installed open/closed workspace using screenshots and actual toggle buttons. Build/signature verified,35 bundle hashes, source717d106.
 - Existing research runtime was left running while checking the replacement client. Installed only after no active tasks remained. The existing PDF task independently ended with a JSON parsing error; this UI-only change does not repair that runtime failure.
+
+### 2026-09-18 — Continuous window glass backing
+- Replaced conversation-width blur with one full-window backdrop shared beneath native sidebar, conversation and workspace. Restricted the transcript's opaque backing to its own safe-area bounds so it no longer overwrites the titlebar material.
+- Preserved macOS26 native regular Liquid Glass; refined the right surface with a0.5pt directional edge highlight and subtle shadow. Reduce Transparency uses an opaque system surface. No custom animation loop or shader dependency.
+- Clean signed build9f99959 installed,35 file hashes verified. Native screenshots checked both sidebars open and left collapse/reopen; common upper backing no longer changes at the column edges. Existing failed PDF task/history retained.
