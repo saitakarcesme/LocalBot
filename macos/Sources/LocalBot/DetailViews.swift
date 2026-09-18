@@ -54,10 +54,10 @@ struct ActivityView: View {
           Button("Stop") { Task { await model.post("/cancel", ["taskId": task.id]) } }.buttonStyle(.plain)
         }
         Button { model.showActivity = false } label: { Image(systemName: "xmark") }.buttonStyle(.plain).help("Close Activity")
-      }.padding(12).background(.regularMaterial)
+      }.padding(16)
       Divider()
       TerminalTranscript(actions: model.activity, footer: footer)
-    }.background(Color(nsColor: .textBackgroundColor))
+    }
   }
 }
 struct NewConversationView: View {

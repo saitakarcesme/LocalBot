@@ -129,6 +129,6 @@ struct TerminalTranscript: View {
   var footer = ""
   private var transcript: String { ActivityText.transcript(actions) + (footer.isEmpty ? "" : "\n\n" + footer) }
   var body: some View {
-    TranscriptView(text: transcript.isEmpty ? "Waiting for activity…" : transcript)
+    ActivityFeed(actions: actions, footer: footer)
   }
 }

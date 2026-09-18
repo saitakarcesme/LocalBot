@@ -39,7 +39,7 @@ final class TranscriptScrollView: NSScrollView {
     editor.textStorage?.replaceCharacters(in: NSRange(location: prefix, length: old.length - prefix), with: new.substring(from: prefix))
     previous = value
     if let storage = editor.textStorage {
-      storage.addAttributes([.font: NSFont.monospacedSystemFont(ofSize: 11, weight: .regular), .foregroundColor: NSColor.labelColor], range: NSRange(location: 0, length: storage.length))
+      storage.addAttributes([.font: NSFont.monospacedSystemFont(ofSize: 11, weight: .regular), .foregroundColor: NSColor.labelColor], range: NSRange(location: prefix, length: storage.length - prefix))
     }
     editor.layoutManager?.ensureLayout(for: editor.textContainer!)
     let used = editor.layoutManager?.usedRect(for: editor.textContainer!).size ?? .zero
