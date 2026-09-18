@@ -597,9 +597,16 @@ struct MessageBubble: View {
   @State private var bubbleWidth: CGFloat = 256
   var outgoing: Bool { message.role == "user" }
   var avatarMotion: LocalBotAnimation? {
-    guard message.id == model.messages.last(where: { $0.role == "assistant" })?.id, model.activeTask != nil else { return nil }
-    if model.activeTask?.status == "awaiting_approval" { return .needsInput }
-    return actions.last?.status == "running" && actions.last?.name != "thinking" ? .working : .thinking
+    guard message.id == model.messages.last(where: { $0.role == "assistant" })?.id else { return nil }
+    if let run = model.activeRuns.first(where: { $0.id == message.runId }), run.taskId == model.activeTask?.id {
+      if model.activeTask?.status == "awaiting_approval" { return .needsInput }
+      return actions.last?.status == "running" && actions.last?.name != "thinking" ? .working : .thinking
+    }
+    guard abs(dateFrom(message.createdAt).timeIntervalSinceNow) < 4, model.activeTask == nil else { return nil }
+    let status = model.currentTasks.last?.status ?? ""
+    if status == "cancelled" { return .stopped }
+    if status.contains("error") || status == "failed" { return .error }
+    return status == "completed" ? .success : nil
   }
   var actions: [Activity] {
     guard message.role == "assistant", let run = message.runId else { return [] }

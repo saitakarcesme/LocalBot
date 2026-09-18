@@ -18,7 +18,7 @@ public struct LocalBotMascot: View {
         self.state = state; self.color = color; self.replayToken = replayToken
     }
     public var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 60.0, paused: reduceMotion || !visible || finished)) { timeline in
+        TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: reduceMotion || !visible || finished)) { timeline in
             LocalBotDrawing(pose: reduceMotion ? LocalBotMotion.neutral : currentPose(at: timeline.date), color: color)
         }
         .aspectRatio(1, contentMode: .fit)
