@@ -378,3 +378,5 @@ Streaming checkpoint requested by the concurrent UI task: fixed dropped trailing
 - Added explicit all-chat scope to conversation listing/history search/read, retaining task cutoffs and default project boundaries. Tool inventory now has 38 registered built-ins.
 - Validation: 128 runtime tests pass, including parallel Codex scheduling, same-chat ordering, lock cancellation, memory persistence/update/forget/pagination and project boundaries. Focused five-test memory suite passes after final lock change. Build/signature verification passes (37 files).
 - Installation pending: existing game4 racing-game task is awaiting write_file approval. Do not interrupt or restart the live runtime without user direction. No real-model recall success is claimed yet.
+
+- Follow-up: user authorized cancelling game4 and installing. Signed source6932a66 installed,37 hashes verified. Real subscription Thor/Athena chats in the same verification project were simultaneously running and both completed read_memory successfully. Verification chats archived. Persistence/replacement/forgetting are covered by runtime tests; live test was read-only.

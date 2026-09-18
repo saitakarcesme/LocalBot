@@ -257,12 +257,14 @@
   },
   "side_chat_shared_memory": {
     "date": "2026-09-19",
-    "status": "implemented_tested_install_pending_active_user_task",
+    "status": "installed_and_live_parallel_read_verified",
     "code_commit": "57f922d",
     "runtime_tests_passed": 128,
     "focused_tests_passed": 5,
     "registered_tools": 38,
-    "blocking_task": "game4 racing game awaiting write_file approval",
-    "notes": "User decision pending: preserve active task or stop it to install. No autonomous loop started."
+    "notes": "User authorized stopping game4 task; completed actions preserved. Two Codex chats (Thor and Athena) ran concurrently in LocalBot Verification and completed read_memory. Verification chats archived. No autonomous loop started.",
+    "installed_commit": "6932a66",
+    "live_parallel_chats": 2,
+    "live_memory_reads": 2
   }
 }
