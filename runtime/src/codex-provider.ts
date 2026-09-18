@@ -41,7 +41,12 @@ export class CodexProvider implements ModelProvider {
     for (let attempt = 0; ; attempt++) {
       try { return await this.generateDecision(messages, tools, signal, onProgress); }
       catch (error) {
-        if (!(error instanceof SyntaxError || error instanceof DecisionSizeError) || attempt >= 1 || signal.aborted) throw error;
+        const disconnected = error instanceof Error && /stream disconnected|error sending request|Codex CLI connection closed|temporarily unavailable/i.test(error.message);
+        if (!(error instanceof SyntaxError || error instanceof DecisionSizeError || disconnected) || attempt >= 1 || signal.aborted) throw error;
+        if (disconnected) {
+          onProgress?.("Reconnecting to finish the response");
+          continue; // No tool was executed by generateDecision; keep actual completed results unchanged.
+        }
         onProgress?.(error instanceof DecisionSizeError ? "Breaking work into smaller steps" : "Correcting response format");
         messages = [...messages, { role: "system", content: "Your previous decision was rejected before executing any actions because its format was invalid or its output was too large. Make the next decision smaller; produce a compact complete first version before optional polish, and split larger work across separate tool rounds. Return valid JSON, including valid JSON-encoded object strings in every calls[].arguments. Escape backslashes and quotes correctly. Use completed tool results already in the context; do not repeat completed actions." }];
       }

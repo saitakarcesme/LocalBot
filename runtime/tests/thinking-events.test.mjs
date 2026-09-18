@@ -11,3 +11,11 @@ test('public thinking summaries persist independently of tool calls, including f
  const event=store.get('SELECT * FROM run_events');assert.equal(event.status,'completed');assert.match(event.output,/Comparing the current curriculum/);assert.equal(store.task(t.id).status,'completed');
  }finally{release();engine.shutdown();store.db.close();}
 });
+
+test('decision transport retry preserves completed tool results and is bounded',async()=>{
+ const {CodexProvider}=await import('../dist/codex-provider.js');let calls=0;const seen=[];
+ class Flaky extends CodexProvider{async generateDecision(messages){calls++;seen.push(messages);if(calls===1)throw Error('stream disconnected before completion: error sending request');return{content:'Done',calls:[]};}}
+ const history=[{role:'tool',content:'verified search result'}];const p=new Flaky({});assert.equal((await p.generate(history,[],new AbortController().signal)).content,'Done');assert.equal(calls,2);assert.equal(seen[0],seen[1]);
+ class Broken extends CodexProvider{async generateDecision(){throw Error('stream disconnected');}}
+ await assert.rejects(new Broken({}).generate(history,[],new AbortController().signal),/stream disconnected/);
+});
