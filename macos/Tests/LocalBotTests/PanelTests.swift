@@ -5,6 +5,9 @@ import AppKit
 final class PanelTests: XCTestCase {
   @MainActor func testReusedMessageLayoutMatchesFreshLayoutAcrossSidebarWidths() {
     let view = LinkTextView(frame: .zero, textContainer: nil)
+    XCTAssertNotNil(view.textStorage)
+    view.textStorage?.setAttributedString(NSAttributedString(string: "Visible response"))
+    XCTAssertEqual(view.string, "Visible response")
     let text = NSAttributedString(string: String(repeating: "A longer message with links and source details. ", count: 100), attributes: [.font: NSFont.systemFont(ofSize: 14)])
     view.measurementStorage.setAttributedString(text)
     for width in [240.0, 530, 310, 530, 240] {
