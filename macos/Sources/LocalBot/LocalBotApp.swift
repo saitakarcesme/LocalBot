@@ -9,8 +9,7 @@ import SwiftUI
     WindowGroup {
       MainView().environmentObject(model).frame(minWidth: 760, minHeight: 520)
         .background(TransparentWindowChrome())
-        .toolbarBackground(.ultraThinMaterial, for: .windowToolbar)
-        .toolbarBackground(.automatic, for: .windowToolbar)
+        .toolbarBackground(.hidden, for: .windowToolbar)
         .preferredColorScheme(appearance == "dark" ? .dark : appearance == "light" ? .light : nil)
         .task {
           model.start()
@@ -402,6 +401,13 @@ struct ConversationView: View {
       }.frame(width: max(0, geometry.size.width - (!isSideChat && model.rightPanel != nil
         ? min(max(280, panelWidth), max(280, geometry.size.width - 360)) + 10 : 0)))
         .clipped().background(Color(nsColor: .textBackgroundColor)).transaction { $0.animation = nil }
+        .overlay(alignment: .top) {
+          Rectangle().fill(.ultraThinMaterial)
+            .frame(height: geometry.safeAreaInsets.top + 12)
+            .mask(LinearGradient(stops: [.init(color: .black, location: 0), .init(color: .black, location: 0.72), .init(color: .clear, location: 1)], startPoint: .top, endPoint: .bottom))
+            .offset(y: -geometry.safeAreaInsets.top)
+            .allowsHitTesting(false).accessibilityHidden(true)
+        }
       if !isSideChat, let panel = model.rightPanel {
         VStack(spacing: 0) {
           HStack { Spacer(); RightPanelControls() }.padding(.horizontal, 16).padding(.vertical, 10)
@@ -433,8 +439,7 @@ struct ConversationView: View {
     }
     .background(Color(nsColor: .textBackgroundColor).ignoresSafeArea())
     .navigationTitle("")
-    .toolbarBackground(.ultraThinMaterial, for: .windowToolbar)
-    .toolbarBackground(.automatic, for: .windowToolbar)
+    .toolbarBackground(.hidden, for: .windowToolbar)
     .toolbar {
       if !isSideChat {
       ToolbarItem(placement: .navigation) {
