@@ -8,6 +8,7 @@ import SwiftUI
   var body: some Scene {
     WindowGroup {
       MainView().environmentObject(model).frame(minWidth: 760, minHeight: 520)
+        .background(WindowBackdrop())
         .background(TransparentWindowChrome())
         .toolbarBackground(.hidden, for: .windowToolbar)
         .preferredColorScheme(appearance == "dark" ? .dark : appearance == "light" ? .light : nil)
@@ -401,13 +402,6 @@ struct ConversationView: View {
       }.frame(width: max(0, geometry.size.width - (!isSideChat && model.rightPanel != nil
         ? min(max(280, panelWidth), max(280, geometry.size.width - 360)) + 10 : 0)))
         .clipped().background(Color(nsColor: .textBackgroundColor)).transaction { $0.animation = nil }
-        .overlay(alignment: .top) {
-          Rectangle().fill(.ultraThinMaterial)
-            .frame(height: geometry.safeAreaInsets.top + 12)
-            .mask(LinearGradient(stops: [.init(color: .black, location: 0), .init(color: .black, location: 0.72), .init(color: .clear, location: 1)], startPoint: .top, endPoint: .bottom))
-            .offset(y: -geometry.safeAreaInsets.top)
-            .allowsHitTesting(false).accessibilityHidden(true)
-        }
       if !isSideChat, let panel = model.rightPanel {
         VStack(spacing: 0) {
           HStack { Spacer(); RightPanelControls() }.padding(.horizontal, 16).padding(.vertical, 10)
@@ -417,7 +411,7 @@ struct ConversationView: View {
         .frame(width: min(max(280, panelWidth), max(280, geometry.size.width - 360)))
         .modifier(PanelGlass())
         .clipShape(RoundedRectangle(cornerRadius: 22))
-        .overlay(RoundedRectangle(cornerRadius: 22).strokeBorder(.primary.opacity(0.12), lineWidth: 0.7))
+
         .padding(.trailing, 10).padding(.bottom, 10).padding(.top, 8)
         .ignoresSafeArea(.container, edges: .top)
         .overlay(alignment: .leading) {
@@ -437,7 +431,7 @@ struct ConversationView: View {
       }
     }
     }
-    .background(Color(nsColor: .textBackgroundColor).ignoresSafeArea())
+    .background(Color.clear)
     .navigationTitle("")
     .toolbarBackground(.hidden, for: .windowToolbar)
     .toolbar {
