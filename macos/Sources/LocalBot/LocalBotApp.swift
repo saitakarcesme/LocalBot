@@ -391,6 +391,7 @@ struct ConversationView: View {
         ActivityView().frame(width: 310).padding(.top, 8)
       }
     }
+    .background(Color(nsColor: .textBackgroundColor).ignoresSafeArea())
     .navigationTitle("")
     .toolbarBackground(.hidden, for: .windowToolbar)
     .toolbar {
@@ -622,7 +623,7 @@ struct MessageBubble: View {
             Text(dateFrom(message.createdAt), style: .time).font(.system(size: 9)).foregroundStyle(
               .tertiary)
             if let run = message.runId {
-              let count = model.activity.filter { $0.runId == run }.count
+              let count = model.activity.filter { $0.runId == run && $0.name != "thinking" }.count
               if count > 0 {
                 Button("\(count) action\(count == 1 ? "" : "s")") { model.showActivity = true }
                   .font(.system(size: 10)).buttonStyle(.plain).foregroundStyle(.secondary)
