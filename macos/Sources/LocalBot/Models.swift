@@ -47,6 +47,7 @@ struct Provider: Codable, Identifiable, Equatable {
   var imageInput: Bool? = nil
 }
 struct Conversation: Codable, Identifiable, Equatable {
+  var isDraft: Bool? = nil
   var id: String
   var title: String
   var members: [String]

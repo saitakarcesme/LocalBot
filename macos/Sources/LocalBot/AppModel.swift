@@ -43,7 +43,26 @@ enum Keychain {
 }
 @MainActor final class AppModel: ObservableObject {
   let persistsSelection: Bool
-  init(persistsSelection: Bool = true) { self.persistsSelection = persistsSelection }
+  private static let openModels = NSHashTable<AppModel>.weakObjects()
+  init(persistsSelection: Bool = true) {
+    self.persistsSelection = persistsSelection
+    Self.openModels.add(self)
+  }
+  static func canDiscardUnusedConversation(_ id: String) -> Bool {
+    !openModels.allObjects.contains(where: { $0.selectedId == id }) &&
+      (UserDefaults.standard.string(forKey: "draft.\(id)") ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+  }
+  func discardUnusedConversation(_ id: String) async {
+    // A main view and a side chat may show the same conversation.
+    guard Self.canDiscardUnusedConversation(id) else { return }
+    do {
+      let data = try await request("/conversations/discard-empty", body: ["id": id])
+      if (try JSONSerialization.jsonObject(with: data) as? [String: Bool])?["deleted"] == true {
+        for model in Self.openModels.allObjects { model.conversations.removeAll { $0.id == id } }
+        UserDefaults.standard.removeObject(forKey: "draft.\(id)")
+      }
+    } catch { /* Retry unused drafts on the next launch if the runtime is unavailable. */ }
+  }
   let workspace = WorkspaceState()
   var browserHandler: ((URL) -> Void)?
   @Published var rightPanel: RightPanel?
@@ -81,7 +100,10 @@ enum Keychain {
         hasEarlierMessages = false
         loadingEarlierMessages = false
         activity = []
-        Task { await refreshConversation() }
+        Task {
+          if let oldValue { await discardUnusedConversation(oldValue) }
+          await refreshConversation()
+        }
       }
     }
   }
@@ -236,6 +258,11 @@ enum Keychain {
           if let secret = Keychain.read(p.id + "@" + p.endpoint) {
             _ = try? await request("/credentials", body: ["providerId": p.id, "secret": secret])
           }
+        }
+      }
+      if first, persistsSelection, !creatingConversation {
+        for conversation in conversations where conversation.isDraft == true {
+          await discardUnusedConversation(conversation.id)
         }
       }
       if selectedId == nil || !conversations.contains(where: { $0.id == selectedId }) {

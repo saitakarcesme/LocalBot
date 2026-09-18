@@ -25,6 +25,7 @@ enum WorkspaceKind: String, CaseIterable {
     browser?.web.stopLoading()
     terminal?.terminate()
     chat?.polling?.cancel(); chat?.polling = nil
+    chat?.selectedId = nil
   }
 }
 @MainActor final class WorkspaceState: ObservableObject {
