@@ -109,7 +109,7 @@ struct WorkspacePanel: View {
             Button { model.openWorkspace(kind) } label: {
               Label(kind.rawValue, systemImage: kind.icon).font(.system(size: 14))
                 .frame(maxWidth: .infinity, alignment: .leading).contentShape(Rectangle())
-            }.buttonStyle(.plain).padding(.vertical, 5)
+            }.buttonStyle(PanelButtonStyle()).padding(.vertical, 5)
           }
         }.padding(28).frame(maxWidth: .infinity, maxHeight: .infinity)
       }
@@ -120,7 +120,7 @@ struct WorkspacePanel: View {
               Button { state.selected = tab.id } label: {
                 Image(systemName: tab.kind.icon).frame(width: 28, height: 28)
                   .background(state.selected == tab.id ? Color.primary.opacity(0.12) : .clear, in: RoundedRectangle(cornerRadius: 8))
-              }.buttonStyle(.plain).help(tab.kind.rawValue).accessibilityLabel(tab.kind.rawValue)
+              }.buttonStyle(PanelButtonStyle()).help(tab.kind.rawValue).accessibilityLabel(tab.kind.rawValue)
                 .contextMenu { Button("Close tab") { close(tab) } }
             }
           }
@@ -130,9 +130,9 @@ struct WorkspacePanel: View {
         } } label: { Image(systemName: "plus").frame(width: 24, height: 28) }
           .menuStyle(.borderlessButton).fixedSize().help("Add workspace tab")
         if let tab = state.tabs.first(where: { $0.id == state.selected }) {
-          Button { close(tab) } label: { Image(systemName: "xmark").frame(width: 24, height: 28) }.buttonStyle(.plain).help("Close tab")
+          Button { close(tab) } label: { Image(systemName: "xmark").frame(width: 24, height: 28) }.buttonStyle(PanelButtonStyle()).help("Close tab")
         }
-        Button { model.rightPanel = nil } label: { Image(systemName: "sidebar.right").frame(width: 24, height: 28) }.buttonStyle(.plain).help("Hide workspace")
+        Button { model.rightPanel = nil } label: { Image(systemName: "sidebar.right").frame(width: 24, height: 28) }.buttonStyle(PanelButtonStyle()).help("Hide workspace")
       }.font(.system(size: 13)).padding(10)
     }
       .onChange(of: state.selected) { _, _ in NSApp.keyWindow?.makeFirstResponder(nil) }
@@ -181,7 +181,7 @@ struct TerminalPane: View {
         Text(URL(fileURLWithPath: tab.workspace).lastPathComponent).font(.caption).lineLimit(1)
         Spacer()
         Button("Focus terminal") { if let view = tab.terminal { view.window?.makeFirstResponder(view) } }
-          .buttonStyle(.plain).font(.caption)
+          .buttonStyle(PanelButtonStyle()).font(.caption)
       }.padding(8)
       TerminalSurface(tab: tab, openLink: { model.openInBrowser($0) }).frame(maxWidth: .infinity, maxHeight: .infinity)
     }

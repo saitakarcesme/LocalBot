@@ -26,3 +26,11 @@ final class ResizeRegion: NSView {
     resize?(Double(x - lastX)); lastX = x
   }
 }
+
+struct PanelButtonStyle: ButtonStyle {
+  func makeBody(configuration: Configuration) -> some View {
+    if #available(macOS 15.0, *) {
+      configuration.label.opacity(configuration.isPressed ? 0.55 : 1).pointerStyle(.link)
+    } else { configuration.label.opacity(configuration.isPressed ? 0.55 : 1) }
+  }
+}

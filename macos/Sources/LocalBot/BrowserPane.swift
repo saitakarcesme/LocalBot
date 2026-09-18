@@ -63,7 +63,7 @@ struct BrowserPane: View {
         Button { session.web.goForward() } label: { Image(systemName: "chevron.right") }.disabled(!session.canForward).help("Forward")
         TextField("URL or search", text: $session.address).textFieldStyle(.roundedBorder).onSubmit { session.submit() }
         Button { if session.loading { session.web.stopLoading() } else { session.web.reload() } } label: { Image(systemName: session.loading ? "xmark" : "arrow.clockwise") }.help("Reload or stop")
-      }.buttonStyle(.plain).padding(10)
+      }.buttonStyle(PanelButtonStyle()).padding(10)
       if let error = session.error { Text(error).font(.caption).foregroundStyle(.orange).textSelection(.enabled).padding(8) }
       BrowserSurface(session: session).frame(maxWidth: .infinity, maxHeight: .infinity)
     }

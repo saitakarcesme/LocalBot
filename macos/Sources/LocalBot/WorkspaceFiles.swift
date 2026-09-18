@@ -62,7 +62,7 @@ struct WorkspaceFiles: View {
           Button("Save") { save() }.disabled(!dirty || state.busy)
         }
         Button { if let selected = state.selected { load(WorkspaceEntry(url: selected, directory: false)) } else { list(state.folder ?? URL(fileURLWithPath: root)) } } label: { Image(systemName: "arrow.clockwise") }.disabled(dirty || state.busy).help("Reload")
-      }.buttonStyle(.plain).padding(12)
+      }.buttonStyle(PanelButtonStyle()).padding(12)
       if let error = state.error { Text(error).foregroundStyle(.orange).font(.caption).textSelection(.enabled).padding(8) }
       if state.busy { ProgressView().controlSize(.small) }
       if state.selected != nil {
@@ -75,7 +75,7 @@ struct WorkspaceFiles: View {
               Button { choose(entry) } label: {
                 Label(entry.url.lastPathComponent, systemImage: entry.directory ? "folder" : "doc.text")
                   .frame(maxWidth: .infinity, alignment: .leading).padding(9).contentShape(Rectangle())
-              }.buttonStyle(.plain).accessibilityLabel("Open " + entry.url.lastPathComponent)
+              }.buttonStyle(PanelButtonStyle()).accessibilityLabel("Open " + entry.url.lastPathComponent)
             }
           }.padding(6)
         }

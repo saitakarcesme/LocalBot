@@ -20,7 +20,7 @@ struct ActivityFeed: View {
           Spacer()
           Button { following.toggle(); if following { proxy.scrollTo("tail", anchor: .bottom) } } label: {
             Label(following ? "Following live" : "Follow live", systemImage: following ? "arrow.down.to.line" : "pause")
-          }.buttonStyle(.plain).font(.caption2).foregroundStyle(.secondary).padding(8)
+          }.buttonStyle(PanelButtonStyle()).font(.caption2).foregroundStyle(.secondary).padding(8)
         }
       }.onAppear { if following { proxy.scrollTo("tail", anchor: .bottom) } }
         .onChange(of: actions) { _, _ in if following { proxy.scrollTo("tail", anchor: .bottom) } }
@@ -51,7 +51,7 @@ struct ActivityEventRow: View {
           Text(active ? "running" : action.status).font(.system(size: 9)).foregroundStyle(.secondary)
           Image(systemName: expanded ? "chevron.down" : "chevron.right").font(.system(size: 8))
         }.contentShape(Rectangle())
-      }.buttonStyle(.plain)
+      }.buttonStyle(PanelButtonStyle())
       if !detail.isEmpty {
         Text(detail).font(.system(size: 11, design: .monospaced)).foregroundStyle(.secondary).lineLimit(expanded ? nil : 3).textSelection(.enabled).padding(.leading, 18)
       }

@@ -10,6 +10,9 @@ struct BotMark: View {
     return NSImage(contentsOf: url)!
   }()
   var body: some View {
-    Image(nsImage: Self.artwork).resizable().scaledToFill().colorMultiply(tint)
+    Canvas { context, size in
+      context.addFilter(.colorMultiply(tint))
+      context.draw(Image(nsImage: Self.artwork), in: CGRect(origin: .zero, size: size))
+    }
   }
 }
