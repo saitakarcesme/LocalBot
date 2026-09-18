@@ -6,7 +6,8 @@ export function conversationTool(store: Store, taskId: string, name: string, arg
   signal.throwIfAborted();
   const task = store.task(taskId);
   const current = store.conversation(task.conversationId);
-  const scope = current.projectId ? "ctx.projectId=?" : "c.id=?";
+  if (args.scope !== undefined && !["project", "all"].includes(args.scope)) throw new Error("Invalid conversation scope");
+  const scope = args.scope === "all" ? "? IS NOT NULL" : current.projectId ? "ctx.projectId=?" : "c.id=?";
   const scopeId = current.projectId ?? current.id;
   if (name === "list_conversations") {
     const state = args.state ?? "active";

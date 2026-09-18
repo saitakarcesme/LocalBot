@@ -1,6 +1,6 @@
 # Tool coverage inventory
 
-Captured target: **269 Codex tools**. Registered LocalBot tools: **36**.
+Captured target: **269 Codex tools**. Registered LocalBot tools: **38**.
 
 Separate control surfaces: **13**. Total assessed entries: **282**. Control entries are not added to the primary catalog denominator.
 
@@ -49,6 +49,8 @@ These counts summarize the inventory labels. They do not prove functional parity
 - `git`
 - `run_tests`
 - `web_fetch`
+- `read_memory`
+- `forget_memory`
 - `remember`
 - `ask_user`
 - `react`
