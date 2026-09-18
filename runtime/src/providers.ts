@@ -9,7 +9,7 @@ import {
   ToolDefinition,
 } from "./types.js";
 export interface ModelProvider {
-  search?(query: string, signal: AbortSignal): Promise<unknown>;
+  search?(query: string, signal: AbortSignal, onProgress?: (output: string) => void): Promise<unknown>;
   health(signal?: AbortSignal): Promise<{ ok: boolean; models: string[] }>;
   generate(
     messages: Chat[],

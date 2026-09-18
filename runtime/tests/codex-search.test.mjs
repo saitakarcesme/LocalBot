@@ -28,6 +28,7 @@ test('search rejects non-subscription auth, missing activity, unsafe URLs and fo
 });
 
 test('optional web metadata and other events do not abort verified search',async()=>{
- const f=fixture('nullable');const r=await codexSearch({model:'test',timeout:1},'query',new AbortController().signal,()=>f.rpc);
+ const updates=[];const f=fixture('nullable');const r=await codexSearch({model:'test',timeout:1},'query',new AbortController().signal,()=>f.rpc,output=>updates.push(output));
+ assert(updates.some(s=>s.includes('search')));assert.equal(updates.length,5);assert(updates.every(s=>s.length<=16000));
  assert.deepEqual(r.actions.map(a=>a.action.type),['search','other','other','openPage','findInPage']);
 });

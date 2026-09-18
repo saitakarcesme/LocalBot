@@ -629,7 +629,11 @@ export class Engine {
               } else if (name === "web_search") {
                 const searchProvider = this.makeProvider(config, this.secrets.get(config.id));
                 if (!searchProvider.search) throw new Error("Selected provider does not support web search");
-                result = JSON.stringify(await searchProvider.search(args.query, signal));
+                result = JSON.stringify(await searchProvider.search(args.query, signal, output => {
+                  if (signal.aborted) return;
+                  this.store.exec("UPDATE tool_calls SET output=?,updatedAt=? WHERE id=? AND status='running'", output.slice(-16000), now(), callId);
+                  this.changed();
+                }));
               } else if (name === "list_tasks") {
                 result = JSON.stringify(this.store.listTasks(taskId, args.scope, args.state, args.before));
               } else if (name === "read_activity") {

@@ -23,7 +23,7 @@ function searchAction(value: any): SearchAction {
   throw new Error("Unsupported web search event");
 }
 
-export async function codexSearch(config: ProviderConfig, query: string, signal: AbortSignal, makeRPC = () => new CodexRPC()) {
+export async function codexSearch(config: ProviderConfig, query: string, signal: AbortSignal, makeRPC = () => new CodexRPC(), onProgress?: (output: string) => void) {
   if (typeof query !== "string" || !query.trim() || query.length > 1000) throw new Error("Search query must contain 1–1000 characters");
   signal.throwIfAborted();
   const rpc = makeRPC();
@@ -42,6 +42,8 @@ export async function codexSearch(config: ProviderConfig, query: string, signal:
     }, deadline);
     const actions: { query: string; action: SearchAction }[] = [];
     let actionBytes = 0;
+    let progress = "";
+    const publish = (line: string) => { progress = (progress + line + "\n").slice(-16000); onProgress?.(progress); };
     const finished = new Promise<string>((resolve,reject) => {
       let answer = ""; let count = 0;
       const abort = () => { reject(deadline.reason); rpc.close(); };
@@ -49,6 +51,7 @@ export async function codexSearch(config: ProviderConfig, query: string, signal:
       rpc.onClose = error => { deadline.removeEventListener("abort",abort); reject(error); };
       rpc.onNotification = (method,p) => {
         if (p.threadId !== thread.id) return;
+        if (method === "item/started" && p.item?.type === "webSearch") publish("[web] Starting lookup " + (p.item.query || ""));
         if (method === "item/started" && p.item?.type === "webSearch" && ++count > 8) {
           reject(new Error("Web search action limit exceeded"));rpc.close();return;
         }
@@ -62,6 +65,7 @@ export async function codexSearch(config: ProviderConfig, query: string, signal:
             actionBytes += Buffer.byteLength(JSON.stringify(event));
             if (actionBytes > 20000) throw new Error("Web search activity exceeds 20 KB");
             actions.push(event);
+            publish("[web] " + JSON.stringify(event));
           } catch (error) { reject(error); rpc.close(); return; }
         }
         if (method === "item/completed" && p.item?.type === "agentMessage") answer = p.item.text;
