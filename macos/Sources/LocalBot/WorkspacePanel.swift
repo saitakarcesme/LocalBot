@@ -130,12 +130,13 @@ struct WorkspacePanel: View {
           ForEach(state.tabs) { tab in
             WorkspaceTabView(tab: tab)
               .opacity(state.selected == tab.id ? 1 : 0)
-              .allowsHitTesting(state.selected == tab.id)
+              .allowsHitTesting(state.selected == tab.id).disabled(state.selected != tab.id)
               .accessibilityHidden(state.selected != tab.id)
           }
         }.frame(maxWidth: .infinity, maxHeight: .infinity)
       }
     }.background(.regularMaterial)
+      .onChange(of: state.selected) { _, _ in NSApp.keyWindow?.makeFirstResponder(nil) }
       .confirmationDialog("Discard unsaved file changes and close this tab?", isPresented: $confirmDiscard) {
         Button("Discard changes", role: .destructive) { if let pendingClose { state.close(pendingClose) }; pendingClose = nil }
         Button("Cancel", role: .cancel) { pendingClose = nil }

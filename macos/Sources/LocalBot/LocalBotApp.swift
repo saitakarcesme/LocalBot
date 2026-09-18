@@ -246,6 +246,7 @@ struct MainView: View {
                   Button(c.archived == true ? "Restore Conversation" : "Archive Conversation") {
                     Task { await model.archiveConversation(c) }
                   }.disabled(model.tasks.contains { $0.conversationId == c.id && ($0.active || $0.status == "awaiting_input") })
+                  Button("Open in Side Chat") { model.openWorkspace(.chat, conversationId: c.id) }
                   Button("Conversation Details…") { model.editingConversation = c }
                   if let project = model.projects.first(where: { $0.id == c.projectId }) {
                     Button("Project Details…") { model.editingProject = project }

@@ -66,9 +66,16 @@ struct WorkspaceFiles: View {
         TextEditor(text: $content).font(.system(size: 12, design: .monospaced)).padding(6)
         Text(dirty ? "Unsaved changes" : "Saved on disk").font(.caption2).foregroundStyle(.secondary).padding(6)
       } else {
-        List(entries) { entry in
-          Button { choose(entry) } label: { Label(entry.url.lastPathComponent, systemImage: entry.directory ? "folder" : "doc.text").frame(maxWidth: .infinity, alignment: .leading) }.buttonStyle(.plain)
-        }.listStyle(.plain)
+        ScrollView {
+          LazyVStack(alignment: .leading, spacing: 2) {
+            ForEach(entries) { entry in
+              Button { choose(entry) } label: {
+                Label(entry.url.lastPathComponent, systemImage: entry.directory ? "folder" : "doc.text")
+                  .frame(maxWidth: .infinity, alignment: .leading).padding(9).contentShape(Rectangle())
+              }.buttonStyle(.plain).accessibilityLabel("Open " + entry.url.lastPathComponent)
+            }
+          }.padding(6)
+        }
       }
     }.onChange(of: dirty) { _, value in dirtyChanged(value) }
       .task { if folder == nil { list(URL(fileURLWithPath: root)) } }
