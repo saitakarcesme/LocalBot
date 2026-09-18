@@ -293,6 +293,13 @@ const server = createServer(async (req, res) => {
       const project = store.createProject(name, workspace);
       change(); json(res, 201, project); return;
     }
+    if (m === "POST" && p === "/conversations/discard-empty") {
+      const b = await body(req);
+      if (typeof b.id !== "string") throw new Error("Conversation ID required");
+      const result = store.discardEmptyConversation(b.id);
+      if (result.deleted) change();
+      json(res, 200, result); return;
+    }
     if (m === "POST" && p === "/conversations/archive") {
       const b = await body(req);
       const c = store.setConversationArchived(b.id, b.archived);
@@ -326,7 +333,11 @@ const server = createServer(async (req, res) => {
         .slice(0, 100);
       if (!title) throw new Error("Title is required");
       if (b.projectId) store.project(b.projectId);
-      const c = store.createConversation(title, members, b.projectId ?? null, b.automatic === true);
+      const c = store.transaction(() => {
+        const created = store.createConversation(title, members, b.projectId ?? null, b.automatic === true);
+        store.exec("INSERT INTO conversation_drafts VALUES(?)", created.id);
+        return store.conversation(created.id);
+      });
       change();
       json(res, 201, c);
       return;

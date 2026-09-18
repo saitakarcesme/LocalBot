@@ -20,6 +20,7 @@ export class Store {
       CREATE TABLE IF NOT EXISTS projects(id TEXT PRIMARY KEY, name TEXT NOT NULL, workspace TEXT NOT NULL, memory TEXT NOT NULL DEFAULT '', createdAt TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS conversation_context(conversationId TEXT PRIMARY KEY REFERENCES conversations(id), projectId TEXT REFERENCES projects(id), automatic INTEGER NOT NULL DEFAULT 0, titled INTEGER NOT NULL DEFAULT 0);
       CREATE TABLE IF NOT EXISTS conversations(id TEXT PRIMARY KEY, title TEXT NOT NULL, members TEXT NOT NULL, createdAt TEXT NOT NULL, updatedAt TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS conversation_drafts(conversationId TEXT PRIMARY KEY REFERENCES conversations(id));
       CREATE TABLE IF NOT EXISTS conversation_archive(conversationId TEXT PRIMARY KEY REFERENCES conversations(id));
       CREATE TABLE IF NOT EXISTS goals(id TEXT PRIMARY KEY, conversationId TEXT NOT NULL REFERENCES conversations(id), objective TEXT NOT NULL, status TEXT NOT NULL CHECK(status IN ('active','blocked','complete')), evidence TEXT NOT NULL DEFAULT '', createdAt TEXT NOT NULL, updatedAt TEXT NOT NULL);
       CREATE UNIQUE INDEX IF NOT EXISTS goals_unfinished ON goals(conversationId) WHERE status IN ('active','blocked');
@@ -46,6 +47,11 @@ export class Store {
       ORDER BY m.rowid DESC LIMIT 1)
       WHERE messageId IS NULL AND runId IN (SELECT id FROM runs WHERE status IN ('failed','cancelled','completed'))
       AND EXISTS(SELECT 1 FROM messages m WHERE m.runId=artifacts.runId AND m.role='assistant')`);
+    // Adopt only old automatic, untitled blank placeholders; seeded contacts remain intact.
+    this.db.exec(`INSERT OR IGNORE INTO conversation_drafts SELECT c.id FROM conversations c
+      JOIN conversation_context ctx ON ctx.conversationId=c.id WHERE ctx.automatic=1 AND ctx.titled=0
+      AND c.title IN ('New conversation','New project conversation')
+      AND NOT EXISTS(SELECT 1 FROM messages m WHERE m.conversationId=c.id)`);
     chmodSync(join(dir, "localbot.sqlite"), 0o600);
   }
   all(sql: string, ...args: any[]): any[] {
@@ -104,12 +110,12 @@ export class Store {
     const c = this.get("SELECT * FROM conversations WHERE id=?", id);
     if (!c) throw new Error("Conversation not found");
     const context = this.get("SELECT projectId,automatic,titled FROM conversation_context WHERE conversationId=?", id);
-    return { ...c, ...context, archived: !!this.get("SELECT 1 FROM conversation_archive WHERE conversationId=?", id), members: JSON.parse(c.members) };
+    return { ...c, ...context, isDraft: !!this.get("SELECT 1 FROM conversation_drafts WHERE conversationId=?", id), archived: !!this.get("SELECT 1 FROM conversation_archive WHERE conversationId=?", id), members: JSON.parse(c.members) };
   }
   conversations() {
     return this.all(
       `SELECT c.*, EXISTS(SELECT 1 FROM conversation_archive WHERE conversationId=c.id) archived, (SELECT content FROM messages WHERE conversationId=c.id ORDER BY rowid DESC LIMIT 1) preview FROM conversations c ORDER BY updatedAt DESC`,
-    ).map((c) => ({ ...c, archived: !!c.archived, ...this.get("SELECT projectId,automatic,titled FROM conversation_context WHERE conversationId=?", c.id), members: JSON.parse(c.members) }));
+    ).map((c) => ({ ...c, isDraft: !!this.get("SELECT 1 FROM conversation_drafts WHERE conversationId=?", c.id), archived: !!c.archived, ...this.get("SELECT projectId,automatic,titled FROM conversation_context WHERE conversationId=?", c.id), members: JSON.parse(c.members) }));
   }
   setConversationArchived(id: string, archived: boolean) {
     this.conversation(id);
@@ -134,6 +140,20 @@ export class Store {
     this.exec("INSERT INTO threads VALUES(?,?,?,?)", id, id, "Main", date);
     this.exec("INSERT INTO conversation_context VALUES(?,?,?,0)", id, projectId, automatic ? 1 : 0);
     return this.conversation(id);
+  }
+  discardEmptyConversation(id: string) {
+    return this.transaction(() => {
+      if (!this.get("SELECT 1 FROM conversation_drafts WHERE conversationId=?", id)) return { deleted: false };
+      for (const table of ["messages", "tasks", "goals", "shared_memory"]) {
+        if (this.get(`SELECT 1 FROM ${table} WHERE conversationId=? LIMIT 1`, id)) return { deleted: false };
+      }
+      this.exec("DELETE FROM conversation_drafts WHERE conversationId=?", id);
+      this.exec("DELETE FROM conversation_archive WHERE conversationId=?", id);
+      this.exec("DELETE FROM conversation_context WHERE conversationId=?", id);
+      this.exec("DELETE FROM threads WHERE conversationId=?", id);
+      this.exec("DELETE FROM conversations WHERE id=?", id);
+      return { deleted: true };
+    });
   }
   projects() { return this.all("SELECT * FROM projects ORDER BY createdAt DESC"); }
   goal(conversationId: string) {
@@ -206,6 +226,7 @@ export class Store {
       content,
       date,
     );
+    this.exec("DELETE FROM conversation_drafts WHERE conversationId=?", conversationId);
     this.exec(
       "UPDATE conversations SET updatedAt=? WHERE id=?",
       date,
