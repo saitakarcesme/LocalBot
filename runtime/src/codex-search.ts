@@ -2,7 +2,7 @@ import { CodexRPC } from "./codex-rpc.js";
 import type { ProviderConfig } from "./types.js";
 
 type SearchAction = { type: "search"; query?: string; queries?: string[] } |
-  { type: "openPage"; url: string } | { type: "findInPage"; url: string; pattern: string };
+  { type: "openPage"; url?: string } | { type: "findInPage"; url?: string; pattern?: string } | { type: "other" };
 function searchAction(value: any): SearchAction {
   const bounded = (text: unknown, max: number): text is string => typeof text === "string" && text.trim().length > 0 && text.length <= max;
   if (value?.type === "search") {
@@ -11,9 +11,14 @@ function searchAction(value: any): SearchAction {
     if (!value.query && !value.queries?.length) throw new Error("Search event contains no query");
     return { type: "search", ...(value.query ? { query: value.query } : {}), ...(value.queries?.length ? { queries: value.queries } : {}) };
   }
-  if ((value?.type === "openPage" || value?.type === "findInPage") && bounded(value.url, 2000)) {
-    if (value.type === "findInPage" && !bounded(value.pattern,1000)) throw new Error("Invalid find event");
-    return value.type === "openPage" ? { type: "openPage", url: value.url } : { type: "findInPage", url: value.url, pattern: value.pattern };
+  // App-server action metadata is optional; open/find can use internal references.
+  // Missing metadata is not evidence that search itself was unavailable.
+  if (value == null || value.type === "other") return { type: "other" };
+  if (value.type === "openPage" || value.type === "findInPage") {
+    if (value.url != null && !bounded(value.url, 2000)) throw new Error("Invalid open URL event");
+    if (value.type === "findInPage" && value.pattern != null && !bounded(value.pattern, 1000)) throw new Error("Invalid find event");
+    return { type: value.type, ...(value.url ? { url: value.url } : {}),
+      ...(value.type === "findInPage" && value.pattern ? { pattern: value.pattern } : {}) };
   }
   throw new Error("Unsupported web search event");
 }
