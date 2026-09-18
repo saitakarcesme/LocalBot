@@ -34,6 +34,13 @@ import SwiftUI
         Button("Decrease Text Size") { messageFontSize = max(11, messageFontSize - 1) }.keyboardShortcut("-")
         Button("Actual Size") { messageFontSize = 14 }.keyboardShortcut("0")
       }
+      CommandMenu("Workspace") {
+        Button("Browser") { model.openWorkspace(.browser) }.keyboardShortcut("t")
+        Button("Terminal") { model.openWorkspace(.terminal) }.keyboardShortcut("`", modifiers: [.control])
+        Button("Files") { model.openWorkspace(.files) }.keyboardShortcut("p")
+        Button("Review") { model.openWorkspace(.review) }.keyboardShortcut("g", modifiers: [.control, .shift])
+        Button("Side Chat") { model.openWorkspace(.chat) }.keyboardShortcut("s", modifiers: [.command, .option])
+      }
       CommandMenu("Conversation") {
         Button("Show Activity") { model.showActivity.toggle() }.keyboardShortcut(
           "i", modifiers: [.command, .shift])
@@ -233,6 +240,7 @@ struct MainView: View {
   @ViewBuilder func conversationRows(_ conversations: [Conversation]) -> some View {
             ForEach(conversations) { c in
               ConversationRow(conversation: c).tag(c.id)
+                .draggable("localbot-conversation:" + c.id)
                 .listRowInsets(EdgeInsets(top: 4, leading: 7, bottom: 4, trailing: 7))
                 .contextMenu {
                   Button(c.archived == true ? "Restore Conversation" : "Archive Conversation") {
@@ -287,6 +295,7 @@ struct ConversationView: View {
   @AppStorage("messageFontSize") private var messageFontSize = 14.0
   @EnvironmentObject var model: AppModel
   var conversation: Conversation
+  var isSideChat = false
   @State var draft = ""
   @State var attachments: [Artifact] = []
   @State private var showingAttachments = false
@@ -295,6 +304,7 @@ struct ConversationView: View {
   @FocusState var composing: Bool
   var members: [Agent] { conversation.members.compactMap { model.agent($0) } }
   var body: some View {
+    GeometryReader { geometry in
     HStack(spacing: 0) {
       VStack(spacing: 0) {
         if model.messages.isEmpty {
@@ -386,15 +396,35 @@ struct ConversationView: View {
         }
         composer
       }.background(Color(nsColor: .textBackgroundColor))
-      if model.showActivity {
-        Divider()
-        ActivityView().frame(width: 310).padding(.top, 8)
+      if !isSideChat {
+        ZStack {
+          ActivityView().opacity(model.rightPanel == .activity ? 1 : 0)
+            .allowsHitTesting(model.rightPanel == .activity).accessibilityHidden(model.rightPanel != .activity)
+          WorkspacePanel(state: model.workspace).opacity(model.rightPanel == .workspace ? 1 : 0)
+            .allowsHitTesting(model.rightPanel == .workspace).accessibilityHidden(model.rightPanel != .workspace)
+        }
+        .frame(width: model.rightPanel == nil ? 0 : min(560, max(280, geometry.size.width * 0.46)))
+        .clipped()
+        .background(.regularMaterial)
+        .overlay(alignment: .leading) { if model.rightPanel != nil { Divider() } }
       }
+    }
+    .animation(.easeInOut(duration: 0.2), value: model.rightPanel)
+    .overlay(alignment: .trailing) {
+      if !isSideChat && model.rightPanel == nil {
+        Color.clear.frame(width: 32).dropDestination(for: String.self) { values, _ in
+          guard let value = values.first, value.hasPrefix("localbot-conversation:") else { return false }
+          model.openWorkspace(.chat, conversationId: String(value.dropFirst(22)))
+          return true
+        }
+      }
+    }
     }
     .background(Color(nsColor: .textBackgroundColor).ignoresSafeArea())
     .navigationTitle("")
     .toolbarBackground(.hidden, for: .windowToolbar)
     .toolbar {
+      if !isSideChat {
       ToolbarItem(placement: .principal) {
         Menu {
           ForEach(members) { a in Button("\(a.name) · \(a.role)") { model.editingAgent = a } }
@@ -409,7 +439,7 @@ struct ConversationView: View {
               ).font(.system(size: 10)).foregroundStyle(.secondary)
             }
           }
-        }.menuStyle(.borderlessButton).frame(maxWidth: model.showActivity ? 180 : 420)
+        }.menuStyle(.borderlessButton).frame(maxWidth: model.rightPanel != nil ? 180 : 420)
       }
       ToolbarItem {
         Button {
@@ -419,12 +449,18 @@ struct ConversationView: View {
         }.help("Activity and artifacts")
       }
       ToolbarItem {
+        Button { model.rightPanel = model.rightPanel == .workspace ? nil : .workspace } label: {
+          Image(systemName: "rectangle.split.2x1")
+        }.help("Workspace: terminal, browser, files, review and side chat")
+      }
+      ToolbarItem {
         Menu {
           ForEach(members) { a in Button(a.name) { model.editingAgent = a } }
         } label: {
           Image(systemName: "info.circle")
         }.help("Contact details")
       }
+    }
     }
     .onAppear {
       draft = UserDefaults.standard.string(forKey: "draft.\(conversation.id)") ?? ""

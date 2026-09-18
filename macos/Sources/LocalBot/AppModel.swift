@@ -42,6 +42,16 @@ enum Keychain {
   }
 }
 @MainActor final class AppModel: ObservableObject {
+  let persistsSelection: Bool
+  init(persistsSelection: Bool = true) { self.persistsSelection = persistsSelection }
+  let workspace = WorkspaceState()
+  var browserHandler: ((URL) -> Void)?
+  @Published var rightPanel: RightPanel?
+  var showActivity: Bool {
+    get { rightPanel == .activity }
+    set { rightPanel = newValue ? .activity : nil }
+  }
+
   @Published var agents: [Agent] = []
   @Published var providers: [Provider] = []
   @Published var projects: [Project] = []
@@ -65,7 +75,7 @@ enum Keychain {
         if let conversation = conversations.first(where: { $0.id == selectedId }) {
           showingArchived = conversation.archived == true
         }
-        UserDefaults.standard.set(selectedId, forKey: "selectedConversation")
+        if persistsSelection { UserDefaults.standard.set(selectedId, forKey: "selectedConversation") }
         messages = []
         searchFocusId = nil
         hasEarlierMessages = false
@@ -83,7 +93,6 @@ enum Keychain {
   @Published var showNew = false
   var newConversationProjectId = ""
   @Published var showSettings = false
-  @Published var showActivity = false
   @Published var editingAgent: Agent?
   @Published var editingProject: Project?
   @Published var editingConversation: Conversation?
@@ -208,15 +217,15 @@ enum Keychain {
           .contains(t.status)
       { notify(t) }
       let first = update == .restarted
-      agents = s.agents
-      providers = s.providers
-      projects = s.projects ?? []
-      activeRuns = s.activeRuns ?? []
-      goals = s.goals ?? []
-      integrations = s.integrations ?? []
-      conversations = s.conversations
-      tasks = s.tasks
-      approvals = s.approvals
+      if agents != (s.agents) { agents = s.agents }
+      if providers != (s.providers) { providers = s.providers }
+      if projects != (s.projects ?? []) { projects = s.projects ?? [] }
+      if activeRuns != (s.activeRuns ?? []) { activeRuns = s.activeRuns ?? [] }
+      if goals != (s.goals ?? []) { goals = s.goals ?? [] }
+      if integrations != (s.integrations ?? []) { integrations = s.integrations ?? [] }
+      if conversations != (s.conversations) { conversations = s.conversations }
+      if tasks != (s.tasks) { tasks = s.tasks }
+      if approvals != (s.approvals) { approvals = s.approvals }
       if first {
         for i in integrations {
           if let secret = Keychain.read("mcp:" + i.id + "@" + i.endpoint) {
@@ -231,7 +240,7 @@ enum Keychain {
       }
       if selectedId == nil || !conversations.contains(where: { $0.id == selectedId }) {
         let saved = UserDefaults.standard.string(forKey: "selectedConversation")
-        if first, let restored = conversations.first(where: { $0.id == saved }) {
+        if first, persistsSelection, let restored = conversations.first(where: { $0.id == saved }) {
           showingArchived = restored.archived == true
           selectedId = restored.id
         } else { selectedId = visibleConversations.first?.id }
@@ -256,9 +265,10 @@ enum Keychain {
       } else {
         // Keep explicitly loaded older pages; refresh overlapping recent messages.
         let newestIDs = Set(m.map(\.id))
-        messages = messages.filter { !newestIDs.contains($0.id) } + m
+        let combined = messages.filter { !newestIDs.contains($0.id) } + m
+        if messages != combined { messages = combined }
       }
-      activity = a
+      if activity != (a) { activity = a }
     } catch { self.error = error.localizedDescription }
   }
   func openSearchResult(_ message: ChatMessage) async {
@@ -413,9 +423,13 @@ enum Keychain {
     } catch { self.error = error.localizedDescription }
     return results
   }
-  func openArtifact(_ a: Artifact) { NSWorkspace.shared.open(URL(fileURLWithPath: a.path)) }
+  func openArtifact(_ a: Artifact) {
+    let url = URL(fileURLWithPath: a.path)
+    if ["html", "htm", "pdf", "png", "jpg", "jpeg", "svg"].contains(url.pathExtension.lowercased()) { openInBrowser(url) }
+    else { NSWorkspace.shared.open(url) }
+  }
   func notify(_ t: AgentTask) {
-    guard UserDefaults.standard.bool(forKey: "notifications"), !NSApp.isActive else { return }
+    guard persistsSelection, UserDefaults.standard.bool(forKey: "notifications"), !NSApp.isActive else { return }
     let c = UNMutableNotificationContent()
     c.title = conversations.first { $0.id == t.conversationId }?.title ?? "LocalBot"
     c.body =
