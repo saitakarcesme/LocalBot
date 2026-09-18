@@ -347,6 +347,8 @@ struct ConversationView: View {
               Color.clear.frame(height: 1).id("bottom")
             }.padding(.bottom, 16)
           }
+          .contentMargins(.top, isSideChat ? 0 : geometry.safeAreaInsets.top, for: .scrollContent)
+          .ignoresSafeArea(.container, edges: isSideChat ? [] : .top)
           .defaultScrollAnchor(.bottom)
           .modifier(ScrollPositionObserver(isAtBottom: $following, hasMessages: !model.messages.isEmpty) {
             proxy.scrollTo("bottom", anchor: .bottom)
