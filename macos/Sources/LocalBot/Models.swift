@@ -46,7 +46,7 @@ struct Provider: Codable, Identifiable, Equatable {
   var requiresAuth: Bool
   var imageInput: Bool? = nil
 }
-struct Conversation: Codable, Identifiable {
+struct Conversation: Codable, Identifiable, Equatable {
   var id: String
   var title: String
   var members: [String]
@@ -57,7 +57,7 @@ struct Conversation: Codable, Identifiable {
   var archived: Bool? = nil
   var automatic: Int?
 }
-struct Project: Codable, Identifiable {
+struct Project: Codable, Identifiable, Equatable {
   var id: String
   var name: String
   var workspace: String
@@ -68,7 +68,7 @@ struct Reaction: Codable, Hashable {
   var actor: String
   var emoji: String
 }
-struct Artifact: Codable, Identifiable {
+struct Artifact: Codable, Identifiable, Equatable {
   var id: String
   var name: String
   var path: String
@@ -77,7 +77,7 @@ struct Artifact: Codable, Identifiable {
   var messageId: String?
   var runId: String?
 }
-struct ChatMessage: Codable, Identifiable {
+struct ChatMessage: Codable, Identifiable, Equatable {
   var id: String
   var conversationId: String
   var taskId: String?
@@ -89,7 +89,7 @@ struct ChatMessage: Codable, Identifiable {
   var reactions: [Reaction]
   var attachments: [Artifact]
 }
-struct AgentTask: Codable, Identifiable {
+struct AgentTask: Codable, Identifiable, Equatable {
   var id: String
   var conversationId: String
   var messageId: String
@@ -100,7 +100,7 @@ struct AgentTask: Codable, Identifiable {
   var updatedAt: String
   var active: Bool { ["queued", "running", "awaiting_approval"].contains(status) }
 }
-struct Approval: Codable, Identifiable {
+struct Approval: Codable, Identifiable, Equatable {
   var id: String
   var taskId: String
   var runId: String
@@ -109,7 +109,7 @@ struct Approval: Codable, Identifiable {
   var status: String
   var createdAt: String
 }
-struct Activity: Codable, Identifiable {
+struct Activity: Codable, Identifiable, Equatable {
   var id: String
   var runId: String
   var agentId: String
@@ -133,7 +133,7 @@ struct Snapshot: Codable {
   var approvals: [Approval]
   var revision: Int
 }
-struct AgentGoal: Codable, Identifiable {
+struct AgentGoal: Codable, Identifiable, Equatable {
   var id: String
   var conversationId: String
   var objective: String
@@ -142,12 +142,12 @@ struct AgentGoal: Codable, Identifiable {
   var createdAt: String
   var updatedAt: String
 }
-struct MCPProcess: Codable {
+struct MCPProcess: Codable, Equatable {
   var command: String
   var args: [String]
   var cwd: String
 }
-struct MCPConnection: Codable, Identifiable {
+struct MCPConnection: Codable, Identifiable, Equatable {
   var id: String
   var name: String
   var endpoint: String
@@ -155,7 +155,7 @@ struct MCPConnection: Codable, Identifiable {
   var transport: String? = nil
   var process: MCPProcess? = nil
 }
-struct ActiveRun: Codable, Identifiable {
+struct ActiveRun: Codable, Identifiable, Equatable {
   var phase: String? = nil
   var progressAt: String? = nil
   var id: String
