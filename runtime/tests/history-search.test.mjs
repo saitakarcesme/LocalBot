@@ -15,7 +15,7 @@ test('agent history search finds old archived project decisions without cross-pr
  const shared=store.searchHistory(task.id,'Cedar','project');assert.equal(shared.matches.length,2);assert(shared.matches.some(m=>m.messageId===oldId));assert(shared.matches.every(m=>!m.excerpt.includes('secret')&&!m.excerpt.includes('future')));
  assert.equal(store.searchHistory(task.id,'Cedar SQLite','project').matches[0].messageId,oldId);
  assert.equal(store.searchHistory(task.id,'" OR "','project').matches.length,0);
- assert.throws(()=>store.searchHistory(task.id,'x','all'),/scope/);
+ assert.throws(()=>store.searchHistory(task.id,'x','invalid'),/scope/);
  assert.throws(()=>store.searchHistory(task.id,' '.repeat(2)),/characters/);
  const direct=e.enqueue(unrelated.id,'Find Cedar');assert.throws(()=>store.searchHistory(direct.id,'Cedar','project'),/does not belong/);
  }finally{e.shutdown();store.db.close();await rm(root,{recursive:true,force:true});}
