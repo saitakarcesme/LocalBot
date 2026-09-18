@@ -5,11 +5,6 @@ import SwiftUI
 struct WindowBackdrop: View {
   var body: some View {
     Color(nsColor: .textBackgroundColor)
-      .overlay(alignment: .top) {
-        Rectangle().fill(.ultraThinMaterial)
-          .frame(height: 100)
-          .mask(LinearGradient(colors: [.black, .black.opacity(0.55), .clear], startPoint: .top, endPoint: .bottom))
-      }
       .ignoresSafeArea()
       .allowsHitTesting(false)
       .accessibilityHidden(true)
