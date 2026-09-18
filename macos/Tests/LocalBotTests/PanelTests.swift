@@ -3,6 +3,19 @@ import AppKit
 @testable import LocalBot
 
 final class PanelTests: XCTestCase {
+  @MainActor func testEmptyChatCleanupPreservesOpenSideChatAndUnsentDraft() {
+    let id = "cleanup-test-" + UUID().uuidString
+    let main = AppModel(persistsSelection: false), side = AppModel(persistsSelection: false)
+    main.selectedId = id; side.selectedId = id
+    XCTAssertFalse(AppModel.canDiscardUnusedConversation(id))
+    main.selectedId = nil
+    XCTAssertFalse(AppModel.canDiscardUnusedConversation(id))
+    side.selectedId = nil
+    UserDefaults.standard.set("unsent message", forKey: "draft.\(id)")
+    XCTAssertFalse(AppModel.canDiscardUnusedConversation(id))
+    UserDefaults.standard.removeObject(forKey: "draft.\(id)")
+    XCTAssertTrue(AppModel.canDiscardUnusedConversation(id))
+  }
   @MainActor func testReusedMessageLayoutMatchesFreshLayoutAcrossSidebarWidths() {
     let view = LinkTextView(frame: .zero, textContainer: nil)
     XCTAssertNotNil(view.textStorage)
