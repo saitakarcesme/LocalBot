@@ -404,7 +404,7 @@ struct ConversationView: View {
         .clipped().background(Color(nsColor: .textBackgroundColor), ignoresSafeAreaEdges: []).transaction { $0.animation = nil }
       if !isSideChat, let panel = model.rightPanel {
         VStack(spacing: 0) {
-          HStack { Spacer(); RightPanelControls() }.padding(.horizontal, 16).padding(.vertical, 10)
+          Color.clear.frame(height: 38).accessibilityHidden(true)
           if panel == .activity { ActivityView() }
           else { WorkspacePanel(state: model.workspace) }
         }
@@ -452,7 +452,10 @@ struct ConversationView: View {
           }
         }.menuStyle(.borderlessButton).padding(.horizontal, 12).frame(maxWidth: model.rightPanel != nil ? 240 : 420)
       }
-      if model.rightPanel == nil {
+      if #available(macOS 26.0, *), model.rightPanel != nil {
+        ToolbarItem { RightPanelControls().padding(.horizontal, 12).fixedSize() }
+          .sharedBackgroundVisibility(.hidden)
+      } else {
         ToolbarItem { RightPanelControls().padding(.horizontal, 12).fixedSize() }
       }
     }
