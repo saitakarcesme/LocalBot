@@ -193,7 +193,7 @@
     "source_commit": "5ea321a",
     "native_tests": 6,
     "preview_100_repeats_ms_before": 4603,
-    "preview_100_repeats_ms_after": "3–5",
+    "preview_100_repeats_ms_after": "3\u20135",
     "verified": [
       "native glass normal and fullscreen",
       "compact project rows with supplied colored logo",
@@ -205,6 +205,25 @@
     "not_verified": [
       "physical divider drag: CUA noWindowsAvailable",
       "frame-rate benchmark / exhaustive cursor hover matrix"
+    ]
+  },
+  "message_portrait_detail_pass": {
+    "status": "installed_verified",
+    "source_commit": "5c363a4",
+    "native_tests": 6,
+    "goal_resumed": false,
+    "verified": [
+      "leading padded title",
+      "right controls move inside open glass",
+      "terminal insets",
+      "transparent per-message portraits",
+      "90 percent contextual activity",
+      "copy response and clear unsent draft"
+    ],
+    "motion_source": "user supplied native SwiftUI animation kit",
+    "limits": [
+      "all motion states not individually visually sampled",
+      "fullscreen shortcut had no observed effect"
     ]
   }
 }
