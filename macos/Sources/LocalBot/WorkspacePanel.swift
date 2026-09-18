@@ -18,7 +18,8 @@ enum WorkspaceKind: String, CaseIterable {
   var browser: BrowserSession?
   var terminal: LocalProcessTerminalView?
   var chat: AppModel?
-  var hasUnsavedChanges = false
+  let files = WorkspaceFileState()
+  var hasUnsavedChanges: Bool { files.content != files.original }
   init(_ kind: WorkspaceKind, workspace: String) { self.kind = kind; self.workspace = workspace }
   func close() {
     browser?.web.stopLoading()
@@ -93,49 +94,48 @@ struct WorkspacePanel: View {
   @ObservedObject var state: WorkspaceState
   @State private var pendingClose: WorkspaceTab?
   @State private var confirmDiscard = false
+  private func close(_ tab: WorkspaceTab) {
+    if tab.hasUnsavedChanges { pendingClose = tab; confirmDiscard = true } else { state.close(tab) }
+  }
   var body: some View {
     VStack(spacing: 0) {
-      HStack(spacing: 10) {
-        Text("Workspace").font(.caption.weight(.semibold))
-        Spacer()
-        Menu { ForEach(WorkspaceKind.allCases, id: \.self) { kind in
-          Button { model.openWorkspace(kind) } label: { Label(kind.rawValue, systemImage: kind.icon) }
-        } } label: { Image(systemName: "plus") }.menuStyle(.borderlessButton).fixedSize().help("Add workspace tab")
-        Button { model.rightPanel = nil } label: { Image(systemName: "xmark") }.buttonStyle(.plain).help("Close workspace")
-      }.padding(12)
-      if !state.tabs.isEmpty {
-        ScrollView(.horizontal) {
-          HStack(spacing: 4) {
-            ForEach(state.tabs) { tab in
-              HStack(spacing: 6) {
-                Button { state.selected = tab.id } label: { Label(tab.kind.rawValue, systemImage: tab.kind.icon) }.buttonStyle(.plain)
-                Button { if tab.hasUnsavedChanges { pendingClose = tab; confirmDiscard = true } else { state.close(tab) } } label: { Image(systemName: "xmark").font(.system(size: 8)) }.buttonStyle(.plain).help("Close tab")
-              }.font(.caption).padding(8).background(state.selected == tab.id ? Color.primary.opacity(0.1) : .clear, in: RoundedRectangle(cornerRadius: 8))
-            }
-          }.padding(.horizontal, 8)
-        }.fixedSize(horizontal: false, vertical: true)
-      }
-      Divider()
-      if state.tabs.isEmpty {
-        VStack(spacing: 8) {
+      if let tab = state.tabs.first(where: { $0.id == state.selected }) {
+        WorkspaceTabView(tab: tab).id(tab.id)
+          .frame(maxWidth: .infinity, maxHeight: .infinity)
+      } else {
+        VStack(alignment: .leading, spacing: 20) {
+          Text("Your workspace").font(.title3.weight(.semibold))
+          Text("Open a tool alongside your conversation.").font(.callout).foregroundStyle(.secondary)
           ForEach(WorkspaceKind.allCases, id: \.self) { kind in
             Button { model.openWorkspace(kind) } label: {
-              Label(kind.rawValue, systemImage: kind.icon).frame(maxWidth: .infinity, alignment: .leading).padding(12)
-            }.buttonStyle(.plain).background(.quaternary.opacity(0.4), in: RoundedRectangle(cornerRadius: 10))
+              Label(kind.rawValue, systemImage: kind.icon).font(.system(size: 14))
+                .frame(maxWidth: .infinity, alignment: .leading).contentShape(Rectangle())
+            }.buttonStyle(.plain).padding(.vertical, 5)
           }
-          Text("Drag a conversation here to open it alongside your chat.").font(.caption).foregroundStyle(.secondary)
-        }.padding(20).frame(maxHeight: .infinity)
-      } else {
-        ZStack {
-          ForEach(state.tabs) { tab in
-            WorkspaceTabView(tab: tab)
-              .opacity(state.selected == tab.id ? 1 : 0)
-              .allowsHitTesting(state.selected == tab.id).disabled(state.selected != tab.id)
-              .accessibilityHidden(state.selected != tab.id)
-          }
-        }.frame(maxWidth: .infinity, maxHeight: .infinity)
+        }.padding(28).frame(maxWidth: .infinity, maxHeight: .infinity)
       }
-    }.background(.regularMaterial)
+      HStack(spacing: 8) {
+        ScrollView(.horizontal, showsIndicators: false) {
+          HStack(spacing: 6) {
+            ForEach(state.tabs) { tab in
+              Button { state.selected = tab.id } label: {
+                Image(systemName: tab.kind.icon).frame(width: 28, height: 28)
+                  .background(state.selected == tab.id ? Color.primary.opacity(0.12) : .clear, in: RoundedRectangle(cornerRadius: 8))
+              }.buttonStyle(.plain).help(tab.kind.rawValue).accessibilityLabel(tab.kind.rawValue)
+                .contextMenu { Button("Close tab") { close(tab) } }
+            }
+          }
+        }
+        Menu { ForEach(WorkspaceKind.allCases, id: \.self) { kind in
+          Button { model.openWorkspace(kind) } label: { Label(kind.rawValue, systemImage: kind.icon) }
+        } } label: { Image(systemName: "plus").frame(width: 24, height: 28) }
+          .menuStyle(.borderlessButton).fixedSize().help("Add workspace tab")
+        if let tab = state.tabs.first(where: { $0.id == state.selected }) {
+          Button { close(tab) } label: { Image(systemName: "xmark").frame(width: 24, height: 28) }.buttonStyle(.plain).help("Close tab")
+        }
+        Button { model.rightPanel = nil } label: { Image(systemName: "sidebar.right").frame(width: 24, height: 28) }.buttonStyle(.plain).help("Hide workspace")
+      }.font(.system(size: 13)).padding(10)
+    }
       .onChange(of: state.selected) { _, _ in NSApp.keyWindow?.makeFirstResponder(nil) }
       .confirmationDialog("Discard unsaved file changes and close this tab?", isPresented: $confirmDiscard) {
         Button("Discard changes", role: .destructive) { if let pendingClose { state.close(pendingClose) }; pendingClose = nil }
@@ -154,7 +154,7 @@ struct WorkspaceTabView: View {
     switch tab.kind {
     case .browser: if let browser = tab.browser { BrowserPane(session: browser) }
     case .terminal: TerminalPane(tab: tab)
-    case .files: WorkspaceFiles(root: tab.workspace, dirtyChanged: { tab.hasUnsavedChanges = $0 })
+    case .files: WorkspaceFiles(root: tab.workspace, state: tab.files)
     case .review: WorkspaceReview(root: tab.workspace)
     case .chat: if let model = tab.chat { SideChatPane(model: model) }
     }

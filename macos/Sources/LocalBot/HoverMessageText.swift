@@ -20,6 +20,7 @@ struct HoverMessageText: NSViewRepresentable {
   func updateNSView(_ view: LinkTextView, context: Context) {
     view.openLink = { url in model.openInBrowser(url) }
     guard view.source != content || view.renderedFontSize != fontSize else { return }
+    view.measurements.removeAll()
     view.source = content
     view.renderedFontSize = fontSize
     let parsed = inlineMessage(content)
@@ -39,6 +40,8 @@ struct HoverMessageText: NSViewRepresentable {
     guard let storage = nsView.textStorage else { return nil }
     // SwiftUI probes several widths. Measure a separate layout so a discarded
     // narrow proposal cannot leave the displayed text container one glyph wide.
+    let width = max(1, proposal.width ?? 530)
+    if let cached = nsView.measurements[width] { return cached }
     let measurement = NSTextStorage(attributedString: storage)
     let layout = NSLayoutManager()
     let container = NSTextContainer(size: CGSize(width: max(1, proposal.width ?? 530), height: .greatestFiniteMagnitude))
@@ -46,7 +49,10 @@ struct HoverMessageText: NSViewRepresentable {
     measurement.addLayoutManager(layout); layout.addTextContainer(container)
     layout.ensureLayout(for: container)
     let size = layout.usedRect(for: container).size
-    return CGSize(width: ceil(size.width), height: ceil(size.height))
+    let result = CGSize(width: ceil(size.width), height: ceil(size.height))
+    if nsView.measurements.count > 32 { nsView.measurements.removeAll() }
+    nsView.measurements[width] = result
+    return result
   }
 }
 
@@ -56,6 +62,7 @@ final class LinkTextView: NSTextView {
     if let url = link as? URL { openLink?(url) }
     else if let value = link as? String, let url = URL(string: value) { openLink?(url) }
   }
+  var measurements: [CGFloat: CGSize] = [:]
   var source = ""
   var renderedFontSize: CGFloat = 0
   private var hoverRange: NSRange?
@@ -79,7 +86,7 @@ final class LinkTextView: NSTextView {
       NSCursor.pointingHand.set()
     } else { clearHover(); NSCursor.iBeam.set() }
   }
-  override func mouseExited(with event: NSEvent) { clearHover(); NSCursor.arrow.set() }
+  override func mouseExited(with event: NSEvent) { clearHover(); super.mouseExited(with: event) }
   private func clearHover() {
     if let range = hoverRange, range.upperBound <= (textStorage?.length ?? 0) { textStorage?.removeAttribute(.underlineStyle, range: range) }
     hoverRange = nil

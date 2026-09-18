@@ -34,41 +34,44 @@ enum WorkspaceDisk {
     try content.write(to: file, atomically: true, encoding: .utf8)
   }
 }
+@MainActor final class WorkspaceFileState: ObservableObject {
+  @Published var folder: URL?
+  @Published var entries: [WorkspaceEntry] = []
+  @Published var selected: URL?
+  @Published var content = ""
+  @Published var original = ""
+  @Published var error: String?
+  @Published var busy = false
+  @Published var showDiscard = false
+  @Published var pending: WorkspaceEntry?
+}
 struct WorkspaceFiles: View {
   @EnvironmentObject var model: AppModel
   let root: String
   var dirtyChanged: (Bool) -> Void = { _ in }
-  @State private var folder: URL?
-  @State private var entries: [WorkspaceEntry] = []
-  @State private var selected: URL?
-  @State private var content = ""
-  @State private var original = ""
-  @State private var error: String?
-  @State private var busy = false
-  @State private var showDiscard = false
-  @State private var pending: WorkspaceEntry?
-  var dirty: Bool { content != original }
+  @ObservedObject var state: WorkspaceFileState
+  var dirty: Bool { state.content != state.original }
   var body: some View {
     VStack(spacing: 0) {
       HStack {
-        Button { navigateUp() } label: { Image(systemName: "chevron.left") }.disabled(folder?.path == root && selected == nil || dirty)
-        Text(selected?.lastPathComponent ?? folder?.lastPathComponent ?? URL(fileURLWithPath: root).lastPathComponent).font(.caption).lineLimit(1)
+        Button { navigateUp() } label: { Image(systemName: "chevron.left") }.disabled(state.folder?.path == root && state.selected == nil || dirty)
+        Text(state.selected?.lastPathComponent ?? state.folder?.lastPathComponent ?? URL(fileURLWithPath: root).lastPathComponent).font(.caption).lineLimit(1)
         Spacer()
-        if let selected {
+        if let selected = state.selected {
           Button("Open") { model.openInBrowser(selected) }
-          Button("Save") { save() }.disabled(!dirty || busy)
+          Button("Save") { save() }.disabled(!dirty || state.busy)
         }
-        Button { if let selected { load(WorkspaceEntry(url: selected, directory: false)) } else { list(folder ?? URL(fileURLWithPath: root)) } } label: { Image(systemName: "arrow.clockwise") }.disabled(dirty || busy).help("Reload")
+        Button { if let selected = state.selected { load(WorkspaceEntry(url: selected, directory: false)) } else { list(state.folder ?? URL(fileURLWithPath: root)) } } label: { Image(systemName: "arrow.clockwise") }.disabled(dirty || state.busy).help("Reload")
       }.buttonStyle(.plain).padding(12)
-      if let error { Text(error).foregroundStyle(.orange).font(.caption).textSelection(.enabled).padding(8) }
-      if busy { ProgressView().controlSize(.small) }
-      if selected != nil {
-        TextEditor(text: $content).font(.system(size: 12, design: .monospaced)).padding(6)
+      if let error = state.error { Text(error).foregroundStyle(.orange).font(.caption).textSelection(.enabled).padding(8) }
+      if state.busy { ProgressView().controlSize(.small) }
+      if state.selected != nil {
+        TextEditor(text: $state.content).font(.system(size: 12, design: .monospaced)).padding(6)
         Text(dirty ? "Unsaved changes" : "Saved on disk").font(.caption2).foregroundStyle(.secondary).padding(6)
       } else {
         ScrollView {
           LazyVStack(alignment: .leading, spacing: 2) {
-            ForEach(entries) { entry in
+            ForEach(state.entries) { entry in
               Button { choose(entry) } label: {
                 Label(entry.url.lastPathComponent, systemImage: entry.directory ? "folder" : "doc.text")
                   .frame(maxWidth: .infinity, alignment: .leading).padding(9).contentShape(Rectangle())
@@ -78,46 +81,46 @@ struct WorkspaceFiles: View {
         }
       }
     }.onChange(of: dirty) { _, value in dirtyChanged(value) }
-      .task { if folder == nil { list(URL(fileURLWithPath: root)) } }
-      .confirmationDialog("Discard unsaved changes?", isPresented: $showDiscard) {
-        Button("Discard", role: .destructive) { content = original; if let pending { load(pending) } }
-        Button("Cancel", role: .cancel) { pending = nil }
+      .task { if state.folder == nil { list(URL(fileURLWithPath: root)) } }
+      .confirmationDialog("Discard unsaved changes?", isPresented: $state.showDiscard) {
+        Button("Discard", role: .destructive) { state.content = state.original; if let pending = state.pending { load(pending) } }
+        Button("Cancel", role: .cancel) { state.pending = nil }
       }
   }
   func choose(_ entry: WorkspaceEntry) {
-    if dirty { pending = entry; showDiscard = true } else { load(entry) }
+    if dirty { state.pending = entry; state.showDiscard = true } else { load(entry) }
   }
   func navigateUp() {
-    if selected != nil { selected = nil; error = nil; return }
-    let parent = (folder ?? URL(fileURLWithPath: root)).deletingLastPathComponent()
+    if state.selected != nil { state.selected = nil; state.error = nil; return }
+    let parent = (state.folder ?? URL(fileURLWithPath: root)).deletingLastPathComponent()
     list(parent)
   }
   func list(_ url: URL) {
-    busy = true
+    state.busy = true
     Task {
-      do { entries = try await Task.detached { try WorkspaceDisk.list(url, root: root) }.value; folder = url; selected = nil; error = nil }
-      catch { self.error = error.localizedDescription }
-      busy = false
+      do { state.entries = try await Task.detached { try WorkspaceDisk.list(url, root: root) }.value; state.folder = url; state.selected = nil; state.error = nil }
+      catch { state.error = error.localizedDescription }
+      state.busy = false
     }
   }
   func load(_ entry: WorkspaceEntry) {
     if entry.directory { list(entry.url); return }
-    busy = true
+    state.busy = true
     Task {
       do {
         let result = try await Task.detached { try WorkspaceDisk.read(entry.url, root: root) }.value
-        selected = entry.url; original = result; content = result; error = nil
-      } catch { self.error = error.localizedDescription; selected = nil }
-      busy = false
+        state.selected = entry.url; state.original = result; state.content = result; state.error = nil
+      } catch { state.error = error.localizedDescription; state.selected = nil }
+      state.busy = false
     }
   }
   func save() {
-    guard let selected else { return }; busy = true
-    let saved = content, previous = original
+    guard let selected = state.selected else { return }; state.busy = true
+    let saved = state.content, previous = state.original
     Task {
-      do { try await Task.detached { try WorkspaceDisk.save(selected, root: root, original: previous, content: saved) }.value; original = saved; error = nil }
-      catch { self.error = error.localizedDescription }
-      busy = false
+      do { try await Task.detached { try WorkspaceDisk.save(selected, root: root, original: previous, content: saved) }.value; state.original = saved; state.error = nil }
+      catch { state.error = error.localizedDescription }
+      state.busy = false
     }
   }
 }

@@ -275,20 +275,17 @@ struct ConversationRow: View {
   var body: some View {
     HStack(spacing: 7) {
       if conversation.projectId != nil {
-        AvatarStack(agents: conversation.members.compactMap { model.agent($0) }, size: 30)
+        AvatarStack(agents: conversation.members.compactMap { model.agent($0) }, size: 22)
       }
       VStack(alignment: .leading, spacing: 4) {
-        Text(title).font(.system(size: 13, weight: conversation.projectId == nil ? .regular : .semibold)).lineLimit(1).truncationMode(.tail)
-        if conversation.projectId != nil {
-          Text(messagePreview(conversation.preview ?? "Send a message to bring your team together."))
-            .font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(2)
-        }
+        Text(title).font(.system(size: 13, weight: .regular)).lineLimit(1).truncationMode(.tail)
+
       }
       Spacer(minLength: 0)
       if model.tasks.contains(where: { $0.conversationId == conversation.id && $0.active }) {
         Circle().fill(Color.accentColor).frame(width: 6, height: 6).help("Work in progress")
       }
-    }.frame(height: conversation.projectId == nil ? 28 : 62).contentShape(Rectangle()).help(title)
+    }.frame(height: 28).contentShape(Rectangle()).help(title)
   }
 }
 
@@ -399,30 +396,22 @@ struct ConversationView: View {
         }
         composer
       }.background(Color(nsColor: .textBackgroundColor))
-      if !isSideChat {
-        ZStack {
-          ActivityView().opacity(model.rightPanel == .activity ? 1 : 0)
-            .allowsHitTesting(model.rightPanel == .activity).accessibilityHidden(model.rightPanel != .activity)
-          WorkspacePanel(state: model.workspace).opacity(model.rightPanel == .workspace ? 1 : 0)
-            .allowsHitTesting(model.rightPanel == .workspace).accessibilityHidden(model.rightPanel != .workspace)
+      if !isSideChat, let panel = model.rightPanel {
+        Group {
+          if panel == .activity { ActivityView() }
+          else { WorkspacePanel(state: model.workspace) }
         }
-        .frame(width: model.rightPanel == nil ? 0 : min(max(280, panelWidth), max(280, geometry.size.width - 280)))
-        .clipped()
-        .background(.regularMaterial)
+        .frame(width: min(max(280, panelWidth), max(280, geometry.size.width - 280)))
+        .background(PanelGlass())
+        .clipShape(RoundedRectangle(cornerRadius: 22))
+        .overlay(RoundedRectangle(cornerRadius: 22).strokeBorder(.primary.opacity(0.12), lineWidth: 0.7))
+        .padding(.trailing, 10).padding(.bottom, 10).padding(.top, 4)
         .overlay(alignment: .leading) {
-          if model.rightPanel != nil {
-            Rectangle().fill(Color.primary.opacity(0.1)).frame(width: 1)
-            Color.clear.frame(width: 7).contentShape(Rectangle())
-              .onHover { if $0 { NSCursor.resizeLeftRight.push() } else { NSCursor.pop() } }
-              .gesture(DragGesture().onChanged { value in
-                if resizeOrigin == nil { resizeOrigin = panelWidth }
-                panelWidth = max(280, min(900, (resizeOrigin ?? panelWidth) - value.translation.width))
-              }.onEnded { _ in resizeOrigin = nil })
-          }
+          PanelResizeHandle { delta in panelWidth = max(280, min(900, panelWidth - delta)) }.frame(width: 8)
         }
+        .transition(.opacity.combined(with: .offset(x: 14)))
       }
     }
-    .animation(.easeInOut(duration: 0.2), value: model.rightPanel)
     .overlay(alignment: .trailing) {
       if !isSideChat && model.rightPanel == nil {
         Color.clear.frame(width: 32).dropDestination(for: String.self) { values, _ in
