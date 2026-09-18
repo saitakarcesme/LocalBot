@@ -1,10 +1,37 @@
 import AppKit
 import SwiftUI
 
+/// One continuous backing beneath navigation, conversation and workspace glass.
+struct WindowBackdrop: View {
+  var body: some View {
+    Color(nsColor: .textBackgroundColor)
+      .overlay(alignment: .top) {
+        Rectangle().fill(.ultraThinMaterial)
+          .frame(height: 100)
+          .mask(LinearGradient(colors: [.black, .black.opacity(0.55), .clear], startPoint: .top, endPoint: .bottom))
+      }
+      .ignoresSafeArea()
+      .allowsHitTesting(false)
+      .accessibilityHidden(true)
+  }
+}
+
 /// Use the same native glass family as the navigation sidebar, with a vibrancy fallback.
 struct PanelGlass: ViewModifier {
+  @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
   func body(content: Content) -> some View {
-    if #available(macOS 26.0, *) {
+    surface(content)
+      .overlay {
+        RoundedRectangle(cornerRadius: 22, style: .continuous)
+          .strokeBorder(LinearGradient(colors: [.white.opacity(0.24), .white.opacity(0.04), .white.opacity(0.10)], startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 0.5)
+          .allowsHitTesting(false)
+      }
+      .shadow(color: .black.opacity(0.08), radius: 12, y: 4)
+  }
+  @ViewBuilder private func surface(_ content: Content) -> some View {
+    if reduceTransparency {
+      content.background(Color(nsColor: .windowBackgroundColor), in: RoundedRectangle(cornerRadius: 22))
+    } else if #available(macOS 26.0, *) {
       content.glassEffect(.regular, in: RoundedRectangle(cornerRadius: 22))
     } else {
       content.background(.regularMaterial, in: RoundedRectangle(cornerRadius: 22))
