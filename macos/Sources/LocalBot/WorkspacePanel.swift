@@ -173,6 +173,7 @@ struct SideChatPane: View {
   }
 }
 struct TerminalPane: View {
+  @EnvironmentObject var model: AppModel
   let tab: WorkspaceTab
   var body: some View {
     VStack(spacing: 0) {
@@ -182,15 +183,17 @@ struct TerminalPane: View {
         Button("Focus terminal") { if let view = tab.terminal { view.window?.makeFirstResponder(view) } }
           .buttonStyle(.plain).font(.caption)
       }.padding(8)
-      TerminalSurface(tab: tab).frame(maxWidth: .infinity, maxHeight: .infinity)
+      TerminalSurface(tab: tab, openLink: { model.openInBrowser($0) }).frame(maxWidth: .infinity, maxHeight: .infinity)
     }
   }
 }
 struct TerminalSurface: NSViewRepresentable {
   let tab: WorkspaceTab
+  var openLink: (URL) -> Void
   func makeNSView(context: Context) -> LocalProcessTerminalView {
     if let existing = tab.terminal { return existing }
-    let view = LocalProcessTerminalView(frame: NSRect(x: 0, y: 0, width: 500, height: 500))
+    let view = WorkspaceTerminalView(frame: NSRect(x: 0, y: 0, width: 500, height: 500))
+    view.openLinkInside = openLink
     view.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
     view.nativeForegroundColor = .textColor; view.nativeBackgroundColor = .textBackgroundColor
     view.startProcess(executable: "/bin/zsh", args: ["-l"], currentDirectory: tab.workspace)
@@ -198,4 +201,11 @@ struct TerminalSurface: NSViewRepresentable {
     return view
   }
   func updateNSView(_ view: LocalProcessTerminalView, context: Context) {}
+}
+
+final class WorkspaceTerminalView: LocalProcessTerminalView {
+  var openLinkInside: ((URL) -> Void)?
+  override func requestOpenLink(source: TerminalView, link: String, params: [String: String]) {
+    if let url = URL(string: link) { openLinkInside?(url) }
+  }
 }

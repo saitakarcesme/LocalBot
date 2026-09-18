@@ -16,6 +16,7 @@ for resource in "$SWIFT_BUILD_DIR"/debug/*.bundle; do
     chmod -R u+w "$target"
   fi
 done
+cp "$SWIFT_BUILD_DIR/checkouts/SwiftTerm/LICENSE" "$APP/Contents/Resources/SwiftTerm-LICENSE"
 cp runtime/dist/*.js "$APP/Contents/Resources/runtime/"
 NODE_VERSION=22.22.2
 NODE_ARCH="$(uname -m)"
