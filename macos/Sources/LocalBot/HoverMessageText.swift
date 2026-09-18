@@ -6,7 +6,7 @@ struct HoverMessageText: NSViewRepresentable {
   var content: String
   var fontSize: CGFloat = 14
   func makeNSView(context: Context) -> LinkTextView {
-    let view = LinkTextView()
+    let view = LinkTextView(frame: .zero, textContainer: nil)
     view.isEditable = false; view.isSelectable = true
     view.drawsBackground = false
     view.textContainerInset = .zero
