@@ -409,7 +409,7 @@ struct ConversationView: View {
               ).font(.system(size: 10)).foregroundStyle(.secondary)
             }
           }
-        }.menuStyle(.borderlessButton).frame(maxWidth: model.showActivity ? 260 : 420)
+        }.menuStyle(.borderlessButton).frame(maxWidth: model.showActivity ? 180 : 420)
       }
       ToolbarItem {
         Button {
