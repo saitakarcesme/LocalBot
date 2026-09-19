@@ -14,11 +14,11 @@ try {
   process.env.LOCALBOT_TUNNEL_BINARY=resolve('build/vendor/tunnel/darwin-arm64/cloudflared');url=await tunnel.start(local);
   if(relay){host=await routing.start(join(root,'host-key.json'),relay,url);url=relay;}
   let ready=false;
-  for(let i=0;i<60;i++){
-   try{const r=await fetch(url+'/rpc',host?{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+ 'x'.repeat(43)},body:JSON.stringify({host,id:'test',requestId:'test',box:'fixture'}),signal:AbortSignal.timeout(5000)}:{signal:AbortSignal.timeout(3000)});if(r.status===(host?401:404)){ready=true;break;}}catch{}
+  for(let i=0;i<15;i++){
+   try{const r=await fetch(url+'/rpc',host?{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+ 'x'.repeat(43)},body:JSON.stringify({host,id:'test',requestId:'test',box:'fixture'}),signal:AbortSignal.timeout(5000)}:{signal:AbortSignal.timeout(3000)});if(i===0)console.log('First route probe status:',r.status);if(r.status===(host?401:404)){ready=true;break;}}catch{}
    await new Promise(r=>setTimeout(r,1000));
   }
-  if(!ready)throw Error('Public tunnel DNS or routing did not become available. Public connectivity is NOT verified.');
+  if(!ready){console.log(tunnel.diagnostic);throw Error('Public tunnel DNS or routing did not become available. Public connectivity is NOT verified.');}
  }
  const file=join(root,'pairing.json');await writeFile(file,JSON.stringify(parseLink(await gateway.pairing(url,'Protocol fixture',host))),{mode:0o600});
  const child=spawn(binary,[file],{stdio:'inherit'});if(await new Promise(r=>child.on('exit',r))!==0)throw Error('Swift protocol fixture failed');

@@ -1,3 +1,4 @@
+import {ModelJobs} from "./model-jobs.js";
 import { RemoteGateway } from './gateway.js';
 import { type RPCRequest } from './protocol.js';
 export type ModelServer = { kind: 'ollama' | 'openai'; endpoint: string };
@@ -25,4 +26,9 @@ export async function modelRequest(server: ModelServer, request: RPCRequest, sig
   if(response.body)for await(const chunk of response.body as any){size+=chunk.length;if(size>8_000_000)throw Error('Model output exceeded the 8 MB response limit.');chunks.push(chunk);}
   return {status:response.status,contentType:response.headers.get('content-type')??'application/json',body:Buffer.concat(chunks).toString('utf8')};
 }
-export function centerGateway(file:string,server:ModelServer){validateModelServer(server);return new RemoteGateway(file,'center',(request,_id,signal)=>modelRequest(server,request,signal));}
+export function centerGateway(file:string,server:ModelServer){
+ validateModelServer(server);const jobs=new ModelJobs();
+ const gateway=new RemoteGateway(file,'center',(request,id,signal)=>request.operation.startsWith('model_')?jobs.handle(server,request,id):modelRequest(server,request,signal));
+ const revoke=gateway.revoke.bind(gateway);gateway.revoke=async(id)=>{jobs.revoke(id);await revoke(id);};
+ const close=gateway.close.bind(gateway);gateway.close=async()=>{jobs.close();await close();};return gateway;
+}

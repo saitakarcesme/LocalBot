@@ -67,7 +67,26 @@ class HTTPProvider implements ModelProvider {
       if (!this.secret) throw Error("Reconnect LocalBot Center in Settings.");
       const link = parseLink(this.secret);
       if (link.kind !== "center" || link.url !== new URL(this.p.endpoint).origin) throw Error("Center credentials do not match this connection.");
-      const result = await invoke(link, {operation:"model",path,method:body === undefined ? "GET" : "POST",body}, signal ? AbortSignal.any([signal,AbortSignal.timeout(this.p.timeout*1000)]) : AbortSignal.timeout(this.p.timeout*1000));
+      const deadline = signal ? AbortSignal.any([signal,AbortSignal.timeout(this.p.timeout*1000)]) : AbortSignal.timeout(this.p.timeout*1000);
+      if (body !== undefined) {
+        const started=await invoke(link,{operation:"model_start",path,method:"POST",body},deadline);
+        let offset=0,finished=false;
+        const cancel=()=>{if(!finished){finished=true;void invoke(link,{operation:"model_cancel",body:{job:started.job}},AbortSignal.timeout(5000)).catch(()=>{});}};
+        deadline.addEventListener("abort",cancel,{once:true});
+        const stream=new ReadableStream<Uint8Array>({
+          async pull(controller){try{
+            while(true){deadline.throwIfAborted();const result=await invoke(link,{operation:"model_poll",body:{job:started.job,offset}},deadline);offset=result.offset;
+              if(result.data)controller.enqueue(Buffer.from(result.data,"base64"));
+              if(result.done){controller.close();cancel();deadline.removeEventListener("abort",cancel);return;}
+              if(result.data)return;
+              await new Promise<void>((resolve,reject)=>{const abort=()=>{clearTimeout(timer);reject(Error("Model request cancelled"));};const timer=setTimeout(()=>{deadline.removeEventListener("abort",abort);resolve();},350);deadline.addEventListener("abort",abort,{once:true});});
+            }
+          }catch(e){cancel();deadline.removeEventListener("abort",cancel);controller.error(e);}},
+          cancel(){cancel();deadline.removeEventListener("abort",cancel);}
+        });
+        return new Response(stream,{headers:{"Content-Type":started.contentType}});
+      }
+      const result = await invoke(link, {operation:"model",path,method:"GET"}, deadline);
       if (result.status < 200 || result.status >= 300) throw Error(`Model server returned HTTP ${result.status}.`);
       return new Response(result.body,{status:result.status,headers:{"Content-Type":result.contentType}});
     }
