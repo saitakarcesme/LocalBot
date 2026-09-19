@@ -75,7 +75,7 @@ extension AppModel {
         workspace.selected = existing.id; rightPanel = .workspace; return
       }
       let child = AppModel(persistsSelection: false)
-      child.workspaceProviderId = model.workspaceProviderId
+      child.workspaceProviderId = workspaceProviderId
       child.browserHandler = { [weak self] url in self?.openInBrowser(url) }
       child.connection = connection
       child.selectedId = conversationId
