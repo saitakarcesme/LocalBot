@@ -395,3 +395,5 @@ Streaming checkpoint requested by the concurrent UI task: fixed dropped trailing
 - 141 runtime tests and 8 native tests pass. iPhone physical-device signing succeeds with the available development account, but the actual phone is unavailable. Physical Windows and separate-network device validation remain pending. No paid service upgrade, live user task cancellation, or automatic loop was started.
 
 - Connected preview update: source50a6645 installed and launched;86 signed bundle hashes verified. Center pairing sheet and Remote settings visible. Native iPhone terminal test passed pwd/stty/Ctrl-C and helper termination; simulator is shut down. Windows49 MB ZIP and signed iPhone2.6 MB IPA prepared. Development signing expires2026-09-26. Branch pushed with micro checkpoints.
+
+- Live installed browser test passed: Athena completed browser_open and browser_snapshot against Example.com, returning Example Domain; native page independently matched. Verification chat2720fdba-ddf1-4366-9f4a-71fe59dc338a archived, no forms/messages submitted.

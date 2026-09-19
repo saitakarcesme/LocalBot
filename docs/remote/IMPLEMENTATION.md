@@ -38,7 +38,7 @@ Some DNS resolvers returned NXDOMAIN for Quick Tunnel names. The relay resolves 
 - Runtime suite: 141 passing tests, including Center stream ownership/offset/revocation and interactive PTY ownership/input replay/resize tests.
 - Swift CryptoKit ↔ Node AES-GCM pairing/response: passed both loopback and public HTTPS relay fixture.
 - Relay identity tests reject modified signatures, expired records and non-tunnel destinations.
-- Mac build passed after browser bridge and settings changes.
+- Mac source `50a6645` installed and launched; 86 signed bundle hashes verified. Native Settings displays Center pairing and iPhone Remote. Real Athena task passed `browser_open` and `browser_snapshot` against Example.com in the installed app; the returned title and visible page matched. Verification chat archived. Browser click/type/scroll still require wider live coverage.
 - iPhone simulator build passed; iPhone device build signed with the available Apple development account. Connected iPhone discovery reports the phone unavailable.
 - Simulator first boot required over four minutes of migration. Only one simulator ran. Signed simulator UI passed public-relay pairing, conversation loading, message round trip, file reading/editing and disconnect using an isolated fixture. Saved file content was independently checked on disk. The simulator was shut down between builds. The subsequent interactive terminal UI check passed: real shell prompt, `pwd`, `stty size` (42 rows × 49 columns), Ctrl-C, and helper process exit after closing the workspace.
 

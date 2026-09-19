@@ -281,13 +281,12 @@
   },
   "localbot_remote_plan": {
     "platform": "iPhone",
-    "status": "plan_only",
-    "path": "docs/LOCALBOT-REMOTE-IPHONE-PLAN.md",
-    "next_decision": "LAN-first milestone or include internet relay in first delivery"
+    "status": "connected_preview_implemented",
+    "path": "docs/LOCALBOT-REMOTE-IPHONE-PLAN.md"
   },
   "connected_preview": {
     "date": "2026-09-19",
-    "status": "installed_mac_signed_phone_windows_packages_browser_smoke_pending",
+    "status": "development_preview_installed_and_verified",
     "branch": "codex/center-iphone-remote",
     "runtime_tests": 141,
     "native_tests": 8,
@@ -299,12 +298,14 @@
       "PTY host input resize ownership and revocation",
       "phone interactive shell pwd stty size and Ctrl-C",
       "remote PTY process exits after workspace dismissal",
-      "installed Mac Center settings UI"
+      "installed Mac Center settings UI",
+      "real Athena browser_open/browser_snapshot in installed Mac app"
     ],
     "pending": [
       "physical Windows Ollama",
       "physical iPhone installation",
-      "browser tool smoke test"
+      "full mobile attachments and background notifications",
+      "broader browser click/type/scroll live coverage"
     ],
     "simulators_maximum": 1,
     "installed_mac_source": "50a6645",
