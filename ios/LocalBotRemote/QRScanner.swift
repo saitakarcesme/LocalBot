@@ -13,6 +13,8 @@ final class ScannerController: UIViewController, AVCaptureMetadataOutputObjectsD
   private let queue = DispatchQueue(label: "app.localbot.camera")
   private var preview: AVCaptureVideoPreviewLayer?
   private var delivered = false
+  // Accessed only on the capture queue; prevents permission replies restarting a dismissed camera.
+  private var stopped = false
   override func viewDidLoad() {
     super.viewDidLoad(); view.backgroundColor = .black
     AVCaptureDevice.requestAccess(for: .video) { [weak self] allowed in
@@ -22,7 +24,7 @@ final class ScannerController: UIViewController, AVCaptureMetadataOutputObjectsD
   }
   private func configure() {
     queue.async { [weak self] in
-      guard let self, let device = AVCaptureDevice.default(for: .video), let input = try? AVCaptureDeviceInput(device: device), self.session.canAddInput(input) else { return }
+      guard let self, !self.stopped, let device = AVCaptureDevice.default(for: .video), let input = try? AVCaptureDeviceInput(device: device), self.session.canAddInput(input) else { return }
       self.session.beginConfiguration(); self.session.addInput(input)
       let output = AVCaptureMetadataOutput()
       guard self.session.canAddOutput(output) else { self.session.commitConfiguration(); return }
@@ -37,7 +39,7 @@ final class ScannerController: UIViewController, AVCaptureMetadataOutputObjectsD
     let label = UILabel(); label.text = "Camera access is unavailable. Paste the pairing code instead."; label.textColor = .white; label.numberOfLines = 0; label.textAlignment = .center; label.frame = view.bounds.insetBy(dx: 30, dy: 30); label.autoresizingMask = [.flexibleWidth,.flexibleHeight]; view.addSubview(label)
   }
   override func viewDidLayoutSubviews() { super.viewDidLayoutSubviews(); preview?.frame = view.bounds }
-  func stop() { queue.async { [weak self] in self?.session.stopRunning() } }
+  func stop() { queue.async { [weak self] in self?.stopped = true; self?.session.stopRunning() } }
   func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
     guard !delivered, let code = (metadataObjects.first as? AVMetadataMachineReadableCodeObject)?.stringValue, code.hasPrefix("localbot://pair") else { return }
     delivered = true; stop(); scanned?(code)
