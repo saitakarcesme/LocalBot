@@ -45,6 +45,7 @@ struct Provider: Codable, Identifiable, Equatable {
   var maxTokens: Int
   var requiresAuth: Bool
   var imageInput: Bool? = nil
+  var transport: String? = nil
 }
 struct Conversation: Codable, Identifiable, Equatable {
   var isDraft: Bool? = nil

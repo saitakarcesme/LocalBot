@@ -1,3 +1,4 @@
+import { claim, invoke, parseLink, encodeLink } from "./remote/protocol.js";
 import { defaultProjectFolder } from "./project-folder.js";
 import { agentStepLimit } from "./run-limits.js";
 import { MCPStdioTransport } from "./mcp-stdio.js";
@@ -342,6 +343,16 @@ const server = createServer(async (req, res) => {
       json(res, 201, c);
       return;
     }
+    if (m === "POST" && p === "/center/connect") {
+      const b = await body(req), link = parseLink(String(b.code ?? ""));
+      if (link.kind !== "center") throw Error("Scan or paste a LocalBot Center code.");
+      const paired = await claim(link), info = await invoke(paired,{operation:"info"});
+      const config: ProviderConfig = {id:randomUUID(),name:paired.name,kind:info.kind,endpoint:paired.url,transport:"center",model:"",contextLength:8192,timeout:240,concurrency:1,temperature:0.3,maxTokens:2000,requiresAuth:true};
+      const credential=encodeLink(paired), health=await provider(config,credential).health();
+      if (!health.models.length) throw Error("No models are installed in Center yet.");
+      config.model=health.models[0];store.saveProvider(config);engine.secrets.set(config.id,credential);
+      change();json(res,201,{provider:config,credential,models:health.models});return;
+    }
     if (m === "POST" && p === "/providers") {
       const b = await body(req);
       if (!["ollama", "openai", "anthropic", "codex"].includes(b.kind))
@@ -359,6 +370,7 @@ const server = createServer(async (req, res) => {
         maxTokens: Math.floor(bounded(b.maxTokens, 128, 16000, 1200)),
         requiresAuth: b.requiresAuth === true,
         imageInput: b.imageInput === true,
+        ...(b.transport === "center" ? {transport:"center" as const} : {}),
       };
       validateEndpoint(config);
       const previous = store.providers().find((p) => p.id === config.id);

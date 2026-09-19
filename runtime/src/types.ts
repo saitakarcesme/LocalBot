@@ -21,6 +21,7 @@ export type Agent = {
   integrations?: string[];
 };
 export type ProviderConfig = {
+  transport?: "center";
   imageInput?: boolean;
   id: string;
   name: string;

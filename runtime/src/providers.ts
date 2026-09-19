@@ -1,3 +1,4 @@
+import { invoke, parseLink } from "./remote/protocol.js";
 import { imageMessages } from "./http-images.js";
 import { randomUUID } from "node:crypto";
 import { CodexProvider } from "./codex-provider.js";
@@ -62,6 +63,14 @@ class HTTPProvider implements ModelProvider {
       throw new Error(
         "Provider credential is locked or missing. Open Model Settings and save its key to Keychain.",
       );
+    if (this.p.transport === "center") {
+      if (!this.secret) throw Error("Reconnect LocalBot Center in Settings.");
+      const link = parseLink(this.secret);
+      if (link.kind !== "center" || link.url !== new URL(this.p.endpoint).origin) throw Error("Center credentials do not match this connection.");
+      const result = await invoke(link, {operation:"model",path,method:body === undefined ? "GET" : "POST",body}, signal ? AbortSignal.any([signal,AbortSignal.timeout(this.p.timeout*1000)]) : AbortSignal.timeout(this.p.timeout*1000));
+      if (result.status < 200 || result.status >= 300) throw Error(`Model server returned HTTP ${result.status}.`);
+      return new Response(result.body,{status:result.status,headers:{"Content-Type":result.contentType}});
+    }
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
     };
