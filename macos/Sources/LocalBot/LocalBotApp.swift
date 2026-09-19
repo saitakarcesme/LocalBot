@@ -186,6 +186,7 @@ struct MainView: View {
           }.buttonStyle(.plain).help("Model settings")
         }.frame(height: 40).padding(.horizontal, 14).padding(.bottom, 16).padding(.top, 7)
       }
+      .ignoresSafeArea(.container, edges: model.isFullscreen ? .top : [])
       .navigationSplitViewColumnWidth(min: 250, ideal: 300, max: 380)
       .toolbar {
         ToolbarItemGroup {
