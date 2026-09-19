@@ -406,7 +406,7 @@ struct ConversationView: View {
           a in ApprovalCard(approval: a)
         }
         composer
-      }.frame(width: max(0, geometry.size.width - (!isSideChat && model.rightPanel != nil
+      }.padding(.top, isSideChat ? 0 : 52).frame(width: max(0, geometry.size.width - (!isSideChat && model.rightPanel != nil
         ? min(max(280, panelWidth), max(280, geometry.size.width - 360)) + 10 : 0)))
         .background(Color(nsColor: .textBackgroundColor), ignoresSafeAreaEdges: []).transaction { $0.animation = nil }
       if !isSideChat, let panel = model.rightPanel {
@@ -419,7 +419,7 @@ struct ConversationView: View {
         .modifier(PanelGlass())
         .clipShape(RoundedRectangle(cornerRadius: 22))
 
-        .padding(.trailing, 10).padding(.bottom, 10)
+        .padding(.top, 8).padding(.trailing, 10).padding(.bottom, 10)
         .ignoresSafeArea(.container, edges: .top)
         .overlay(alignment: .leading) {
           PanelResizeHandle { delta in panelWidth = max(280, min(900, panelWidth - delta)) }.frame(width: 8)
@@ -438,6 +438,7 @@ struct ConversationView: View {
       }
     }
     }
+    .ignoresSafeArea(.container, edges: .top)
     .background(Color.clear)
     .navigationTitle("")
     .toolbarBackground(.hidden, for: .windowToolbar)
