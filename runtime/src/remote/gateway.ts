@@ -70,13 +70,13 @@ export class RemoteGateway {
     this.saving = this.saving.catch(() => {}).then(async () => { await fs.mkdir(dirname(this.file), { recursive: true, mode: 0o700 }); await fs.writeFile(this.file + '.new', text, { mode: 0o600 }); await fs.rename(this.file + '.new', this.file); });
     return this.saving;
   }
-  async pairing(url: string, name: string) {
+  async pairing(url: string, name: string, host?: string) {
     this.devices = this.devices.filter(d => !d.expires || d.expires > Date.now());
     if (this.devices.length >= 20) throw Error('Remove an old device before adding another.');
     const token = randomBytes(32).toString('base64url');
     const device: Device = { id: randomBytes(18).toString('base64url'), tokenHash: hash(token), key: randomBytes(32).toString('base64'), name, paired: false, expires: Date.now() + 600_000, createdAt: new Date().toISOString() };
     this.devices.push(device); await this.save();
-    return encodeLink({ v: 1, kind: this.kind, url: remoteURL(url), id: device.id, token, key: device.key, name, expires: device.expires });
+    return encodeLink({ v: 1, kind: this.kind, url: remoteURL(url), host, id: device.id, token, key: device.key, name, expires: device.expires });
   }
   list() { return this.devices.filter(d => !d.expires || d.expires > Date.now()).map(({ id, name, paired, createdAt }) => ({ id, name, paired, createdAt })); }
   async revoke(id: string) { this.devices = this.devices.filter(d => d.id !== id); await this.save(); }

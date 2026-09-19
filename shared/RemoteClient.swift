@@ -10,6 +10,7 @@ struct PairingLink: Codable {
   let key: String
   let name: String
   var expires: Double?
+  var host: String?
   static func parse(_ code: String) throws -> Self {
     guard let components = URLComponents(string: code.trimmingCharacters(in: .whitespacesAndNewlines)),
       components.scheme == "localbot", components.host == "pair",
@@ -25,6 +26,7 @@ struct PairingLink: Codable {
       let url = URLComponents(string: link.url), url.scheme == "https", url.host != nil,
       url.user == nil, url.password == nil, url.query == nil, url.fragment == nil,
       url.path.isEmpty || url.path == "/" else { throw RemoteError("Use a valid secure iPhone pairing code.") }
+    if let host = link.host, host.range(of: "^[A-Za-zA-Z0-9_-]{43}$", options: .regularExpression) == nil { throw RemoteError("Invalid host identity.") }
     if let expiry = link.expires, expiry < Date().timeIntervalSince1970 * 1000 { throw RemoteError("This code expired. Generate a new one on your Mac.") }
     return link
   }
@@ -65,7 +67,9 @@ actor RemoteClient {
     var request = URLRequest(url: url); request.httpMethod = "POST"
     request.setValue("Bearer " + link.token, forHTTPHeaderField: "Authorization")
     request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-    request.httpBody = try JSONSerialization.data(withJSONObject: ["id":link.id,"requestId":requestID,"box":combined.base64EncodedString()])
+    var wire: [String:Any] = ["id":link.id,"requestId":requestID,"box":combined.base64EncodedString()]
+    if let host = link.host { wire["host"] = host }
+    request.httpBody = try JSONSerialization.data(withJSONObject: wire)
     let (data, response) = try await session.data(for: request)
     guard let response = response as? HTTPURLResponse, response.statusCode == 200 else {
       if (response as? HTTPURLResponse)?.statusCode == 401 { throw RemoteError("Connection was revoked or expired. Pair with your Mac again.") }

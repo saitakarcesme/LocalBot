@@ -1,3 +1,4 @@
+import { RoutingPublisher } from "./routing.js";
 import { join } from 'node:path';
 import { RemoteGateway } from './gateway.js';
 import { PreviewTunnel } from './tunnel.js';
@@ -16,6 +17,7 @@ export function mobileRoute(request: RPCRequest) {
 export class RemoteHost {
   private gateway?: RemoteGateway;
   private tunnel = new PreviewTunnel();
+  private routing = new RoutingPublisher();
   private publicURL?: string;
   private starting = false;
   private leases = new Map<string, number>();
@@ -45,14 +47,18 @@ export class RemoteHost {
       this.gateway = gateway;
       const localURL = await gateway.start(Number(process.env.LOCALBOT_REMOTE_PORT ?? 0));
       this.publicURL = process.env.LOCALBOT_REMOTE_PUBLIC_URL ? remoteURL(process.env.LOCALBOT_REMOTE_PUBLIC_URL) : await this.tunnel.start(localURL);
+      if (process.env.LOCALBOT_RELAY_URL) {
+        await this.routing.start(join(this.dir,"remote-host-key.json"),process.env.LOCALBOT_RELAY_URL,this.publicURL);
+        this.publicURL=remoteURL(process.env.LOCALBOT_RELAY_URL);
+      }
       return this.status();
     } catch (e) { await this.stop(); throw e; }
     finally { this.starting = false; }
   }
   async pair(name = 'iPhone') {
     if (!this.status().enabled || !this.gateway || !this.publicURL) throw Error('Enable Remote first');
-    return { code: await this.gateway.pairing(this.publicURL, name), ...this.status() };
+    return { code: await this.gateway.pairing(this.publicURL, name, this.routing.host), ...this.status() };
   }
   async revoke(id: string) { await this.gateway?.revoke(id); return this.status(); }
-  async stop() { this.tunnel.stop(); const gateway = this.gateway; this.gateway = undefined; this.publicURL = undefined; if (gateway) await gateway.close(); }
+  async stop() { this.routing.stop(); this.tunnel.stop(); const gateway = this.gateway; this.gateway = undefined; this.publicURL = undefined; if (gateway) await gateway.close(); }
 }

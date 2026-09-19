@@ -1,5 +1,5 @@
 import { createCipheriv, createDecipheriv, randomBytes, randomUUID } from 'node:crypto';
-export type Link = { v: 1; kind: 'center' | 'remote'; url: string; id: string; token: string; key: string; name: string; expires?: number };
+export type Link = { v: 1; kind: 'center' | 'remote'; url: string; id: string; token: string; key: string; name: string; expires?: number; host?: string };
 export type RPCRequest = { operation: string; path?: string; method?: string; body?: unknown };
 export function remoteURL(value: string) {
   const url = new URL(value);
@@ -14,6 +14,7 @@ export function parseLink(code: string): Link {
   if (!data || data.length > 8192) throw Error('Invalid pairing code.');
   const link = JSON.parse(Buffer.from(data, 'base64url').toString('utf8')) as Link;
   if (link.v !== 1 || !['remote', 'center'].includes(link.kind) || !/^[a-zA-Z0-9_-]{20,80}$/.test(link.id) || !/^[a-zA-Z0-9_-]{32,100}$/.test(link.token) || Buffer.from(link.key, 'base64').length !== 32 || typeof link.name !== 'string') throw Error('Invalid pairing data.');
+  if (link.host !== undefined && !/^[A-Za-z0-9_-]{43}$/.test(link.host)) throw Error("Invalid host identity");
   link.url = remoteURL(link.url);
   if (link.expires && link.expires < Date.now()) throw Error('This pairing code expired. Generate a new code on the host.');
   return link;
@@ -36,7 +37,7 @@ export function unseal(key: string, id: string, requestId: string, direction: 'r
 }
 export async function invoke(link: Link, request: RPCRequest, signal?: AbortSignal) {
   const requestId = randomUUID();
-  const response = await fetch(remoteURL(link.url) + '/rpc', { method: 'POST', redirect: 'error', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + link.token }, body: JSON.stringify({ id: link.id, requestId, box: seal(link.key, link.id, requestId, 'request', { ...request, timestamp: Date.now() }) }), signal: signal ?? AbortSignal.timeout(240_000) });
+  const response = await fetch(remoteURL(link.url) + '/rpc', { method: 'POST', redirect: 'error', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + link.token }, body: JSON.stringify({ id: link.id, host: link.host, requestId, box: seal(link.key, link.id, requestId, 'request', { ...request, timestamp: Date.now() }) }), signal: signal ?? AbortSignal.timeout(240_000) });
   if (!response.ok) throw Error(response.status === 401 ? 'Connection expired or was revoked. Pair this device again.' : `Host connection failed (HTTP ${response.status}).`);
   const wire = await response.json() as { box: string };
   const result = unseal(link.key, link.id, requestId, 'response', wire.box);
