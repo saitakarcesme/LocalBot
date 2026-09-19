@@ -65,7 +65,7 @@ struct Avatar: View {
   var size: CGFloat = 40
   var motion: LocalBotAnimation? = nil
   var palette: LocalBotPalette {
-    switch agent?.color { case "purple": return .lavender; case "orange": return .peach
+    switch agent?.color { case "purple": return .lavender; case "yellow": return .butter; case "orange": return .peach
     case "green": return .mint; case "pink": return .rose; default: return group ? .lilac : .sky }
   }
   var body: some View {

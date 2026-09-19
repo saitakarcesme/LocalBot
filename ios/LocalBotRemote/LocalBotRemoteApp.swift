@@ -104,7 +104,7 @@ struct ConversationsView: View {
   }
 }
 func palette(_ color: String?) -> LocalBotPalette {
-  switch color { case "purple": return .lavender; case "pink": return .rose; case "green": return .mint; case "orange": return .peach; case "yellow": return .gold; default: return .sky }
+  switch color { case "purple": return .lavender; case "pink": return .rose; case "green": return .mint; case "orange": return .peach; case "yellow": return .butter; default: return .sky }
 }
 struct MobileChat: View {
   @EnvironmentObject private var store: RemoteStore

@@ -294,7 +294,7 @@ struct AgentEditor: View {
             ) { Image(systemName: $0).tag($0) }
           }
           Picker("Color", selection: $agent.color) {
-            ForEach(["blue", "purple", "green", "orange", "pink"], id: \.self) {
+            ForEach(["blue", "purple", "green", "orange", "pink", "yellow"], id: \.self) {
               Text($0.capitalized).tag($0)
             }
           }

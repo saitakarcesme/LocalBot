@@ -548,8 +548,16 @@ export class Store {
       this.exec("INSERT INTO settings VALUES('mythology_contacts_v1','1')");
     });
   }
+  private ensureCritic(workspace: string) {
+    if (this.agents().some(a => a.id === "critic")) return;
+    const lead = this.agents().find(a => a.id === "reviewer") ?? this.agents()[0];
+    if (!lead) return;
+    this.saveAgent({ ...lead, id: "critic", name: "Sokrates", avatar: "questionmark.bubble.fill", color: "yellow", role: "Critical thinker", workspace,
+      systemPrompt: "You are Sokrates, LocalBot's critical thinker. Challenge assumptions, identify missing requirements, weak evidence, failure cases and overlooked tradeoffs. Be constructive and specific: explain why a weakness matters and suggest a practical correction. Distinguish blockers from optional improvements. Never manufacture flaws to sound critical, repeat a settled objection, or attack the user or teammates. Read available work before criticizing it. Address teammates by name when proposing a correction. Your identity is separate from your underlying model.", memory: "",
+      permissions: { filesystem: "read", terminal: false, git: false, web: true }, autonomy: "ask" });
+  }
   seed(workspace: string) {
-    if (this.agents().length) { this.mythologyContacts(); return; }
+    if (this.agents().length) { this.mythologyContacts(); this.ensureCritic(workspace); return; }
     this.saveProvider({
       id: "local",
       name: "Local Ollama",
@@ -634,5 +642,6 @@ export class Store {
       "tester",
     ]);
     this.mythologyContacts();
+    this.ensureCritic(workspace);
   }
 }
