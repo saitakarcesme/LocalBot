@@ -29,6 +29,8 @@ targets:
     platform: iOS
     sources:
       - LocalBotRemote
+      - ../shared/Resources/Launch.mp4
+      - ../macos/Sources/LocalBot/LaunchScreen.swift
       - ../shared/RemoteClient.swift
       - ../macos/Sources/LocalBot/ProfileView.swift
       - ../macos/Sources/LocalBot/Models.swift

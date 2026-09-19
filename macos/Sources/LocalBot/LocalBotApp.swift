@@ -3,11 +3,12 @@ import SwiftUI
 
 @main struct LocalBotApp: App {
   @StateObject private var model = AppModel()
+  @State private var launching = true
   @AppStorage("messageFontSize") private var messageFontSize = 14.0
   @AppStorage("appearance") private var appearance = "system"
   var body: some Scene {
     WindowGroup {
-      MainView().environmentObject(model).frame(minWidth: 760, minHeight: 520)
+      Group { if launching { LaunchScreen { launching = false } } else { MainView().environmentObject(model) } }.frame(minWidth: 760, minHeight: 520)
         .background(WindowBackdrop())
         .background(TransparentWindowChrome())
         .toolbarBackground(.hidden, for: .windowToolbar)

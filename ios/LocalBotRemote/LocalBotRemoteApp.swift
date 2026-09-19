@@ -5,7 +5,8 @@ import UniformTypeIdentifiers
 
 @main struct LocalBotRemoteApp: App {
   @StateObject private var store = RemoteStore()
-  var body: some Scene { WindowGroup { RemoteRoot().environmentObject(store) } }
+  @State private var launching = true
+  var body: some Scene { WindowGroup { RemoteRoot().environmentObject(store).overlay { if launching { LaunchScreen { launching = false } } } } }
 }
 struct RemoteRoot: View {
   @EnvironmentObject private var store: RemoteStore

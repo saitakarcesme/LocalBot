@@ -19,6 +19,7 @@ done
 if [ -f "$APP/Contents/Resources/SwiftTerm-LICENSE" ]; then chmod u+w "$APP/Contents/Resources/SwiftTerm-LICENSE"; fi
 cp "$SWIFT_BUILD_DIR/checkouts/SwiftTerm/LICENSE" "$APP/Contents/Resources/SwiftTerm-LICENSE"
 chmod u+w "$APP/Contents/Resources/SwiftTerm-LICENSE"
+cp shared/Resources/Launch.mp4 "$APP/Contents/Resources/Launch.mp4"
 cp macos/Sources/LocalBot/Resources/LocalBotMark.png "$APP/Contents/Resources/LocalBotMark.png"
 cp -R runtime/dist/. "$APP/Contents/Resources/runtime/"
 clang -O2 -Wall native/remote-pty.c -o "$APP/Contents/Resources/remote-pty"
