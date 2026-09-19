@@ -5,7 +5,7 @@
 3. Double-click **Start LocalBot Center.cmd**. Keep its window open. If the browser opens before Center is ready, refresh it.
 4. Select your detected model server and click **Connect this PC**.
 5. Copy the pairing code. On the Mac, open LocalBot → Settings → **Connect another PC**, paste it, and connect.
-6. Leave **Use this connection for all bots** enabled to switch the team at once. You can change individual bot models later in Settings.
+6. Leave **Use this connection for all bots** enabled to switch the team at once. Choose a default in Profile & usage, or select a model for one conversation using its composer model button.
 
 Center probes Ollama first. LM Studio and other OpenAI-compatible local servers are also supported. A custom server must run on the same PC as Center. You do not need to expose Ollama to your network, forward router ports, or share a Wi-Fi network with the Mac.
 
@@ -19,4 +19,4 @@ Center uses encrypted, polled model jobs and preserves the model server’s stre
 
 ## Compatibility and validation
 
-This package contains Node 22.22.2 and Cloudflare cloudflared 2026.9.1 for Windows x64 with their licenses. Downloads are checksum verified by the packaging script. The implementation and encrypted Ollama adapter are tested on macOS fixtures. **A physical Windows/Ollama smoke test is still required.**
+This package contains Node 22.22.2 and Cloudflare cloudflared 2026.9.1 for Windows x64 with their licenses. Downloads are checksum verified by the packaging script. A physical dual RTX 3090 Windows PC passed Qwen3.8 27B Q8 generation and Mac-side tool execution through the encrypted relay. Wider reliability testing remains ongoing.

@@ -26,12 +26,12 @@ Some DNS resolvers returned NXDOMAIN for Quick Tunnel names. The relay resolves 
 
 - Relay envelopes: 3.5 MB request, 4 MB response; host results may be larger locally. Image-heavy requests need lower payloads or a larger-capacity deployment.
 - Center model generation uses bounded jobs and polled encrypted chunks, avoiding a single long public request. Model output is limited to 8 MB and jobs to 15 minutes; the Mac's configured provider timeout still applies. Two concurrent Center generations maximum.
-- The mobile terminal is an interactive macOS PTY with SwiftTerm rendering, keyboard input, resizing, Ctrl-C and bounded output. It runs as the Mac user, like the desktop terminal. Sessions close on view dismissal, device revocation, host shutdown or fifteen minutes without requests. Background iOS suspension can interrupt transport.
+- The mobile terminal is an interactive macOS PTY with SwiftTerm rendering, keyboard input, resizing, Ctrl-C and bounded output. It runs as the Mac user, like the desktop terminal. Sessions survive view dismissal and reattach to the same conversation; explicit End session, device revocation, host shutdown or fifteen idle minutes close them. Background iOS suspension can interrupt transport.
 - iPhone browser links open in an embedded native browser; Mac cookies/tabs are not mirrored.
 - APNs/background completion notifications, full mobile image attachment workflow, and large-file previews remain unimplemented.
 - Browser DOM automation does not cover cross-origin iframe controls, file pickers, CAPTCHA, OS dialogs or password entry. Actual email sending has not been tested or performed.
 - Full accessibility, physical-pointer, animation/frame-time and exhaustive mobile layout verification remain pending.
-- Physical Windows/Ollama and two-device/two-network tests remain pending. Simulator compilation is not evidence of physical-device behavior.
+- Physical Windows/Ollama generation and native tools have passed through the public encrypted relay. Wider network interruption and long-duration reliability testing remain pending.
 
 ## Verification
 
@@ -39,7 +39,15 @@ Some DNS resolvers returned NXDOMAIN for Quick Tunnel names. The relay resolves 
 - Swift CryptoKit ↔ Node AES-GCM pairing/response: passed both loopback and public HTTPS relay fixture.
 - Relay identity tests reject modified signatures, expired records and non-tunnel destinations.
 - Mac source `50a6645` installed and launched; 86 signed bundle hashes verified. Native Settings displays Center pairing and iPhone Remote. Real Athena task passed `browser_open` and `browser_snapshot` against Example.com in the installed app; the returned title and visible page matched. Verification chat archived. Browser click/type/scroll still require wider live coverage.
-- iPhone simulator build passed; iPhone device build signed with the available Apple development account. Connected iPhone discovery reports the phone unavailable.
+- iPhone simulator build passed; iPhone device build signed with the available Apple development account. The current signed build was installed and launched on the physical iPhone.
 - Simulator first boot required over four minutes of migration. Only one simulator ran. Signed simulator UI passed public-relay pairing, conversation loading, message round trip, file reading/editing and disconnect using an isolated fixture. Saved file content was independently checked on disk. The simulator was shut down between builds. The subsequent interactive terminal UI check passed: real shell prompt, `pwd`, `stty size` (42 rows × 49 columns), Ctrl-C, and helper process exit after closing the workspace.
 
 Use `node scripts/test-public-remote.mjs` for local cross-language verification and `LOCALBOT_RELAY_URL=https://relay-five-lake.vercel.app node scripts/test-public-remote.mjs --public` for the isolated public fixture. Neither test accesses real chats or model data.
+
+## Model connection validation — September 19, 2026
+
+- 151 runtime tests pass. A physical dual RTX 3090 Windows host runs Qwen3.8 27B Q8 with Ollama reporting 100% GPU at 16K context.
+- The paired Mac completed clock, file-list, approved file-write and file-read calls with Qwen; the result was independently checked on disk.
+- Per-conversation selection ran qwen3:1.7b without changing the Qwen3.8 default. Usage records contain separate provider-reported counts for both models.
+- Updated Mac profile/model picker visually checked; signed Mac and physical iPhone builds installed. Phone animation performance was not measured.
+- Center uses an isolated tunnel configuration and three bounded startup attempts; unit tests cover retry exhaustion and cancellation by user action.
