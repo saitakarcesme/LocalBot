@@ -23,7 +23,7 @@ test('usage reads only official account methods and omits private account data',
   assert.deepEqual(normalizeUsage({}).rateLimits,null);
   assert.equal(allowed({permissions:{web:false}},'get_usage_limits'),false);
   assert.equal(allowed({permissions:{web:true}},'get_usage_limits'),true);
-  assert.equal(provider({kind:'ollama',endpoint:'http://127.0.0.1:11434'}).usage,undefined);
+  assert.equal((await provider({kind:'ollama',endpoint:'http://127.0.0.1:11434'}).usage(new AbortController().signal)).rateLimits,null);
 });
 test('usage rejects malformed buckets and windows instead of reporting invented zero usage',()=>{
   for(const value of [null,[],{rateLimits:[]},{rateLimits:{primary:{usedPercent:'2'}}},{rateLimits:{primary:{usedPercent:NaN}}},{rateLimits:{primary:{usedPercent:-1}}},{rateLimits:{primary:{usedPercent:0,resetsAt:1.5}}},{rateLimitsByLimitId:[]},{rateLimitsByLimitId:{['x'.repeat(201)]:{}}}])assert.throws(()=>normalizeUsage(value),/Invalid/);

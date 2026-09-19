@@ -239,6 +239,7 @@ class HTTPProvider implements ModelProvider {
       content = "",
       total = 0,
       finished = false;
+    let anthropicInput: number | undefined;
     const calls = new Map<number, ToolCall>();
     const consume = (line: string) => {
       if (!line.trim() || line.startsWith("event:") || line.startsWith(":"))
@@ -298,6 +299,8 @@ class HTTPProvider implements ModelProvider {
           finished = true;
         }
       } else {
+        if (d.type === "message_start") anthropicInput = d.message?.usage?.input_tokens;
+        if (d.type === "message_delta") recordModelUsage(usageRequest, anthropicInput, d.usage?.output_tokens, { providerId: p.id, model: p.model });
         if (
           d.type === "content_block_start" &&
           d.content_block?.type === "tool_use"
