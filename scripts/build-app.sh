@@ -21,6 +21,7 @@ cp "$SWIFT_BUILD_DIR/checkouts/SwiftTerm/LICENSE" "$APP/Contents/Resources/Swift
 chmod u+w "$APP/Contents/Resources/SwiftTerm-LICENSE"
 cp macos/Sources/LocalBot/Resources/LocalBotMark.png "$APP/Contents/Resources/LocalBotMark.png"
 cp -R runtime/dist/. "$APP/Contents/Resources/runtime/"
+clang -O2 -Wall native/remote-pty.c -o "$APP/Contents/Resources/remote-pty"
 NODE_VERSION=22.22.2
 NODE_ARCH="$(uname -m)"
 if [ "$NODE_ARCH" = x86_64 ]; then NODE_ARCH=x64; fi
