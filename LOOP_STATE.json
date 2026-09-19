@@ -311,6 +311,8 @@
     "installed_mac_source": "50a6645",
     "signed_iphone_profile_expires": "2026-09-26"
   },
-  "last_update": "2026-09-19 mobile UI profile and usage installed; five-bot Launch Lab started",
-  "verification_profile": "141 existing + 3 new runtime tests; Mac signed build; physical iPhone install/launch; encrypted upload bytes and shared profile/usage verified"
+  "last_update": "2026-09-19 six-bot shared conversation, terminal continuity, profile toolbar and video splash installed",
+  "verification_profile": "141 existing + 3 new runtime tests; Mac signed build; physical iPhone install/launch; encrypted upload bytes and shared profile/usage verified",
+  "verification_team": "144 runtime tests; resumed native PTY; signed Mac and physical iPhone install; Mac splash observed",
+  "pull_request": "https://github.com/saitakarcesme/LocalBot/pull/1"
 }
