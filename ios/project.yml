@@ -30,6 +30,7 @@ targets:
     sources:
       - LocalBotRemote
       - ../shared/RemoteClient.swift
+      - ../macos/Sources/LocalBot/ProfileView.swift
       - ../macos/Sources/LocalBot/Models.swift
       - ../macos/Sources/LocalBot/LocalBotMascot.swift
     settings:

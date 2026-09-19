@@ -42,6 +42,7 @@ enum Keychain {
   }
 }
 @MainActor final class AppModel: ObservableObject {
+  @Published var profile = UserProfile()
   let persistsSelection: Bool
   private static let openModels = NSHashTable<AppModel>.weakObjects()
   init(persistsSelection: Bool = true) {
@@ -240,6 +241,7 @@ enum Keychain {
         && ["completed", "completed_with_errors", "failed", "awaiting_approval", "awaiting_input"]
           .contains(t.status)
       { notify(t) }
+      if profile != s.profile ?? UserProfile() { profile = s.profile ?? UserProfile() }
       let first = update == .restarted
       if agents != (s.agents) { agents = s.agents }
       if providers != (s.providers) { providers = s.providers }

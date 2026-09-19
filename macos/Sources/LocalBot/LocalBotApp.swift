@@ -92,6 +92,7 @@ struct TypingDots: View {
   }
 }
 struct MainView: View {
+  @State private var showProfile = false
   @EnvironmentObject var model: AppModel
   @FocusState var searchFocused: Bool
   @State private var collapsedProjects = Set(UserDefaults.standard.stringArray(forKey: "collapsedProjects") ?? [])
@@ -166,9 +167,8 @@ struct MainView: View {
           }
         }
         HStack(spacing: 7) {
-          Circle().fill(model.connected ? .green : .orange).frame(width: 6, height: 6)
-          Text(model.connected ? "Local runtime" : "Connecting…").font(.caption).foregroundStyle(
-            .secondary)
+          Button { showProfile = true } label: { ProfileBadge(profile: model.profile) }.buttonStyle(.plain)
+            .sheet(isPresented: $showProfile) { ProfileEditor(profile: model.profile, loadUsage: { try await model.request("/usage") }, save: { profile in _ = try await model.request("/profile", body: ["name":profile.name,"photo":profile.photo ?? ""]); model.profile = profile }) }
           Spacer()
           Button { model.toggleArchiveList() } label: {
             Image(systemName: model.showingArchived ? "bubble.left.and.bubble.right" : "archivebox").font(.system(size: 17))
