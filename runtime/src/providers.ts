@@ -1,3 +1,4 @@
+import { localSearch } from "./local-search.js";
 import { recordModelUsage } from "./token-usage.js";
 import { invoke, parseLink } from "./remote/protocol.js";
 import { imageMessages } from "./http-images.js";
@@ -50,6 +51,7 @@ export function provider(p: ProviderConfig, secret?: string): ModelProvider {
   return new HTTPProvider(p, secret);
 }
 class HTTPProvider implements ModelProvider {
+  search(query: string, signal: AbortSignal) { return localSearch(query, signal); }
   constructor(
     private p: ProviderConfig,
     private secret?: string,
