@@ -1,3 +1,4 @@
+import { personalContext, savePersonalContext, phoneActions, updatePhoneAction } from "./personal.js";
 import { setTokenUsageSink } from "./token-usage.js";
 import { validateProfile } from "./profile.js";
 import { codexUsage } from "./codex-usage.js";
@@ -174,6 +175,13 @@ const server = createServer(async (req, res) => {
     if (m === "POST" && p === "/browser/result") { const b=await body(req); json(res,200,{accepted:browserBridge.complete(b.id,b.result,b.error)}); return; }
     if (m === "POST" && p === "/workspace/action") { json(res,200,await workspaceAction(store,await body(req),AbortSignal.timeout(65000))); return; }
     if (m === "GET" && p === "/memory") { json(res,200,store.all("SELECT id,scope,topic,note,updatedAt FROM shared_memory ORDER BY updatedAt DESC LIMIT 200")); return; }
+    if (m === "GET" && p === "/personal/context") { json(res,200,personalContext(store)); return; }
+    if (m === "POST" && p === "/personal/context") { const value=savePersonalContext(store,await body(req)); change(); json(res,200,value); return; }
+    if (m === "GET" && p === "/phone/actions") { json(res,200,phoneActions(store)); return; }
+    if (m === "POST" && p === "/phone/actions/update") {
+      const device = req.headers["x-localbot-remote"] === "true" ? String(req.headers["x-localbot-device"] ?? "") : "";
+      const value=updatePhoneAction(store,device,await body(req));change();json(res,200,value);return;
+    }
     if (m === "GET" && p === "/health") {
       json(res, 200, { ok: true, version: "0.2.0", pid: process.pid });
       return;

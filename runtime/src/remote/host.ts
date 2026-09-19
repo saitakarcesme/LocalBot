@@ -7,6 +7,8 @@ import { remoteURL, type RPCRequest } from "./protocol.js";
 
 // Deliberately excludes credentials, provider configuration and pairing administration.
 const reads = new Set([
+  "/personal/context",
+  "/phone/actions",
   "/snapshot",
   "/usage",
   "/models",
@@ -17,6 +19,8 @@ const reads = new Set([
   "/memory",
 ]);
 const writes = new Set([
+  "/personal/context",
+  "/phone/actions/update",
   "/messages",
   "/profile",
   "/models/select",
@@ -125,6 +129,7 @@ export class RemoteHost {
               Authorization: "Bearer " + local.token,
               "Content-Type": "application/json",
               "X-LocalBot-Remote": "true",
+              "X-LocalBot-Device": _device,
             },
             body:
               route.method === "POST"
