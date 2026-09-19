@@ -30,12 +30,11 @@ struct MobileWorkspace: View {
             HStack { Text(path).font(.caption).foregroundStyle(.secondary); Spacer(); if path != "." { Button("Up") { path=(path as NSString).deletingLastPathComponent; if path.isEmpty { path="." }; load() } } }.padding(.horizontal)
             List(entries,id: \.self) { entry in Button { let target=path == "." ? entry : path+"/"+entry; if entry.hasSuffix("/") { path=String(target.dropLast());load() } else { read(target) } } label: { Label(entry,systemImage:entry.hasSuffix("/") ? "folder":"doc") } }
           }
+        } else if choice == "Terminal" {
+          PhoneTerminal().environmentObject(store)
         } else {
           ScrollView([.horizontal,.vertical]) { Text(content.isEmpty ? (choice == "Review" ? "No changes to display." : "") : content).font(.system(.callout,design:.monospaced)).textSelection(.enabled).frame(maxWidth:.infinity,alignment:.leading).padding() }
-          if choice == "Terminal" {
-            Text("Commands run on your Mac inside this conversation’s workspace. Network access is disabled; commands stop after 60 seconds. Interactive programs are not supported yet.").font(.caption).foregroundStyle(.secondary).padding(.horizontal)
-            HStack { TextField("Command",text:$command,axis:.vertical).textInputAutocapitalization(.never).autocorrectionDisabled(); Button { let value=command;command="";run { let response=try await store.workspace("command",extras:["command":value]);content += "\n$ "+value+"\n"+(try output(response)) } } label: { Image(systemName:"arrow.up.circle.fill").font(.title2) }.disabled(busy || command.isEmpty) }.padding().background(.thinMaterial,in:RoundedRectangle(cornerRadius:22)).padding()
-          }
+
         }
       }.navigationTitle("Workspace").navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement:.cancellationAction) { Button("Done") { if file != nil && content != original { showDiscard = true } else { dismiss() } } }; ToolbarItem(placement:.topBarTrailing) { Button { sideChat=true } label:{ Image(systemName:"bubble.left.and.bubble.right") }.accessibilityLabel("Side chat") } }

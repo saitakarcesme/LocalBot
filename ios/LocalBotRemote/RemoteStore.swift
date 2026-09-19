@@ -77,6 +77,9 @@ import Security
     guard let client, let selected else { throw RemoteError("Open a conversation first.") }
     return try await client.api("/workspace/action", body: extras.merging(["action":action,"conversationId":selected]) {_,new in new})
   }
+  func terminal(_ body: [String:Any]) async throws -> Data {
+    guard let client else { throw RemoteError("Connect LocalBot first.") }; return try await client.api("/terminal", body: body)
+  }
   func memory() async throws -> Data {
     guard let client else { throw RemoteError("Connect LocalBot first.") }
     return try await client.api("/memory")

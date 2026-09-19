@@ -6,6 +6,8 @@ import {realpath, stat} from 'node:fs/promises';
 type Session = {owner:string; child:ChildProcessWithoutNullStreams; output:Buffer; start:number; nextInput:number; lastInput?:string; closed:boolean; touched:number; error?:string};
 export class RemoteTerminals {
   private sessions = new Map<string,Session>();
+  private revoked = new Set<string>();
+  private stopped = false;
   private timer = setInterval(() => {
     for (const [id,session] of this.sessions) if (Date.now()-session.touched > 15*60_000) this.remove(id);
   }, 30_000).unref();
@@ -13,6 +15,7 @@ export class RemoteTerminals {
   async open(owner:string, workspace:string) {
     const cwd=await realpath(workspace);
     if (!(await stat(cwd)).isDirectory()) throw Error('Workspace directory is unavailable');
+    if(this.stopped || this.revoked.has(owner)) throw Error("Terminal access was revoked.");
     if(this.sessions.size>=4 || [...this.sessions.values()].filter(s=>s.owner===owner).length>=2) throw Error('Close a remote terminal before opening another.');
     const child=spawn(this.binary,[cwd],{stdio:['pipe','pipe','pipe']});
     const id=randomUUID(),session:Session={owner,child,output:Buffer.alloc(0),start:0,nextInput:0,closed:false,touched:Date.now()};
@@ -58,6 +61,6 @@ export class RemoteTerminals {
     const header=Buffer.alloc(5);header[0]=type;header.writeUInt32BE(bytes.length,1);session.child.stdin.write(Buffer.concat([header,bytes]));
   }
   private remove(id:string){const session=this.sessions.get(id);if(!session)return;session.child.stdin.end();session.child.kill('SIGTERM');this.sessions.delete(id);}
-  revoke(owner:string){for(const[id,session]of this.sessions)if(session.owner===owner)this.remove(id);}
-  close(){clearInterval(this.timer);for(const id of this.sessions.keys())this.remove(id);}
+  revoke(owner:string){this.revoked.add(owner);for(const[id,session]of this.sessions)if(session.owner===owner)this.remove(id);}
+  close(){this.stopped=true;clearInterval(this.timer);for(const id of this.sessions.keys())this.remove(id);}
 }

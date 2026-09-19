@@ -17,8 +17,14 @@ settings:
     INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
     PRODUCT_BUNDLE_IDENTIFIER: app.localbot.remote
     ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+packages:
+  SwiftTerm:
+    url: https://github.com/migueldeicaza/SwiftTerm.git
+    exactVersion: 1.13.0
 targets:
   LocalBotRemote:
+    dependencies:
+      - package: SwiftTerm
     type: application
     platform: iOS
     sources:

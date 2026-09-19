@@ -9,8 +9,10 @@
 /* Begin PBXBuildFile section */
 		0294A03A2D88D55C52DF1405 /* RemoteStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFACA3C0D90860CC2C2503E2 /* RemoteStore.swift */; };
 		133FA26C968F83E1092D8BF4 /* NativeGlass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45CE18871F08D21D146E00C3 /* NativeGlass.swift */; };
+		16EAF59FA28451694A6A199B /* SwiftTerm in Frameworks */ = {isa = PBXBuildFile; productRef = 7747645B535C0271042B570F /* SwiftTerm */; };
 		18A4B8CCAB5AE7FFAA5830DF /* QRScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0ECB2101A0508F0E977D4D59 /* QRScanner.swift */; };
 		2823D53C8366895EA8FB5ADC /* RemoteClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = E63C42BF7FE12BD10C52B27B /* RemoteClient.swift */; };
+		4644FB53AF210AE9490379FA /* PhoneTerminal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69D2DB177B29392FD4F3CD66 /* PhoneTerminal.swift */; };
 		4B179B921307990694250996 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B323165EDDE7F2825A28E52F /* Assets.xcassets */; };
 		52D1D1DB58DBC6F37D3737AE /* LocalBotRemoteApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAB07FCFCDE224A8756AA314 /* LocalBotRemoteApp.swift */; };
 		5372A20265348B70786B7594 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23CBBA3AB008F097CC816099 /* Models.swift */; };
@@ -25,11 +27,23 @@
 		4457BBD412BA31B5B5619451 /* LocalBotMascot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalBotMascot.swift; sourceTree = "<group>"; };
 		45CE18871F08D21D146E00C3 /* NativeGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeGlass.swift; sourceTree = "<group>"; };
 		613423EDAAACC95C41B6ED5C /* MobileWorkspace.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileWorkspace.swift; sourceTree = "<group>"; };
+		69D2DB177B29392FD4F3CD66 /* PhoneTerminal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhoneTerminal.swift; sourceTree = "<group>"; };
 		B323165EDDE7F2825A28E52F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		BAB07FCFCDE224A8756AA314 /* LocalBotRemoteApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalBotRemoteApp.swift; sourceTree = "<group>"; };
 		BFACA3C0D90860CC2C2503E2 /* RemoteStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteStore.swift; sourceTree = "<group>"; };
 		E63C42BF7FE12BD10C52B27B /* RemoteClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteClient.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		80ADBE89D45813D60C02CC13 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				16EAF59FA28451694A6A199B /* SwiftTerm in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		4EFF4405BF2164D229E05742 /* LocalBotRemote */ = {
@@ -39,6 +53,7 @@
 				BAB07FCFCDE224A8756AA314 /* LocalBotRemoteApp.swift */,
 				613423EDAAACC95C41B6ED5C /* MobileWorkspace.swift */,
 				45CE18871F08D21D146E00C3 /* NativeGlass.swift */,
+				69D2DB177B29392FD4F3CD66 /* PhoneTerminal.swift */,
 				0ECB2101A0508F0E977D4D59 /* QRScanner.swift */,
 				BFACA3C0D90860CC2C2503E2 /* RemoteStore.swift */,
 			);
@@ -91,6 +106,7 @@
 			buildPhases = (
 				F2FBE01F6857AD5C9E895AFE /* Sources */,
 				F82F009046CC3AAC52877CA4 /* Resources */,
+				80ADBE89D45813D60C02CC13 /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -98,6 +114,7 @@
 			);
 			name = LocalBotRemote;
 			packageProductDependencies = (
+				7747645B535C0271042B570F /* SwiftTerm */,
 			);
 			productName = LocalBotRemote;
 			productReference = 418D7CCFFFAD283B026EBEA8 /* LocalBotRemote.app */;
@@ -126,6 +143,9 @@
 			);
 			mainGroup = 58C3AB8C8D341EE1159D741F;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				289EC70015F8CAC85B37990B /* XCRemoteSwiftPackageReference "SwiftTerm" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 6F9D0F5586A0C606CAC2F22E /* Products */;
 			projectDirPath = "";
@@ -157,6 +177,7 @@
 				65A555988A767A02264227E5 /* MobileWorkspace.swift in Sources */,
 				5372A20265348B70786B7594 /* Models.swift in Sources */,
 				133FA26C968F83E1092D8BF4 /* NativeGlass.swift in Sources */,
+				4644FB53AF210AE9490379FA /* PhoneTerminal.swift in Sources */,
 				18A4B8CCAB5AE7FFAA5830DF /* QRScanner.swift in Sources */,
 				2823D53C8366895EA8FB5ADC /* RemoteClient.swift in Sources */,
 				0294A03A2D88D55C52DF1405 /* RemoteStore.swift in Sources */,
@@ -359,6 +380,25 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		289EC70015F8CAC85B37990B /* XCRemoteSwiftPackageReference "SwiftTerm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/migueldeicaza/SwiftTerm.git";
+			requirement = {
+				kind = exactVersion;
+				version = 1.13.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		7747645B535C0271042B570F /* SwiftTerm */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 289EC70015F8CAC85B37990B /* XCRemoteSwiftPackageReference "SwiftTerm" */;
+			productName = SwiftTerm;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 241B0CF6BB9B18A7330ABE19 /* Project object */;
 }
