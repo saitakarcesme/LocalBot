@@ -795,6 +795,7 @@ struct TransparentWindowChrome: NSViewRepresentable {
   func updateNSView(_ view: ChromeView, context: Context) {}
   final class ChromeView: NSVisualEffectView {
     private var observers: [NSObjectProtocol] = []
+    private var fullscreenDelegate: FullscreenToolbarDelegate?
     override func viewDidMoveToWindow() {
       super.viewDidMoveToWindow()
       observers.forEach(NotificationCenter.default.removeObserver)
@@ -808,6 +809,10 @@ struct TransparentWindowChrome: NSViewRepresentable {
       }
     }
     private func configure(_ window: NSWindow) {
+      if window.delegate !== fullscreenDelegate {
+        let proxy = FullscreenToolbarDelegate(); proxy.original = window.delegate
+        fullscreenDelegate = proxy; window.delegate = proxy
+      }
       material = .underWindowBackground
       blendingMode = .behindWindow
       state = .active
@@ -823,5 +828,17 @@ struct TransparentWindowChrome: NSViewRepresentable {
       window.titlebarSeparatorStyle = .none
     }
     deinit { observers.forEach(NotificationCenter.default.removeObserver) }
+  }
+}
+
+/// Preserve SwiftUI’s delegate while keeping toolbar controls in the fullscreen window.
+final class FullscreenToolbarDelegate: NSObject, NSWindowDelegate {
+  weak var original: NSWindowDelegate?
+  override func responds(to selector: Selector!) -> Bool { super.responds(to: selector) || (original?.responds(to: selector) ?? false) }
+  override func forwardingTarget(for selector: Selector!) -> Any? { original?.responds(to: selector) == true ? original : super.forwardingTarget(for: selector) }
+  func window(_ window: NSWindow, willUseFullScreenPresentationOptions proposedOptions: NSApplication.PresentationOptions) -> NSApplication.PresentationOptions {
+    var options = original?.window?(window, willUseFullScreenPresentationOptions: proposedOptions) ?? proposedOptions
+    options.remove(.autoHideToolbar)
+    return options
   }
 }
