@@ -99,7 +99,9 @@ export class WorkspaceHost {
   async api(request: RPCRequest, device: string, signal: AbortSignal) {
     if (!this.connection)
       throw Error("Enable Workspace host in LocalBot Center first.");
-    const route = mobileRoute({ ...request, operation: "api" });
+    const adminRead = request.method === "GET" && request.path === "/remote/status";
+    const adminWrite = request.method === "POST" && ["/remote/start", "/remote/stop", "/remote/pair", "/remote/revoke"].includes(request.path ?? "");
+    const route = adminRead || adminWrite ? {path:request.path!,method:request.method!} : mobileRoute({ ...request, operation: "api" });
     if (route.path === "/terminal")
       throw Error(
         "Interactive terminal is not yet supported by the Windows workspace host.",

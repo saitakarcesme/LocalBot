@@ -13,6 +13,16 @@ struct RemoteSettingsView: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {
       HStack {
+        Label("Workspace host", systemImage: "desktopcomputer").font(.headline)
+        Spacer()
+        Menu(model.workspaceProviderId == nil ? "This Mac" : "Model PC") {
+          Button("This Mac") { switchHost(nil) }
+          ForEach(model.centerConnections) { provider in Button(provider.name) { switchHost(provider.id) } }
+        }.disabled(busy)
+      }
+      Text(model.workspaceProviderId == nil ? "Choose a model PC with Workspace host enabled to work while this Mac is off. Mac-only projects stay on this Mac." : "Conversations live on the model PC. Your Mac and iPhone reconnect to the same workspace.")
+        .font(.caption).foregroundStyle(.secondary)
+      HStack {
         Label("iPhone Remote", systemImage: "iphone").font(.headline)
         Spacer()
         if busy { ProgressView().controlSize(.small) }
@@ -20,10 +30,10 @@ struct RemoteSettingsView: View {
           perform(status?.enabled == true ? "/remote/stop" : "/remote/start")
         }.disabled(busy)
       }
-      Text("Scan a pairing code in LocalBot Remote on your iPhone. Paired phones can read chats, edit workspace files, approve actions, and run terminals on this Mac. Different networks are supported. Keep this Mac awake and LocalBot open.")
+      Text(model.workspaceProviderId == nil ? "Scan the code in LocalBot Remote. Keep this Mac awake for Mac-hosted conversations." : "Scan a new code to connect your iPhone directly to the model PC. Keep that PC and Center running; this Mac can be off.")
         .font(.caption).foregroundStyle(.secondary)
       if status?.enabled == true {
-        if status?.preview == true {
+        if status?.preview == true && model.workspaceProviderId == nil {
           Text(status?.persistentPairing == true ? "Preview service. Paired phones reconnect when LocalBot is running. Keep this Mac awake." : "Preview connection: after restarting LocalBot, enable Remote and pair your phone again.")
             .font(.caption).foregroundStyle(.secondary)
         }
@@ -43,6 +53,10 @@ struct RemoteSettingsView: View {
       }
       if let error { Text(error).font(.caption).foregroundStyle(.red).textSelection(.enabled) }
     }.task { await refresh() }
+  }
+  private func switchHost(_ id: String?) {
+    busy = true;error = nil
+    Task { defer { busy = false };do { try await model.selectWorkspaceHost(id);code=nil;qr=nil;await refresh() } catch { self.error=error.localizedDescription } }
   }
   private func refresh() async {
     do { status = try JSONDecoder().decode(Status.self, from: await model.request("/remote/status")) }
