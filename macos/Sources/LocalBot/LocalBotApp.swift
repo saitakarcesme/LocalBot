@@ -3,11 +3,12 @@ import SwiftUI
 
 @main struct LocalBotApp: App {
   @StateObject private var model = AppModel()
+  @State private var launching = true
   @AppStorage("messageFontSize") private var messageFontSize = 14.0
   @AppStorage("appearance") private var appearance = "system"
   var body: some Scene {
     WindowGroup {
-      MainView().environmentObject(model).frame(minWidth: 760, minHeight: 520)
+      Group { if launching { LaunchScreen { launching = false } } else { MainView().environmentObject(model) } }.frame(minWidth: 760, minHeight: 520)
         .background(WindowBackdrop())
         .background(TransparentWindowChrome())
         .toolbarBackground(.hidden, for: .windowToolbar)
@@ -65,7 +66,7 @@ struct Avatar: View {
   var size: CGFloat = 40
   var motion: LocalBotAnimation? = nil
   var palette: LocalBotPalette {
-    switch agent?.color { case "purple": return .lavender; case "orange": return .peach
+    switch agent?.color { case "purple": return .lavender; case "yellow": return .butter; case "orange": return .peach
     case "green": return .mint; case "pink": return .rose; default: return group ? .lilac : .sky }
   }
   var body: some View {
@@ -92,6 +93,7 @@ struct TypingDots: View {
   }
 }
 struct MainView: View {
+  @State private var showProfile = false
   @EnvironmentObject var model: AppModel
   @FocusState var searchFocused: Bool
   @State private var collapsedProjects = Set(UserDefaults.standard.stringArray(forKey: "collapsedProjects") ?? [])
@@ -166,9 +168,8 @@ struct MainView: View {
           }
         }
         HStack(spacing: 7) {
-          Circle().fill(model.connected ? .green : .orange).frame(width: 6, height: 6)
-          Text(model.connected ? "Local runtime" : "Connecting…").font(.caption).foregroundStyle(
-            .secondary)
+          Button { showProfile = true } label: { ProfileBadge(profile: model.profile) }.buttonStyle(.plain)
+            .sheet(isPresented: $showProfile) { ProfileEditor(profile: model.profile, loadUsage: { try await model.request("/usage") }, save: { profile in _ = try await model.request("/profile", body: ["name":profile.name,"photo":profile.photo ?? ""]); model.profile = profile }, loadModels: { try await model.request("/models") }, selectModel: { _ = try await model.request("/models/select", body: $0.payload) }, personal: { AnyView(PersonalContextView(load: { try await model.request("/personal/context") }, save: { try await model.request("/personal/context", body: $0) })) }, research: { AnyView(ResearchView(load: { try await model.request("/research") }, save: { try await model.request("/research", body: $0) }, conversations: model.conversations)) }) }
           Spacer()
           Button { model.toggleArchiveList() } label: {
             Image(systemName: model.showingArchived ? "bubble.left.and.bubble.right" : "archivebox").font(.system(size: 17))
@@ -180,7 +181,7 @@ struct MainView: View {
           } label: {
             Image(systemName: "gearshape").font(.system(size: 17))
           }.buttonStyle(.plain).help("Model settings")
-        }.padding(14)
+        }.frame(height: 40).padding(.horizontal, 14).padding(.bottom, 16).padding(.top, 7)
       }
       .navigationSplitViewColumnWidth(min: 250, ideal: 300, max: 380)
       .toolbar {
@@ -203,6 +204,7 @@ struct MainView: View {
           description: Text("Choose a contact to begin."))
       }
     }
+    .padding(.top, 8)
     .overlay {
       if !model.hasLoaded {
         VStack(spacing: 18) {
@@ -283,7 +285,7 @@ struct ConversationRow: View {
   var body: some View {
     HStack(spacing: 7) {
       if conversation.projectId != nil {
-        AvatarStack(agents: conversation.members.compactMap { model.agent($0) }, size: 22)
+        AvatarStack(agents: Array(conversation.members.prefix(3)).compactMap { model.agent($0) }, size: 22).frame(width: 48, alignment: .leading)
       }
       VStack(alignment: .leading, spacing: 4) {
         Text(title).font(.system(size: 13, weight: .regular)).lineLimit(1).truncationMode(.tail)
@@ -291,7 +293,7 @@ struct ConversationRow: View {
       }
       Spacer(minLength: 0)
       if model.tasks.contains(where: { $0.conversationId == conversation.id && $0.active }) {
-        Circle().fill(Color.accentColor).frame(width: 6, height: 6).help("Work in progress")
+        ProgressView().controlSize(.mini).help("Work in progress")
       }
     }.frame(height: 28).contentShape(Rectangle()).help(title)
   }
@@ -418,7 +420,7 @@ struct ConversationView: View {
         .modifier(PanelGlass())
         .clipShape(RoundedRectangle(cornerRadius: 22))
 
-        .padding(.trailing, 10).padding(.bottom, 10).padding(.top, 8)
+        .padding(.trailing, 10).padding(.bottom, 10)
         .ignoresSafeArea(.container, edges: .top)
         .overlay(alignment: .leading) {
           PanelResizeHandle { delta in panelWidth = max(280, min(900, panelWidth - delta)) }.frame(width: 8)
@@ -483,7 +485,7 @@ struct ConversationView: View {
       if let activeAgent { Avatar(agent: activeAgent, size: 32, motion: progress == .approval ? .needsInput : (model.activity.last?.status == "running" && model.activity.last?.name != "thinking" ? .working : .thinking)) }
       switch progress {
       case .typing:
-        TypingDots().accessibilityLabel("\(activeAgent?.name ?? "Agent") is typing")
+        HStack(spacing: 8) { ProgressView().controlSize(.mini); Text(activeRun?.phase ?? "Preparing the next step…").font(.caption).foregroundStyle(.secondary) }
       case .approval:
         Text("Waiting for your approval…").font(.caption).foregroundStyle(.secondary)
       case .queued:
@@ -551,11 +553,15 @@ struct ConversationView: View {
         Button {
           showingAttachments = true
         } label: {
-          Image(systemName: "plus").font(.system(size: 18)).frame(width: 30, height: 32)
+          Image(systemName: "plus").font(.system(size: 18)).frame(width: 32, height: 40)
         }.buttonStyle(.plain).foregroundStyle(.secondary).help("Attach files").disabled(model.attaching)
         .sheet(isPresented: $showingAttachments) {
           AttachmentPicker { urls in attachments += await model.attach(urls: urls) }
         }
+        ModelSelector(load: { try await model.request("/models?conversationId=" + conversation.id) }, select: { option in
+          var body = option.payload; body["conversationId"] = conversation.id
+          _ = try await model.request("/models/select", body: body)
+        })
         HStack(alignment: .bottom, spacing: 8) {
           ComposerEditor(text: $draft, fontSize: messageFontSize, send: send)
             .overlay(alignment: .topLeading) {
@@ -789,6 +795,7 @@ struct TransparentWindowChrome: NSViewRepresentable {
   func updateNSView(_ view: ChromeView, context: Context) {}
   final class ChromeView: NSVisualEffectView {
     private var observers: [NSObjectProtocol] = []
+    private var fullscreenDelegate: FullscreenToolbarDelegate?
     override func viewDidMoveToWindow() {
       super.viewDidMoveToWindow()
       observers.forEach(NotificationCenter.default.removeObserver)
@@ -802,6 +809,10 @@ struct TransparentWindowChrome: NSViewRepresentable {
       }
     }
     private func configure(_ window: NSWindow) {
+      if window.delegate !== fullscreenDelegate {
+        let proxy = FullscreenToolbarDelegate(); proxy.original = window.delegate
+        fullscreenDelegate = proxy; window.delegate = proxy
+      }
       material = .underWindowBackground
       blendingMode = .behindWindow
       state = .active
@@ -817,5 +828,17 @@ struct TransparentWindowChrome: NSViewRepresentable {
       window.titlebarSeparatorStyle = .none
     }
     deinit { observers.forEach(NotificationCenter.default.removeObserver) }
+  }
+}
+
+/// Preserve SwiftUI’s delegate while keeping toolbar controls in the fullscreen window.
+final class FullscreenToolbarDelegate: NSObject, NSWindowDelegate {
+  weak var original: NSWindowDelegate?
+  override func responds(to selector: Selector!) -> Bool { super.responds(to: selector) || (original?.responds(to: selector) ?? false) }
+  override func forwardingTarget(for selector: Selector!) -> Any? { original?.responds(to: selector) == true ? original : super.forwardingTarget(for: selector) }
+  func window(_ window: NSWindow, willUseFullScreenPresentationOptions proposedOptions: NSApplication.PresentationOptions) -> NSApplication.PresentationOptions {
+    var options = original?.window?(window, willUseFullScreenPresentationOptions: proposedOptions) ?? proposedOptions
+    options.remove(.autoHideToolbar)
+    return options
   }
 }

@@ -294,7 +294,7 @@ struct AgentEditor: View {
             ) { Image(systemName: $0).tag($0) }
           }
           Picker("Color", selection: $agent.color) {
-            ForEach(["blue", "purple", "green", "orange", "pink"], id: \.self) {
+            ForEach(["blue", "purple", "green", "orange", "pink", "yellow"], id: \.self) {
               Text($0.capitalized).tag($0)
             }
           }
@@ -372,10 +372,11 @@ struct SettingsView: View {
   @State var healthText = ""
   @State var models: [String] = []
   @State var testing = false
+  @State private var centerSheet = false
   @AppStorage("appearance") var appearance = "system"
   @AppStorage("notifications") var notifications = false
   var body: some View {
-    VStack(alignment: .leading, spacing: 15) {
+    ScrollView { VStack(alignment: .leading, spacing: 15) {
       HStack {
         Text("Settings").font(.title2.bold())
         Spacer()
@@ -396,9 +397,12 @@ struct SettingsView: View {
         }
       }
       Divider()
+      RemoteSettingsView()
+      Divider()
       HStack {
         Text("Model Connections").font(.headline)
         Spacer()
+        Button("Connect another PC") { centerSheet = true }
         Button {
           let p = Provider(
             id: UUID().uuidString, name: "Inference Server", kind: "openai",
@@ -430,9 +434,11 @@ struct SettingsView: View {
       }
       if editing != nil { providerForm }
       Text(
-        "Local models are primary. Ollama uses its native API; llama.cpp, vLLM and MLX use OpenAI-compatible endpoints. For a remote PC use HTTPS with authentication, or an SSH tunnel to localhost."
+        "Local models are primary. Ollama uses its native API; llama.cpp, vLLM and MLX use OpenAI-compatible endpoints. For another PC, open LocalBot Center there and paste its pairing code here. Connections are encrypted and work across different networks."
       ).font(.caption).foregroundStyle(.secondary)
-    }.padding(24).frame(width: 620).onAppear {
+    }.padding(24) }.frame(width: 620, height: 720)
+    .sheet(isPresented: $centerSheet) { CenterConnectionView().environmentObject(model) }
+    .onAppear {
       if editing == nil {
         editing = model.providers.first
         selection = editing?.id
@@ -487,7 +493,7 @@ struct SettingsView: View {
       Stepper(
         "Concurrent tasks: \(editing?.concurrency ?? 1)", value: numberField(\.concurrency),
         in: 1...4)
-      Text("Use 1 on an 8 GB Mac. Tasks sharing a workspace always run in sequence.").font(
+      Text("Use 1 on an 8 GB Mac. Increase only if the model server can handle parallel requests.").font(
         .caption2
       ).foregroundStyle(.secondary)
       if editing?.kind != "codex" { Toggle(

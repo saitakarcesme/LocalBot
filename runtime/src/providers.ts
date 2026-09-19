@@ -1,3 +1,7 @@
+import { fitContext } from "./context-window.js";
+import { localSearch } from "./local-search.js";
+import { recordModelUsage } from "./token-usage.js";
+import { invoke, parseLink } from "./remote/protocol.js";
 import { imageMessages } from "./http-images.js";
 import { randomUUID } from "node:crypto";
 import { CodexProvider } from "./codex-provider.js";
@@ -48,6 +52,8 @@ export function provider(p: ProviderConfig, secret?: string): ModelProvider {
   return new HTTPProvider(p, secret);
 }
 class HTTPProvider implements ModelProvider {
+  async usage(signal: AbortSignal) { signal.throwIfAborted(); return { provider: this.p.id, model: this.p.model, rateLimits: null, notice: "This backend does not report subscription limits." }; }
+  search(query: string, signal: AbortSignal) { return localSearch(query, signal); }
   constructor(
     private p: ProviderConfig,
     private secret?: string,
@@ -62,6 +68,33 @@ class HTTPProvider implements ModelProvider {
       throw new Error(
         "Provider credential is locked or missing. Open Model Settings and save its key to Keychain.",
       );
+    if (this.p.transport === "center") {
+      if (!this.secret) throw Error("Reconnect LocalBot Center in Settings.");
+      const link = parseLink(this.secret);
+      if (link.kind !== "center" || link.url !== new URL(this.p.endpoint).origin) throw Error("Center credentials do not match this connection.");
+      const deadline = signal ? AbortSignal.any([signal,AbortSignal.timeout(this.p.timeout*1000)]) : AbortSignal.timeout(this.p.timeout*1000);
+      if (body !== undefined) {
+        const started=await invoke(link,{operation:"model_start",path,method:"POST",body},deadline);
+        let offset=0,finished=false;
+        const cancel=()=>{if(!finished){finished=true;void invoke(link,{operation:"model_cancel",body:{job:started.job}},AbortSignal.timeout(5000)).catch(()=>{});}};
+        deadline.addEventListener("abort",cancel,{once:true});
+        const stream=new ReadableStream<Uint8Array>({
+          async pull(controller){try{
+            while(true){deadline.throwIfAborted();const result=await invoke(link,{operation:"model_poll",body:{job:started.job,offset}},deadline);offset=result.offset;
+              if(result.data)controller.enqueue(Buffer.from(result.data,"base64"));
+              if(result.done){controller.close();cancel();deadline.removeEventListener("abort",cancel);return;}
+              if(result.data)return;
+              await new Promise<void>((resolve,reject)=>{const abort=()=>{clearTimeout(timer);reject(Error("Model request cancelled"));};const timer=setTimeout(()=>{deadline.removeEventListener("abort",abort);resolve();},350);deadline.addEventListener("abort",abort,{once:true});});
+            }
+          }catch(e){cancel();deadline.removeEventListener("abort",cancel);controller.error(e);}},
+          cancel(){cancel();deadline.removeEventListener("abort",cancel);}
+        });
+        return new Response(stream,{headers:{"Content-Type":started.contentType}});
+      }
+      const result = await invoke(link, {operation:"model",path,method:"GET"}, deadline);
+      if (result.status < 200 || result.status >= 300) throw Error(`Model server returned HTTP ${result.status}.`);
+      return new Response(result.body,{status:result.status,headers:{"Content-Type":result.contentType}});
+    }
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
     };
@@ -103,8 +136,11 @@ class HTTPProvider implements ModelProvider {
     messages: Chat[],
     tools: ToolDefinition[],
     signal: AbortSignal,
+    onProgress?: (phase: string, summary?: string) => void,
   ): Promise<Generation> {
     const p = this.p;
+    messages = fitContext(messages, tools, p);
+    const usageRequest = randomUUID();
     if (messages.some(m => m.images?.length)) {
       if (!this.capabilities().images) throw new Error("Enable image input for a vision-capable Ollama or compatible model");
       messages = await imageMessages(messages, p.kind as "ollama" | "openai");
@@ -141,6 +177,7 @@ class HTTPProvider implements ModelProvider {
       body = {
         model: p.model,
         messages,
+        stream_options: { include_usage: true },
         tools: tools.length ? tools : undefined,
         stream: true,
         temperature: p.temperature,
@@ -205,6 +242,7 @@ class HTTPProvider implements ModelProvider {
       content = "",
       total = 0,
       finished = false;
+    let anthropicInput: number | undefined;
     const calls = new Map<number, ToolCall>();
     const consume = (line: string) => {
       if (!line.trim() || line.startsWith("event:") || line.startsWith(":"))
@@ -221,6 +259,9 @@ class HTTPProvider implements ModelProvider {
         throw new Error("Malformed model stream");
       }
       if (d.error) throw new Error("Model server reported an inference error.");
+      if (d.message?.thinking || d.choices?.[0]?.delta?.reasoning_content) onProgress?.("Thinking through the next step");
+      else if (d.message?.content || d.choices?.[0]?.delta?.content || d.delta?.text) onProgress?.("Writing a response");
+      else if (d.message?.tool_calls || d.choices?.[0]?.delta?.tool_calls) onProgress?.("Preparing an action");
       if (p.kind === "ollama") {
         content += d.message?.content ?? "";
         for (const t of d.message?.tool_calls ?? []) {
@@ -235,6 +276,7 @@ class HTTPProvider implements ModelProvider {
           });
         }
         if (d.done) {
+          recordModelUsage(usageRequest, d.prompt_eval_count, d.eval_count, { providerId: p.id, model: p.model });
           if (d.done_reason === "length")
             throw new Error(
               "Model output limit reached. Increase Max output tokens in Settings.",
@@ -242,6 +284,7 @@ class HTTPProvider implements ModelProvider {
           finished = true;
         }
       } else if (p.kind === "openai") {
+        if (d.usage) recordModelUsage(usageRequest, d.usage.prompt_tokens, d.usage.completion_tokens, { providerId: p.id, model: p.model });
         const choice = d.choices?.[0];
         content += choice?.delta?.content ?? "";
         for (const t of choice?.delta?.tool_calls ?? []) {
@@ -262,6 +305,8 @@ class HTTPProvider implements ModelProvider {
           finished = true;
         }
       } else {
+        if (d.type === "message_start") anthropicInput = d.message?.usage?.input_tokens;
+        if (d.type === "message_delta") recordModelUsage(usageRequest, anthropicInput, d.usage?.output_tokens, { providerId: p.id, model: p.model });
         if (
           d.type === "content_block_start" &&
           d.content_block?.type === "tool_use"

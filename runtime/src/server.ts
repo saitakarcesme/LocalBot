@@ -1,3 +1,12 @@
+import { AutoResearch, initResearch, researchStatus, saveResearch } from "./research.js";
+import { personalContext, savePersonalContext, phoneActions, updatePhoneAction } from "./personal.js";
+import { setTokenUsageSink } from "./token-usage.js";
+import { validateProfile } from "./profile.js";
+import { codexUsage } from "./codex-usage.js";
+import { workspaceAction } from "./remote/workspace.js";
+import { browserBridge } from "./browser-bridge.js";
+import { RemoteHost } from "./remote/host.js";
+import { claim, invoke, parseLink, encodeLink } from "./remote/protocol.js";
 import { defaultProjectFolder } from "./project-folder.js";
 import { agentStepLimit } from "./run-limits.js";
 import { MCPStdioTransport } from "./mcp-stdio.js";
@@ -8,7 +17,7 @@ import { randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 import { promises as fs, readFileSync, unlinkSync } from "node:fs";
 import { homedir } from "node:os";
 import { spawn } from "node:child_process";
-import { join, resolve } from "node:path";
+import { join, resolve, isAbsolute } from "node:path";
 import { Store } from "./store.js";
 import { Engine } from "./engine.js";
 import { provider, validateEndpoint } from "./providers.js";
@@ -52,6 +61,14 @@ process.on("exit", () => {
 const store = new Store(dir);
 store.seed(workspace);
 store.recover();
+initResearch(store);
+store.exec("CREATE TABLE IF NOT EXISTS token_usage(thread TEXT PRIMARY KEY, total INTEGER NOT NULL)");
+store.exec("CREATE TABLE IF NOT EXISTS token_usage_models(thread TEXT PRIMARY KEY, providerId TEXT NOT NULL, model TEXT NOT NULL)");
+setTokenUsageSink((thread, total, identity) => {
+  store.exec("INSERT INTO token_usage VALUES(?,?) ON CONFLICT(thread) DO UPDATE SET total=MAX(total,excluded.total)", thread, total);
+  if (identity?.taskId) store.exec("INSERT INTO request_usage VALUES(?,?,?,?) ON CONFLICT(id) DO UPDATE SET total=MAX(total,excluded.total)",thread,identity.taskId,new Date().toISOString().slice(0,10),total);
+  if (identity) store.exec("INSERT INTO token_usage_models VALUES(?,?,?) ON CONFLICT(thread) DO UPDATE SET providerId=excluded.providerId,model=excluded.model", thread, identity.providerId, identity.model);
+});
 const tokenPath = join(dir, "runtime-token");
 let token: string;
 try {
@@ -69,6 +86,8 @@ const change = () => {
     s.write(`id: ${revision}\ndata: ${JSON.stringify({ revision })}\n\n`);
 };
 const engine = new Engine(store, change);
+const research = new AutoResearch(store,engine,change);
+const researchTimer=setInterval(()=>void research.tick(),60000);researchTimer.unref();
 async function body(req: IncomingMessage) {
   let text = "";
   for await (const b of req) {
@@ -97,7 +116,7 @@ function cleanAgent(a: any): Agent {
     typeof a.name !== "string" ||
     !a.name.trim() ||
     typeof a.workspace !== "string" ||
-    !a.workspace.startsWith("/")
+    !isAbsolute(a.workspace)
   )
     throw new Error("Agent requires a name and absolute workspace path");
   store.provider(a.providerId);
@@ -129,6 +148,11 @@ function cleanAgent(a: any): Agent {
     integrations: Array.isArray(a.integrations) ? a.integrations.filter((id: unknown) => store.integrations().some(i => i.id === id)).slice(0, 20) : [],
   };
 }
+const remoteHost = new RemoteHost(dir, () => {
+  const address = server.address();
+  if (!address || typeof address === "string") throw Error("Runtime is not ready");
+  return {url: `http://127.0.0.1:${address.port}`, token};
+});
 const server = createServer(async (req, res) => {
   try {
     const host = req.headers.host ?? "";
@@ -147,6 +171,34 @@ const server = createServer(async (req, res) => {
     const u = new URL(req.url ?? "/", "http://localhost"),
       p = u.pathname,
       m = req.method;
+    if (p === "/workspace-host/api") {
+      if(req.headers["x-localbot-remote"] === "true") throw Error("Use a direct workspace pairing on your phone.");
+      const config=store.provider(String(u.searchParams.get("providerId")));const credential=engine.secrets.get(config.id);
+      if(config.transport!=="center"||!credential)throw Error("Unlock the model PC connection first.");
+      const link=parseLink(credential);if(link.kind!=="center"||link.url!==new URL(config.endpoint).origin)throw Error("Workspace connection does not match this PC.");
+      const request={operation:"workspace_api",path:String(u.searchParams.get("path")),method:m,body:m==="POST"?await body(req):undefined};
+      json(res,200,await invoke(link,request,AbortSignal.timeout(180000)));return;
+    }
+    if (m === "GET" && p === "/remote/status") { json(res,200,remoteHost.status()); return; }
+    if (m === "POST" && p === "/remote/start") { const status=await remoteHost.start();await fs.writeFile(join(dir,"remote-enabled.json"),"true",{mode:0o600});json(res,200,status); return; }
+    if (m === "POST" && p === "/remote/stop") { await fs.writeFile(join(dir,"remote-enabled.json"),"false",{mode:0o600});await remoteHost.stop(); json(res,200,remoteHost.status()); return; }
+    if (m === "POST" && p === "/remote/pair") { json(res,200,await remoteHost.pair()); return; }
+    if (m === "POST" && p === "/remote/revoke") { json(res,200,await remoteHost.revoke(String((await body(req)).id))); return; }
+    if (m === "GET" && p === "/browser/poll") { json(res,200,{action:browserBridge.poll()}); return; }
+    if (m === "POST" && p === "/browser/result") { const b=await body(req); json(res,200,{accepted:browserBridge.complete(b.id,b.result,b.error)}); return; }
+    if (m === "POST" && p === "/workspace/action") { json(res,200,await workspaceAction(store,await body(req),AbortSignal.timeout(65000))); return; }
+    if (m === "GET" && p === "/memory") { json(res,200,store.all("SELECT id,scope,topic,note,updatedAt FROM shared_memory ORDER BY updatedAt DESC LIMIT 200")); return; }
+    if (m === "GET" && p === "/personal/context") { json(res,200,personalContext(store)); return; }
+    if (m === "POST" && p === "/personal/context") { const value=savePersonalContext(store,await body(req)); change(); json(res,200,value); return; }
+    if (m === "GET" && p === "/phone/actions") { json(res,200,phoneActions(store)); return; }
+    if (m === "POST" && p === "/phone/actions/update") {
+      const device = req.headers["x-localbot-remote"] === "true" ? String(req.headers["x-localbot-device"] ?? "") : "";
+      const value=updatePhoneAction(store,device,await body(req));change();json(res,200,value);return;
+    }
+    if (m === "GET" && p === "/research") {json(res,200,researchStatus(store));return;}
+    if (m === "POST" && p === "/research") {const settings=saveResearch(store,await body(req));
+      if (!settings.enabled) { const latest=researchStatus(store).latest; if(latest && ["queued","running","awaiting_approval","awaiting_input"].includes(latest.status)) engine.cancel(latest.id); }
+      change();json(res,200,researchStatus(store));void research.tick();return;}
     if (m === "GET" && p === "/health") {
       json(res, 200, { ok: true, version: "0.2.0", pid: process.pid });
       return;
@@ -163,8 +215,46 @@ const server = createServer(async (req, res) => {
       return;
     }
     if (m === "GET" && p === "/snapshot") {
-      json(res, 200, { ...store.snapshot(), revision, instanceId });
+      json(res, 200, { ...store.snapshot(), hostName: process.env.LOCALBOT_HOST_NAME ?? "This Mac", profile: JSON.parse(store.get("SELECT value FROM settings WHERE key='profile'")?.value ?? '{"name":"LocalBot User"}'), revision, instanceId });
       return;
+    }
+    if (m === "POST" && p === "/profile") {
+      const profile = validateProfile(await body(req));
+      store.exec("INSERT INTO settings VALUES('profile',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value", JSON.stringify(profile));
+      change(); json(res, 200, profile); return;
+    }
+    if (m === "GET" && p === "/models") {
+      const conversationId = u.searchParams.get("conversationId") || undefined;
+      if (conversationId) store.conversation(conversationId);
+      const options = (await Promise.all(store.providers().map(async config => {
+        try { const result = await provider(config, engine.secrets.get(config.id)).health(AbortSignal.timeout(8000));
+          return result.models.map(model => ({providerId: config.id, provider: config.name, model}));
+        } catch { return []; }
+      }))).flat();
+      const leadId = conversationId ? store.conversation(conversationId).members[0] : store.agents()[0]?.id;
+      const effective = leadId ? store.modelConfig(store.agent(leadId), conversationId) : null;
+      json(res, 200, {options, selected: effective ? {providerId: effective.id, model: effective.model} : null}); return;
+    }
+    if (m === "POST" && p === "/models/select") {
+      const b = await body(req), conversationId = b.conversationId || undefined;
+      if (conversationId) store.conversation(conversationId);
+      const active = () => conversationId
+        ? store.get("SELECT id FROM tasks WHERE conversationId=? AND status IN ('running','queued')", conversationId)
+        : store.get("SELECT id FROM tasks WHERE status IN ('running','queued')");
+      if (active()) throw Error("Wait for the current task to finish before changing its model.");
+      const config = store.provider(b.providerId);
+      const health = await provider(config, engine.secrets.get(config.id)).health(AbortSignal.timeout(10000));
+      if (typeof b.model !== "string" || !health.models.includes(b.model)) throw Error("Select an available model.");
+      if (active()) throw Error("A task started while checking the model. Try again when it finishes.");
+      store.exec("INSERT INTO settings VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value", "model:" + (conversationId ?? "default"), JSON.stringify({providerId:config.id,model:b.model}));
+      change(); json(res,200,{ok:true}); return;
+    }
+    if (m === "GET" && p === "/usage") {
+      const config = store.providers().find(p => p.kind === "codex");
+      const tokens = store.get("SELECT SUM(total) AS total FROM token_usage")?.total ?? null;
+      let limits: any = {}; try { if (config) limits = await codexUsage(config, AbortSignal.timeout(30000)); } catch { limits.notice = "Subscription limits are temporarily unavailable."; }
+      const models = store.all("SELECT COALESCE(m.providerId,'legacy') AS providerId, COALESCE(m.model,'Earlier usage') AS model, SUM(t.total) AS tokens FROM token_usage t LEFT JOIN token_usage_models m ON m.thread=t.thread GROUP BY m.providerId,m.model ORDER BY tokens DESC");
+      json(res, 200, { ...limits, tokens, models, tokenNotice: "Recorded provider-reported tokens. Earlier usage may be unattributed." }); return;
     }
     if (m === "GET" && p === "/messages") {
       json(
@@ -296,7 +386,7 @@ const server = createServer(async (req, res) => {
     if (m === "POST" && p === "/conversations/discard-empty") {
       const b = await body(req);
       if (typeof b.id !== "string") throw new Error("Conversation ID required");
-      const result = store.discardEmptyConversation(b.id);
+      const result = remoteHost.protectedDraft(b.id) ? {deleted:false} : store.discardEmptyConversation(b.id);
       if (result.deleted) change();
       json(res, 200, result); return;
     }
@@ -336,14 +426,26 @@ const server = createServer(async (req, res) => {
       const c = store.transaction(() => {
         const created = store.createConversation(title, members, b.projectId ?? null, b.automatic === true);
         store.exec("INSERT INTO conversation_drafts VALUES(?)", created.id);
+        if (req.headers["x-localbot-remote"] === "true") remoteHost.protectDraft(created.id);
         return store.conversation(created.id);
       });
       change();
       json(res, 201, c);
       return;
     }
+    if (m === "POST" && p === "/center/connect") {
+      const b = await body(req), link = parseLink(String(b.code ?? ""));
+      if (link.kind !== "center") throw Error("Scan or paste a LocalBot Center code.");
+      const paired = await claim(link), info = await invoke(paired,{operation:"info"});
+      const config: ProviderConfig = {id:randomUUID(),name:paired.name,kind:info.kind,endpoint:paired.url,transport:"center",model:"",contextLength:8192,timeout:240,concurrency:1,temperature:0.3,maxTokens:2000,requiresAuth:true};
+      const credential=encodeLink(paired), health=await provider(config,credential).health();
+      if (!health.models.length) throw Error("No models are installed in Center yet.");
+      config.model=health.models[0];store.transaction(()=>{store.saveProvider(config);if(b.useForAll===true)for(const agent of store.agents())store.saveAgent({...agent,providerId:config.id,model:config.model});});engine.secrets.set(config.id,credential);
+      change();json(res,201,{provider:config,credential,models:health.models});return;
+    }
     if (m === "POST" && p === "/providers") {
       const b = await body(req);
+      const existingProvider = store.providers().find(p => p.id === b.id);
       if (!["ollama", "openai", "anthropic", "codex"].includes(b.kind))
         throw new Error("Unsupported provider");
       const config: ProviderConfig = {
@@ -359,6 +461,7 @@ const server = createServer(async (req, res) => {
         maxTokens: Math.floor(bounded(b.maxTokens, 128, 16000, 1200)),
         requiresAuth: b.requiresAuth === true,
         imageInput: b.imageInput === true,
+        ...((b.transport ?? existingProvider?.transport) === "center" ? {transport:"center" as const} : {}),
       };
       validateEndpoint(config);
       const previous = store.providers().find((p) => p.id === config.id);
@@ -529,6 +632,7 @@ server.listen(port, "127.0.0.1", async () => {
   );
   console.log(`LocalBot runtime listening on 127.0.0.1:${actual}`);
   void engine.pump();
+  void fs.readFile(join(dir,"remote-enabled.json"),"utf8").then(value=>{if(value==="true")return remoteHost.start();}).catch(()=>{});
 });
 const heartbeat = setInterval(() => {
   for (const s of streams) s.write(": heartbeat\n\n");
@@ -536,6 +640,8 @@ const heartbeat = setInterval(() => {
 heartbeat.unref();
 for (const sig of ["SIGTERM", "SIGINT"] as const)
   process.on(sig, () => {
+    void remoteHost.stop();
+    clearInterval(researchTimer);
     engine.shutdown();
     server.close();
     void MCPStdioTransport.shutdown().finally(() => setTimeout(() => process.exit(0), 50).unref());

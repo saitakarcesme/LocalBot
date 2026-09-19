@@ -30,6 +30,7 @@ export class CodexProvider implements ModelProvider {
 
   async health(signal?: AbortSignal) {
     const rpc = new CodexRPC();
+    rpc.usageIdentity = { providerId: this.config.id, model: this.config.model };
     try {
       await rpc.initialize(signal);
       const account = await rpc.request("account/read", { refreshToken: false }, signal);
@@ -60,6 +61,7 @@ export class CodexProvider implements ModelProvider {
     const input = await codexInput(messages, tools);
     signal.throwIfAborted();
     const rpc = new CodexRPC();
+    rpc.usageIdentity = { providerId: this.config.id, model: this.config.model };
     const timeout = AbortSignal.timeout(this.config.timeout * 1000);
     const deadline = AbortSignal.any([signal, timeout]);
     try {

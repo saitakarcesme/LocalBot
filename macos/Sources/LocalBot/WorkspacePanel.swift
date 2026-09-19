@@ -51,6 +51,10 @@ extension AppModel {
       ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Documents/LocalBot").path
   }
   func openWorkspace(_ kind: WorkspaceKind, url: URL? = nil, conversationId: String? = nil) {
+    if workspaceProviderId != nil && [.terminal, .files, .review].contains(kind) {
+      error = "This panel requires a workspace on this Mac. PC conversations and side chats remain available."
+      return
+    }
     rightPanel = .workspace
     if kind == .chat {
       Task { await openSideChat(conversationId) }
@@ -75,6 +79,7 @@ extension AppModel {
         workspace.selected = existing.id; rightPanel = .workspace; return
       }
       let child = AppModel(persistsSelection: false)
+      child.workspaceProviderId = workspaceProviderId
       child.browserHandler = { [weak self] url in self?.openInBrowser(url) }
       child.connection = connection
       child.selectedId = conversationId

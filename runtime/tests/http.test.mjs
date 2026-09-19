@@ -54,7 +54,7 @@ test("runtime HTTP authentication and browser origin restrictions are enforced",
     403,
   );
   const s = await request("/snapshot");
-  assert.equal(s.data.agents.length, 5);
+  assert.equal(s.data.agents.length, 6);
   assert.equal(s.data.providers.length, 1);
 });
 test("HTTP attachments, conversations and full-text search survive real API requests", async () => {

@@ -106,6 +106,16 @@ export class Store {
       JSON.stringify(p),
     );
   }
+  modelChoice(conversationId?: string) {
+    const row = this.get("SELECT value FROM settings WHERE key=?", "model:" + (conversationId ?? "default"));
+    return row ? JSON.parse(row.value) as { providerId: string; model: string } : null;
+  }
+  modelConfig(agent: Agent, conversationId?: string) {
+    const choice = (conversationId ? this.modelChoice(conversationId) : null) ?? this.modelChoice();
+    const config = this.provider(choice?.providerId ?? agent.providerId);
+    config.model = choice?.model ?? (agent.model || config.model);
+    return config;
+  }
   conversation(id: string) {
     const c = this.get("SELECT * FROM conversations WHERE id=?", id);
     if (!c) throw new Error("Conversation not found");
@@ -548,15 +558,23 @@ export class Store {
       this.exec("INSERT INTO settings VALUES('mythology_contacts_v1','1')");
     });
   }
+  private ensureCritic(workspace: string) {
+    if (this.agents().some(a => a.id === "critic")) return;
+    const lead = this.agents().find(a => a.id === "reviewer") ?? this.agents()[0];
+    if (!lead) return;
+    this.saveAgent({ ...lead, id: "critic", name: "Sokrates", avatar: "questionmark.bubble.fill", color: "yellow", role: "Critical thinker", workspace,
+      systemPrompt: "You are Sokrates, LocalBot's critical thinker. Challenge assumptions, identify missing requirements, weak evidence, failure cases and overlooked tradeoffs. Be constructive and specific: explain why a weakness matters and suggest a practical correction. Distinguish blockers from optional improvements. Never manufacture flaws to sound critical, repeat a settled objection, or attack the user or teammates. Read available work before criticizing it. Address teammates by name when proposing a correction. Your identity is separate from your underlying model.", memory: "",
+      permissions: { filesystem: "read", terminal: false, git: false, web: true }, autonomy: "ask" });
+  }
   seed(workspace: string) {
-    if (this.agents().length) { this.mythologyContacts(); return; }
+    if (this.agents().length) { this.mythologyContacts(); this.ensureCritic(workspace); return; }
     this.saveProvider({
       id: "local",
       name: "Local Ollama",
       kind: "ollama",
       endpoint: "http://127.0.0.1:11434",
       model: "qwen3:1.7b",
-      contextLength: 4096,
+      contextLength: 16384,
       timeout: 180,
       concurrency: 1,
       temperature: 0.3,
@@ -634,5 +652,6 @@ export class Store {
       "tester",
     ]);
     this.mythologyContacts();
+    this.ensureCritic(workspace);
   }
 }
