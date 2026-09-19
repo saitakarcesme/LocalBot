@@ -5,6 +5,8 @@ import { realpath, stat } from "node:fs/promises";
 
 type Session = {
   owner: string;
+  conversation?: string;
+  workspace: string;
   child: ChildProcessWithoutNullStreams;
   output: Buffer;
   start: number;
@@ -26,12 +28,14 @@ export class RemoteTerminals {
     private binary = process.env.LOCALBOT_PTY_BINARY ??
       join(dirname(process.execPath), "remote-pty"),
   ) {}
-  async open(owner: string, workspace: string) {
+  async open(owner: string, workspace: string, conversation?: string) {
     const cwd = await realpath(workspace);
     if (!(await stat(cwd)).isDirectory())
       throw Error("Workspace directory is unavailable");
     if (this.stopped || this.revoked.has(owner))
       throw Error("Terminal access was revoked.");
+    const existing = [...this.sessions.entries()].find(([, s]) => conversation && s.owner === owner && s.conversation === conversation && s.workspace === cwd);
+    if (existing) { existing[1].touched = Date.now(); return { session: existing[0], sequence: existing[1].nextInput }; }
     if (
       this.sessions.size >= 4 ||
       [...this.sessions.values()].filter((s) => s.owner === owner).length >= 2
@@ -43,6 +47,8 @@ export class RemoteTerminals {
     const id = randomUUID(),
       session: Session = {
         owner,
+        conversation,
+        workspace: cwd,
         child,
         output: Buffer.alloc(0),
         start: 0,
@@ -83,7 +89,7 @@ export class RemoteTerminals {
       this.remove(id);
       throw error;
     });
-    return { session: id };
+    return { session: id, sequence: 0 };
   }
   handle(owner: string, body: any) {
     const session = this.sessions.get(body.session);

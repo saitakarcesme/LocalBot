@@ -114,7 +114,7 @@ export class RemoteHost {
               : state.agents.find((a: any) => a.id === conversation.members[0])
                   ?.workspace;
             if (!workspace) throw Error("Conversation has no workspace");
-            return this.terminals!.open(_device, workspace);
+            return this.terminals!.open(_device, workspace, conversation.id);
           }
           const response = await fetch(local.url + route.path, {
             method: route.method,

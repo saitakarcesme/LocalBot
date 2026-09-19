@@ -57,6 +57,7 @@ struct PhoneTerminalContent: View {
         let result = try await call(["action":"open","conversationId":conversation])
         guard let id = result["session"] as? String else { throw RemoteError("Could not open the terminal.") }
         session = id
+        sequence = result["sequence"] as? Int ?? 0
         if disposed { close(); return }
         _ = try await call(["action":"resize","cols":size.cols,"rows":size.rows])
       }
@@ -71,6 +72,7 @@ struct PhoneTerminalContent: View {
           try await Task.sleep(for:.milliseconds(250))
         } catch {
           if Task.isCancelled { return }; self.error = error.localizedDescription
+          if error.localizedDescription.contains("no longer available") { closed = true; return }
           try await Task.sleep(for:.seconds(2))
         }
       }
