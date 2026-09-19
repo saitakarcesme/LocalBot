@@ -287,7 +287,7 @@
   },
   "connected_preview": {
     "date": "2026-09-19",
-    "status": "packaging_and_terminal_ui_verification",
+    "status": "installed_mac_signed_phone_windows_packages_browser_smoke_pending",
     "branch": "codex/center-iphone-remote",
     "runtime_tests": 141,
     "native_tests": 8,
@@ -296,14 +296,18 @@
       "public encrypted Swift/Node exchange",
       "signed simulator pairing and message round trip",
       "phone file edit independently checked",
-      "PTY host input resize ownership and revocation"
+      "PTY host input resize ownership and revocation",
+      "phone interactive shell pwd stty size and Ctrl-C",
+      "remote PTY process exits after workspace dismissal",
+      "installed Mac Center settings UI"
     ],
     "pending": [
       "physical Windows Ollama",
       "physical iPhone installation",
-      "interactive terminal phone UI",
-      "updated Mac installation"
+      "browser tool smoke test"
     ],
-    "simulators_maximum": 1
+    "simulators_maximum": 1,
+    "installed_mac_source": "50a6645",
+    "signed_iphone_profile_expires": "2026-09-26"
   }
 }

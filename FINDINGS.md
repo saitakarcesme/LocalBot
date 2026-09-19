@@ -393,3 +393,5 @@ Streaming checkpoint requested by the concurrent UI task: fixed dropped trailing
 - Added five permission-controlled tools for the desktop’s persistent browser. Actual mail sending was not performed.
 - Interactive remote PTY addition passes host input/resize/device-ownership/retry/revocation tests; iOS rendering integration is being verified separately.
 - 141 runtime tests and 8 native tests pass. iPhone physical-device signing succeeds with the available development account, but the actual phone is unavailable. Physical Windows and separate-network device validation remain pending. No paid service upgrade, live user task cancellation, or automatic loop was started.
+
+- Connected preview update: source50a6645 installed and launched;86 signed bundle hashes verified. Center pairing sheet and Remote settings visible. Native iPhone terminal test passed pwd/stty/Ctrl-C and helper termination; simulator is shut down. Windows49 MB ZIP and signed iPhone2.6 MB IPA prepared. Development signing expires2026-09-26. Branch pushed with micro checkpoints.
