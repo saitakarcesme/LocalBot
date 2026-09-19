@@ -376,7 +376,7 @@ struct SettingsView: View {
   @AppStorage("appearance") var appearance = "system"
   @AppStorage("notifications") var notifications = false
   var body: some View {
-    VStack(alignment: .leading, spacing: 15) {
+    ScrollView { VStack(alignment: .leading, spacing: 15) {
       HStack {
         Text("Settings").font(.title2.bold())
         Spacer()
@@ -396,6 +396,8 @@ struct SettingsView: View {
           }
         }
       }
+      Divider()
+      RemoteSettingsView()
       Divider()
       HStack {
         Text("Model Connections").font(.headline)
@@ -434,7 +436,7 @@ struct SettingsView: View {
       Text(
         "Local models are primary. Ollama uses its native API; llama.cpp, vLLM and MLX use OpenAI-compatible endpoints. For another PC, open LocalBot Center there and paste its pairing code here. Connections are encrypted and work across different networks."
       ).font(.caption).foregroundStyle(.secondary)
-    }.padding(24).frame(width: 620)
+    }.padding(24) }.frame(width: 620, height: 720)
     .sheet(isPresented: $centerSheet) { CenterConnectionView().environmentObject(model) }
     .onAppear {
       if editing == nil {
