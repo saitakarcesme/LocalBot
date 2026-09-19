@@ -206,18 +206,21 @@ const server = createServer(async (req, res) => {
           return result.models.map(model => ({providerId: config.id, provider: config.name, model}));
         } catch { return []; }
       }))).flat();
-      json(res, 200, {options, selected: store.modelChoice(conversationId) ?? store.modelChoice()}); return;
+      const leadId = conversationId ? store.conversation(conversationId).members[0] : store.agents()[0]?.id;
+      const effective = leadId ? store.modelConfig(store.agent(leadId), conversationId) : null;
+      json(res, 200, {options, selected: effective ? {providerId: effective.id, model: effective.model} : null}); return;
     }
     if (m === "POST" && p === "/models/select") {
       const b = await body(req), conversationId = b.conversationId || undefined;
       if (conversationId) store.conversation(conversationId);
-      const active = conversationId
+      const active = () => conversationId
         ? store.get("SELECT id FROM tasks WHERE conversationId=? AND status IN ('running','queued')", conversationId)
         : store.get("SELECT id FROM tasks WHERE status IN ('running','queued')");
-      if (active) throw Error("Wait for the current task to finish before changing its model.");
+      if (active()) throw Error("Wait for the current task to finish before changing its model.");
       const config = store.provider(b.providerId);
       const health = await provider(config, engine.secrets.get(config.id)).health(AbortSignal.timeout(10000));
       if (typeof b.model !== "string" || !health.models.includes(b.model)) throw Error("Select an available model.");
+      if (active()) throw Error("A task started while checking the model. Try again when it finishes.");
       store.exec("INSERT INTO settings VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value", "model:" + (conversationId ?? "default"), JSON.stringify({providerId:config.id,model:b.model}));
       change(); json(res,200,{ok:true}); return;
     }
