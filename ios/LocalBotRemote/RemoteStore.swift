@@ -73,6 +73,14 @@ import Security
       await refresh(); return true
     } catch { self.error = error.localizedDescription; return false }
   }
+  func workspace(_ action: String, extras: [String:Any] = [:]) async throws -> Data {
+    guard let client, let selected else { throw RemoteError("Open a conversation first.") }
+    return try await client.api("/workspace/action", body: extras.merging(["action":action,"conversationId":selected]) {_,new in new})
+  }
+  func memory() async throws -> Data {
+    guard let client else { throw RemoteError("Connect LocalBot first.") }
+    return try await client.api("/memory")
+  }
   func action(_ path: String, body: [String:Any]) async {
     do { guard let client else { return }; _ = try await client.api(path, body: body); await refresh() }
     catch { self.error = error.localizedDescription }

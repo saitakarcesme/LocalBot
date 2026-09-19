@@ -1,3 +1,4 @@
+import { workspaceAction } from "./remote/workspace.js";
 import { browserBridge } from "./browser-bridge.js";
 import { RemoteHost } from "./remote/host.js";
 import { claim, invoke, parseLink, encodeLink } from "./remote/protocol.js";
@@ -162,6 +163,8 @@ const server = createServer(async (req, res) => {
     if (m === "POST" && p === "/remote/revoke") { json(res,200,await remoteHost.revoke(String((await body(req)).id))); return; }
     if (m === "GET" && p === "/browser/poll") { json(res,200,{action:browserBridge.poll()}); return; }
     if (m === "POST" && p === "/browser/result") { const b=await body(req); json(res,200,{accepted:browserBridge.complete(b.id,b.result,b.error)}); return; }
+    if (m === "POST" && p === "/workspace/action") { json(res,200,await workspaceAction(store,await body(req),AbortSignal.timeout(65000))); return; }
+    if (m === "GET" && p === "/memory") { json(res,200,store.all("SELECT id,scope,topic,note,updatedAt FROM shared_memory ORDER BY updatedAt DESC LIMIT 200")); return; }
     if (m === "GET" && p === "/health") {
       json(res, 200, { ok: true, version: "0.2.0", pid: process.pid });
       return;

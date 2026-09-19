@@ -95,6 +95,7 @@ struct MobileChat: View {
   var project: Project?
   @State private var draft = ""
   @State private var activity = false
+  @State private var workspace = false
   @State private var browser: URL?
   @State private var agent: String?
   @State private var followsOutput = true
@@ -121,10 +122,11 @@ struct MobileChat: View {
         .safeAreaInset(edge: .bottom) { composer }
         .navigationTitle(store.snapshot?.conversations.first { $0.id == store.selected }?.title ?? project?.name ?? "New conversation")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar { ToolbarItem(placement: .topBarTrailing) { Button { activity = true } label: { Image(systemName: "waveform.path") }.accessibilityLabel("Activity") } }
+        .toolbar { ToolbarItemGroup(placement: .topBarTrailing) { Button { activity = true } label: { Image(systemName: "waveform.path") }.accessibilityLabel("Activity"); Button { workspace = true } label: { Image(systemName: "rectangle.split.2x1") }.accessibilityLabel("Workspace").disabled(store.selected == nil) } }
         .task(id: store.selected) { if draft.isEmpty { draft = UserDefaults.standard.string(forKey: draftKey) ?? "" }; await store.refresh() }
         .onChange(of: draft) { _, value in UserDefaults.standard.set(value,forKey: draftKey) }
         .sheet(isPresented: $activity) { ActivityView().environmentObject(store) }
+        .sheet(isPresented: $workspace) { MobileWorkspace(project: project).environmentObject(store) }
         .sheet(item: Binding(get: { browser.map(BrowserLink.init) },set: { browser = $0?.url })) { link in MobileBrowser(url: link.url).ignoresSafeArea() }
         .environment(\.openURL, OpenURLAction { url in guard ["https","http"].contains(url.scheme ?? "") else { return .discarded }; browser = url; return .handled })
     }
@@ -135,7 +137,7 @@ struct MobileChat: View {
       HStack(alignment: .bottom, spacing: 10) {
         if store.selected == nil { Menu { ForEach(store.snapshot?.agents ?? []) { item in Button(item.name) { agent = item.id } } } label: { Image(systemName: "person.crop.circle") }.accessibilityLabel("Choose agent") }
         TextField("Message", text: $draft, axis: .vertical).lineLimit(1...6).padding(.vertical, 8)
-        Button { if let running { Task { await store.action("/cancel",body:["taskId":running.id]) } } else { let text = draft; Task { if await store.send(text,project:project?.id,agent:agent) { draft = "" } } } } label: { Image(systemName: running == nil ? "arrow.up.circle.fill" : "stop.circle.fill").font(.system(size: 32)).foregroundStyle(running == nil ? Color.accentColor : .orange) }
+        Button { if let running { Task { await store.action("/cancel",body:["taskId":running.id]) } } else { let text = draft; let key = draftKey; Task { if await store.send(text,project:project?.id,agent:agent) { UserDefaults.standard.removeObject(forKey: key); draft = "" } } } } label: { Image(systemName: running == nil ? "arrow.up.circle.fill" : "stop.circle.fill").font(.system(size: 32)).foregroundStyle(running == nil ? Color.accentColor : .orange) }
           .disabled(store.busy || (running == nil && draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)).accessibilityLabel(running == nil ? "Send message" : "Stop task")
       }.padding(.horizontal, 14).padding(.vertical, 5).background(.regularMaterial, in: RoundedRectangle(cornerRadius: 26))
     }.padding(.horizontal, 14).padding(.vertical, 8)

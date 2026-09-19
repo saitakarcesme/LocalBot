@@ -4,8 +4,8 @@ import { PreviewTunnel } from './tunnel.js';
 import { remoteURL, type RPCRequest } from './protocol.js';
 
 // Deliberately excludes credentials, provider configuration and pairing administration.
-const reads = new Set(['/snapshot', '/messages', '/activity', '/artifacts', '/search']);
-const writes = new Set(['/messages', '/cancel', '/approvals', '/reactions', '/conversations', '/conversations/archive', '/conversations/update']);
+const reads = new Set(['/snapshot', '/messages', '/activity', '/artifacts', '/search', '/memory']);
+const writes = new Set(['/messages', '/cancel', '/approvals', '/reactions', '/conversations', '/conversations/archive', '/conversations/update', '/workspace/action']);
 export function mobileRoute(request: RPCRequest) {
   if (request.operation !== 'api' || typeof request.path !== 'string' || !request.path.startsWith('/') || request.path.startsWith('//')) throw Error('Unsupported remote operation');
   const url = new URL(request.path, 'http://localhost');
