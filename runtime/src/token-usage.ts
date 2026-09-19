@@ -39,7 +39,7 @@ export function recordModelUsage(
     if (Number.isSafeInteger(total))
       tokenUsageSink(request, total, {
         ...identity,
-        taskId: taskUsage.getStore(),
+        ...(taskUsage.getStore() ? { taskId: taskUsage.getStore() } : {}),
       });
   }
 }

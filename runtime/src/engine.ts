@@ -575,6 +575,7 @@ export class Engine {
             let result = "",
               failed = false;
             try {
+              if (!available.some(t => t.function.name === name)) throw new Error(`Tool is unavailable for this run: ${name}`);
               const args = JSON.parse(call.function.arguments);
               validateArguments(name, args);
               if (name === "view_image" && !this.makeProvider(config).capabilities().images) throw new Error("Selected provider cannot inspect images");
