@@ -1,3 +1,4 @@
+import { recordModelUsage } from "./token-usage.js";
 import { invoke, parseLink } from "./remote/protocol.js";
 import { imageMessages } from "./http-images.js";
 import { randomUUID } from "node:crypto";
@@ -133,6 +134,7 @@ class HTTPProvider implements ModelProvider {
     signal: AbortSignal,
   ): Promise<Generation> {
     const p = this.p;
+    const usageRequest = randomUUID();
     if (messages.some(m => m.images?.length)) {
       if (!this.capabilities().images) throw new Error("Enable image input for a vision-capable Ollama or compatible model");
       messages = await imageMessages(messages, p.kind as "ollama" | "openai");
@@ -169,6 +171,7 @@ class HTTPProvider implements ModelProvider {
       body = {
         model: p.model,
         messages,
+        stream_options: { include_usage: true },
         tools: tools.length ? tools : undefined,
         stream: true,
         temperature: p.temperature,
@@ -263,6 +266,7 @@ class HTTPProvider implements ModelProvider {
           });
         }
         if (d.done) {
+          recordModelUsage(usageRequest, d.prompt_eval_count, d.eval_count, { providerId: p.id, model: p.model });
           if (d.done_reason === "length")
             throw new Error(
               "Model output limit reached. Increase Max output tokens in Settings.",
@@ -270,6 +274,7 @@ class HTTPProvider implements ModelProvider {
           finished = true;
         }
       } else if (p.kind === "openai") {
+        if (d.usage) recordModelUsage(usageRequest, d.usage.prompt_tokens, d.usage.completion_tokens, { providerId: p.id, model: p.model });
         const choice = d.choices?.[0];
         content += choice?.delta?.content ?? "";
         for (const t of choice?.delta?.tool_calls ?? []) {

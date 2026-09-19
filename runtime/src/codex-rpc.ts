@@ -8,6 +8,7 @@ import { join } from "node:path";
 /** Private stdio connection: authentication stays entirely inside Codex CLI. */
 export class CodexRPC {
   private child: ChildProcessWithoutNullStreams;
+  usageIdentity?: { providerId: string; model: string };
   private nextId = 0;
   private closed = false;
   private pending = new Map<number, { resolve: (value: any) => void; reject: (error: Error) => void; cleanup: () => void }>();
@@ -33,7 +34,7 @@ export class CodexRPC {
           () => this.send({ id: message.id, error: { code: -32601, message: "Request is not permitted by LocalBot" } }),
         );
       } else if (message.method) {
-        if (message.method === "thread/tokenUsage/updated") recordTokenUsage(message.params);
+        if (message.method === "thread/tokenUsage/updated") recordTokenUsage(message.params, this.usageIdentity);
         this.onNotification(message.method, message.params);
       } else {
         const pending = this.pending.get(message.id);

@@ -60,7 +60,11 @@ const store = new Store(dir);
 store.seed(workspace);
 store.recover();
 store.exec("CREATE TABLE IF NOT EXISTS token_usage(thread TEXT PRIMARY KEY, total INTEGER NOT NULL)");
-setTokenUsageSink((thread, total) => store.exec("INSERT INTO token_usage VALUES(?,?) ON CONFLICT(thread) DO UPDATE SET total=MAX(total,excluded.total)", thread, total));
+store.exec("CREATE TABLE IF NOT EXISTS token_usage_models(thread TEXT PRIMARY KEY, providerId TEXT NOT NULL, model TEXT NOT NULL)");
+setTokenUsageSink((thread, total, identity) => {
+  store.exec("INSERT INTO token_usage VALUES(?,?) ON CONFLICT(thread) DO UPDATE SET total=MAX(total,excluded.total)", thread, total);
+  if (identity) store.exec("INSERT INTO token_usage_models VALUES(?,?,?) ON CONFLICT(thread) DO UPDATE SET providerId=excluded.providerId,model=excluded.model", thread, identity.providerId, identity.model);
+});
 const tokenPath = join(dir, "runtime-token");
 let token: string;
 try {
@@ -198,7 +202,8 @@ const server = createServer(async (req, res) => {
       const config = store.providers().find(p => p.kind === "codex");
       const tokens = store.get("SELECT SUM(total) AS total FROM token_usage")?.total ?? null;
       let limits: any = {}; try { if (config) limits = await codexUsage(config, AbortSignal.timeout(30000)); } catch { limits.notice = "Subscription limits are temporarily unavailable."; }
-      json(res, 200, { ...limits, tokens, tokenNotice: "Provider-reported Codex tokens recorded by LocalBot since this update. Earlier usage and other providers are excluded." }); return;
+      const models = store.all("SELECT COALESCE(m.providerId,'legacy') AS providerId, COALESCE(m.model,'Earlier usage') AS model, SUM(t.total) AS tokens FROM token_usage t LEFT JOIN token_usage_models m ON m.thread=t.thread GROUP BY m.providerId,m.model ORDER BY tokens DESC");
+      json(res, 200, { ...limits, tokens, models, tokenNotice: "Provider-reported Codex tokens recorded by LocalBot since this update. Earlier usage and other providers are excluded." }); return;
     }
     if (m === "GET" && p === "/messages") {
       json(
