@@ -11,6 +11,7 @@ import {
   type ModelServer,
 } from "./remote/center.js";
 import { readJSON } from "./remote/gateway.js";
+import { reconnectSavedHost } from "./remote/reconnect.js";
 import { PreviewTunnel } from "./remote/tunnel.js";
 const dir =
   process.env.LOCALBOT_CENTER_DIR ??
@@ -26,10 +27,13 @@ let tunnel = new PreviewTunnel();
 let publicURL = "";
 let selected: ModelServer | undefined;
 let starting = false;
+let restoreGeneration = 0;
+let connectionError = "";
 const routing = new RoutingPublisher();
 async function connectServer(server: ModelServer) {
   if (starting) throw Error("A connection is already starting.");
   starting = true;
+  connectionError = "";
   try {
     routing.stop();
     tunnel.stop();
@@ -56,6 +60,7 @@ async function connectServer(server: ModelServer) {
     await gateway?.close();
     gateway = undefined;
     publicURL = "";
+    connectionError = "Connection interrupted. Choose Connect this PC to retry.";
     throw e;
   } finally {
     starting = false;
@@ -64,7 +69,7 @@ async function connectServer(server: ModelServer) {
 const html = `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>LocalBot Center</title><style>
 :root{color-scheme:dark light;font:16px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}body{margin:0;background:light-dark(#f4f4f7,#18191c);color:light-dark(#222,#f5f5f7);display:grid;min-height:100vh;place-items:center}main{width:min(600px,calc(100% - 64px));padding:32px;border:1px solid #8883;border-radius:30px;background:light-dark(#fffc,#ffffff08);box-shadow:0 25px 80px #0002;backdrop-filter:blur(20px)}h1{letter-spacing:-1.4px;font-size:36px;margin:10px 0}p{line-height:1.6;color:light-dark(#64646c,#aaaab5)}small{display:block;color:#999;line-height:1.5}button,select,textarea,input{font:inherit;border-radius:12px;padding:13px;border:1px solid #8884;background:light-dark(#fff,#ffffff0b);color:inherit}button{cursor:pointer}button.primary{background:#8f86ff;color:white;border:0}button:disabled{opacity:.4;cursor:default}select,textarea{width:100%;box-sizing:border-box;margin:14px 0}textarea{height:110px;resize:vertical;font:12px ui-monospace,monospace}a:hover{text-decoration:underline}section{margin-top:25px}.row{display:flex;gap:10px;align-items:center}.orb{font-size:36px;color:#c7b6ff}#error{color:#ff9b81}#devices button{float:right;padding:6px 10px}#devices p{min-height:32px}</style>
 <main><div class="orb">●</div><h1>LocalBot Center</h1><p>Your models. Connected to LocalBot.<br>Keep Ollama running on this PC. No router setup needed.</p><section><div class="row"><strong>Model server</strong><button id="scan">Refresh</button></div><select id="servers"></select><small id="models">Looking for local models…</small><details><summary>Use another local server</summary><input id="endpoint" placeholder="http://127.0.0.1:1234/v1"><select id="kind"><option value="ollama">Ollama</option><option value="openai">OpenAI compatible</option></select></details><p id="error" role="alert"></p><button class="primary" id="connect">Connect this PC</button></section><section id="pair" hidden><strong>Paste this code in LocalBot → Settings → Connect model PC</strong><textarea id="code" readonly aria-label="Pairing code"></textarea><div class="row"><button id="copy">Copy code</button><button id="new">New code</button></div><p>Works across different networks. This code expires in 10 minutes and can be used once.</p><small>Preview service: keep Center running. Paired devices reconnect when you reopen Center. No shared Wi-Fi is required.</small></section><section id="devices"></section><button id="stop" hidden>Disconnect</button></main>
-<script>const token=${JSON.stringify(csrf)};let servers=[];const el=id=>document.getElementById(id);async function api(path,body){const r=await fetch(path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json','X-LocalBot-Token':token},body:body?JSON.stringify(body):undefined});const v=await r.json();if(!r.ok)throw Error(v.error);return v;}async function action(fn){el('error').textContent='';try{await fn()}catch(e){el('error').textContent=e.message}}async function scan(){servers=await api('/discover');el('servers').replaceChildren(...servers.map((s,i)=>new Option((s.kind==='ollama'?'Ollama':'Compatible server')+' · '+s.models.length+' models',i)));el('connect').disabled=!servers.length&&!el('endpoint').value;showModels();}function showModels(){el('models').textContent=servers[el('servers').value]?.models.join(' · ')||'No models found. Open Ollama and download a model, or enter a local endpoint.';}async function pairing(){const p=await api('/pair',{});el('code').value=p.code;el('pair').hidden=false;}async function devices(){const d=await api('/devices');el('devices').replaceChildren(...d.map(x=>{const p=document.createElement('p');p.textContent=x.name+(x.paired?' · Connected':' · Waiting to pair');const b=document.createElement('button');b.textContent='Revoke';b.onclick=()=>action(async()=>{await api('/revoke',{id:x.id});await devices()});p.append(b);return p;}));}el('scan').onclick=()=>action(scan);el('servers').onchange=showModels;el('endpoint').oninput=()=>el('connect').disabled=false;el('connect').onclick=()=>action(async()=>{el('connect').disabled=true;el('connect').textContent='Connecting…';try{await api('/connect',el('endpoint').value?{endpoint:el('endpoint').value,kind:el('kind').value}:servers[el('servers').value]);await pairing();await devices();el('stop').hidden=false;}finally{el('connect').disabled=false;el('connect').textContent='Connect this PC';}});el('copy').onclick=()=>action(async()=>{await navigator.clipboard.writeText(el('code').value);el('copy').textContent='Copied';});el('new').onclick=()=>action(async()=>{await pairing();await devices()});el('stop').onclick=()=>action(async()=>{await api('/stop',{});el('pair').hidden=true;el('stop').hidden=true;await devices()});action(scan);setInterval(()=>{if(document.hidden)return;api('/status').then(s=>{el('stop').hidden=!s.connected;el('connect').disabled=s.starting;if(s.connected){el('pair').hidden=false;devices().catch(()=>{});}}).catch(()=>{});},5000);</script></html>`;
+<script>const token=${JSON.stringify(csrf)};let servers=[];const el=id=>document.getElementById(id);async function api(path,body){const r=await fetch(path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json','X-LocalBot-Token':token},body:body?JSON.stringify(body):undefined});const v=await r.json();if(!r.ok)throw Error(v.error);return v;}async function action(fn){el('error').textContent='';try{await fn()}catch(e){el('error').textContent=e.message}}async function scan(){servers=await api('/discover');el('servers').replaceChildren(...servers.map((s,i)=>new Option((s.kind==='ollama'?'Ollama':'Compatible server')+' · '+s.models.length+' models',i)));el('connect').disabled=!servers.length&&!el('endpoint').value;showModels();}function showModels(){el('models').textContent=servers[el('servers').value]?.models.join(' · ')||'No models found. Open Ollama and download a model, or enter a local endpoint.';}async function pairing(){const p=await api('/pair',{});el('code').value=p.code;el('pair').hidden=false;}async function devices(){const d=await api('/devices');el('devices').replaceChildren(...d.map(x=>{const p=document.createElement('p');p.textContent=x.name+(x.paired?' · Connected':' · Waiting to pair');const b=document.createElement('button');b.textContent='Revoke';b.onclick=()=>action(async()=>{await api('/revoke',{id:x.id});await devices()});p.append(b);return p;}));}el('scan').onclick=()=>action(scan);el('servers').onchange=showModels;el('endpoint').oninput=()=>el('connect').disabled=false;el('connect').onclick=()=>action(async()=>{el('connect').disabled=true;el('connect').textContent='Connecting…';try{await api('/connect',el('endpoint').value?{endpoint:el('endpoint').value,kind:el('kind').value}:servers[el('servers').value]);await pairing();await devices();el('stop').hidden=false;}finally{el('connect').disabled=false;el('connect').textContent='Connect this PC';}});el('copy').onclick=()=>action(async()=>{await navigator.clipboard.writeText(el('code').value);el('copy').textContent='Copied';});el('new').onclick=()=>action(async()=>{await pairing();await devices()});el('stop').onclick=()=>action(async()=>{await api('/stop',{});el('pair').hidden=true;el('stop').hidden=true;await devices()});action(scan);setInterval(()=>{if(document.hidden)return;api('/status').then(s=>{el('stop').hidden=!s.connected;el('connect').disabled=s.starting;el('connect').textContent=s.starting?'Connecting…':'Connect this PC';if(s.error)el('error').textContent=s.error;if(s.connected){el('pair').hidden=false;devices().catch(()=>{});}}).catch(()=>{});},5000);</script></html>`;
 const ui = createServer(async (req, res) => {
   const json = (status: number, data: unknown) => {
     res.writeHead(status, {
@@ -97,7 +102,7 @@ const ui = createServer(async (req, res) => {
       return;
     }
     if (req.url === "/status" && req.method === "GET") {
-      json(200, { connected: !!gateway && !!publicURL && !starting, starting });
+      json(200, { connected: !!gateway && !!publicURL && !starting, starting, error: connectionError });
       return;
     }
     if (req.url === "/devices" && req.method === "GET") {
@@ -110,6 +115,7 @@ const ui = createServer(async (req, res) => {
     }
     const body = await readJSON(req, 10000);
     if (req.url === "/connect") {
+      restoreGeneration++;
       await connectServer({ kind: body.kind, endpoint: body.endpoint });
       json(200, { connected: true });
       return;
@@ -127,6 +133,8 @@ const ui = createServer(async (req, res) => {
       return;
     }
     if (req.url === "/stop") {
+      restoreGeneration++;
+      connectionError = "";
       await fs.writeFile(join(dir, "server.json"), "null", { mode: 0o600 });
       routing.stop();
       tunnel.stop();
@@ -155,12 +163,14 @@ ui.listen(Number(process.env.LOCALBOT_CENTER_PORT ?? 8818), "127.0.0.1", () => {
     .readFile(join(dir, "server.json"), "utf8")
     .then(async (raw) => {
       const server = JSON.parse(raw);
-      if (server) await connectServer(server);
+      const generation = restoreGeneration;
+      if (server) await reconnectSavedHost(() => connectServer(server), () => generation === restoreGeneration);
     })
     .catch(() => {});
 });
 for (const event of ["SIGINT", "SIGTERM"] as const)
   process.on(event, () => {
+    restoreGeneration++;
     routing.stop();
     tunnel.stop();
     void gateway?.close();
