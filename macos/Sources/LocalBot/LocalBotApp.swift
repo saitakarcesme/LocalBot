@@ -169,7 +169,7 @@ struct MainView: View {
         }
         HStack(spacing: 7) {
           Button { showProfile = true } label: { ProfileBadge(profile: model.profile) }.buttonStyle(.plain)
-            .sheet(isPresented: $showProfile) { ProfileEditor(profile: model.profile, loadUsage: { try await model.request("/usage") }, save: { profile in _ = try await model.request("/profile", body: ["name":profile.name,"photo":profile.photo ?? ""]); model.profile = profile }, loadModels: { try await model.request("/models") }, selectModel: { _ = try await model.request("/models/select", body: $0.payload) }, personal: { AnyView(PersonalContextView(load: { try await model.request("/personal/context") }, save: { try await model.request("/personal/context", body: $0) })) }) }
+            .sheet(isPresented: $showProfile) { ProfileEditor(profile: model.profile, loadUsage: { try await model.request("/usage") }, save: { profile in _ = try await model.request("/profile", body: ["name":profile.name,"photo":profile.photo ?? ""]); model.profile = profile }, loadModels: { try await model.request("/models") }, selectModel: { _ = try await model.request("/models/select", body: $0.payload) }, personal: { AnyView(PersonalContextView(load: { try await model.request("/personal/context") }, save: { try await model.request("/personal/context", body: $0) })) }, research: { AnyView(ResearchView(load: { try await model.request("/research") }, save: { try await model.request("/research", body: $0) }, conversations: model.conversations)) }) }
           Spacer()
           Button { model.toggleArchiveList() } label: {
             Image(systemName: model.showingArchived ? "bubble.left.and.bubble.right" : "archivebox").font(.system(size: 17))

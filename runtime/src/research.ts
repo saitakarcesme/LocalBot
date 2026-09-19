@@ -9,6 +9,7 @@ export type ResearchSettings = {
   dailyTarget: number;
   maxPasses: number;
   pauseReason?: string;
+  acknowledgedTask?: string;
 };
 export function researchSettings(store: Store): ResearchSettings {
   return JSON.parse(
@@ -49,6 +50,9 @@ export function saveResearch(store: Store, input: any) {
     conversationId: String(input.conversationId ?? ""),
     dailyTarget: input.dailyTarget,
     maxPasses: input.maxPasses,
+    acknowledgedTask: store.get(
+      "SELECT taskId FROM research_passes ORDER BY createdAt DESC LIMIT 1",
+    )?.taskId,
   };
   store.exec(
     "INSERT INTO settings VALUES('auto-research',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
@@ -105,6 +109,7 @@ export class AutoResearch {
       if (!s.enabled) return;
       if (
         s.latest &&
+        s.latest.id !== s.acknowledgedTask &&
         ["failed", "interrupted", "cancelled"].includes(s.latest.status)
       ) {
         const next = {
