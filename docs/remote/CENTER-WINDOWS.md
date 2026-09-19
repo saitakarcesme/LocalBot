@@ -11,11 +11,11 @@ Center probes Ollama first. LM Studio and other OpenAI-compatible local servers 
 
 ## Connection preview
 
-The included Cloudflare Quick Tunnel is an account-free **preview** connection. Keep Center and the model server running. Restarting Center changes its public address; create a new code and reconnect the Mac. A permanent address requires a separately configured HTTPS tunnel and `LOCALBOT_PUBLIC_URL`, pointing only at the gateway (not port 8818 or Ollama). Quick Tunnels are not a production availability guarantee.
+The included Cloudflare Quick Tunnel is an account-free **preview** connection. Keep Center and the model server running. Center renews its tunnel address through the relay after a restart; already paired Macs keep their credentials. The included LocalBot Connect relay maintains a stable host identity across tunnel restarts. A separately configured HTTPS tunnel can use `LOCALBOT_PUBLIC_URL` with `LOCALBOT_RELAY_URL` set to an empty string, pointing only at the gateway (not port 8818 or Ollama). Quick Tunnels are not a production availability guarantee.
 
 Pairing codes expire after ten minutes and can be used once. Treat them as secrets. Paired devices can be revoked in Center. Requests and responses use authenticated encryption; the tunnel service cannot decrypt model prompts or outputs. Device credentials stay in the Windows user profile and macOS Keychain. The Windows user account and disk should be protected.
 
-Model responses currently arrive as a complete response through Center; the model server's own streaming format is preserved internally. Very slow generations can exceed the preview tunnel's request timeout.
+Center uses encrypted, polled model jobs and preserves the model server’s streaming format. The Mac’s provider timeout applies. Two model jobs can run at once; output is limited to 8 MB per job.
 
 ## Compatibility and validation
 
