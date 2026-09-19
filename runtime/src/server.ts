@@ -354,6 +354,7 @@ const server = createServer(async (req, res) => {
       const c = store.transaction(() => {
         const created = store.createConversation(title, members, b.projectId ?? null, b.automatic === true);
         store.exec("INSERT INTO conversation_drafts VALUES(?)", created.id);
+        if (req.headers["x-localbot-remote"] === "true") remoteHost.protectDraft(created.id);
         return store.conversation(created.id);
       });
       change();

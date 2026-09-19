@@ -20,6 +20,7 @@ export class RemoteHost {
   private starting = false;
   private leases = new Map<string, number>();
   constructor(private dir: string, private connection: () => { url: string; token: string }) {}
+  protectDraft(id: string) { this.leases.set(id, Date.now()+300_000); }
   protectedDraft(id: string) { return (this.leases.get(id) ?? 0) > Date.now(); }
   status() { return { enabled: !!this.gateway && (!!process.env.LOCALBOT_REMOTE_PUBLIC_URL || this.tunnel.running), starting: this.starting, preview: !process.env.LOCALBOT_REMOTE_PUBLIC_URL, devices: this.gateway?.list() ?? [] }; }
   async start() {
@@ -30,7 +31,7 @@ export class RemoteHost {
       await this.stop();
       const gateway = new RemoteGateway(join(this.dir, 'remote-devices.json'), 'remote', async (request, _device, signal) => {
         const route = mobileRoute(request), local = this.connection();
-        const response = await fetch(local.url + route.path, { method: route.method, redirect: 'error', headers: { Authorization: 'Bearer ' + local.token, 'Content-Type': 'application/json' }, body: route.method === 'POST' ? JSON.stringify(request.body ?? {}) : undefined, signal });
+        const response = await fetch(local.url + route.path, { method: route.method, redirect: 'error', headers: { Authorization: 'Bearer ' + local.token, 'Content-Type': 'application/json', 'X-LocalBot-Remote': 'true' }, body: route.method === 'POST' ? JSON.stringify(request.body ?? {}) : undefined, signal });
         const text = await response.text();
         if (Buffer.byteLength(text) > 8_000_000) throw Error('This result is too large to load on the phone. Narrow the request.');
         const result = JSON.parse(text);
