@@ -53,7 +53,7 @@ import Security
   }
   func select(_ id: String) { selected = id; messages = []; activity = []; loadedConversation = nil }
   func send(_ text: String, project: String? = nil, agent: String? = nil, attachments: [Artifact] = []) async -> Bool {
-    guard let client, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
+    guard let client, (!text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !attachments.isEmpty) else { return false }
     busy = true; defer { busy = false }
     do {
       if selected == nil {
@@ -82,7 +82,7 @@ import Security
   }
   func upload(_ data: Data, name: String) async throws -> Artifact {
     guard let client else { throw RemoteError("Connect LocalBot first.") }
-    guard data.count <= 5_000_000 else { throw RemoteError("Choose a file smaller than 5 MB.") }
+    guard data.count <= 2_000_000 else { throw RemoteError("Choose a file smaller than 2 MB.") }
     return try JSONDecoder().decode(Artifact.self, from: await client.api("/attachments", body: ["name":name,"data":data.base64EncodedString()]))
   }
   func workspace(_ action: String, extras: [String:Any] = [:]) async throws -> Data {

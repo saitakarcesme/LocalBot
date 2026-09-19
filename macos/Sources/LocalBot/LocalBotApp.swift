@@ -283,7 +283,7 @@ struct ConversationRow: View {
   var body: some View {
     HStack(spacing: 7) {
       if conversation.projectId != nil {
-        AvatarStack(agents: conversation.members.compactMap { model.agent($0) }, size: 22)
+        AvatarStack(agents: Array(conversation.members.prefix(3)).compactMap { model.agent($0) }, size: 22).frame(width: 48, alignment: .leading)
       }
       VStack(alignment: .leading, spacing: 4) {
         Text(title).font(.system(size: 13, weight: .regular)).lineLimit(1).truncationMode(.tail)
@@ -291,7 +291,7 @@ struct ConversationRow: View {
       }
       Spacer(minLength: 0)
       if model.tasks.contains(where: { $0.conversationId == conversation.id && $0.active }) {
-        Circle().fill(Color.accentColor).frame(width: 6, height: 6).help("Work in progress")
+        ProgressView().controlSize(.mini).help("Work in progress")
       }
     }.frame(height: 28).contentShape(Rectangle()).help(title)
   }
