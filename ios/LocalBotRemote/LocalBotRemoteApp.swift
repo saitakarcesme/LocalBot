@@ -148,13 +148,36 @@ struct MobileChat: View {
         .task(id: store.selected) { if draft.isEmpty { draft = UserDefaults.standard.string(forKey: draftKey) ?? "" }; await store.refresh() }
         .onChange(of: draft) { _, value in UserDefaults.standard.set(value,forKey: draftKey) }
         .photosPicker(isPresented: $pickPhoto, selection: $photo, matching: .images)
-        .onChange(of: photo) { _, item in Task { guard let item else { return }; uploading = true; defer { uploading = false; photo = nil }; do { if let data = try await item.loadTransferable(type: Data.self) { let image = UIImage(data: data); let size = image?.size ?? .zero; let scale = min(1, 1600 / max(1, max(size.width,size.height))); let format = UIGraphicsImageRendererFormat(); format.scale = 1; let jpeg = image.map { image in UIGraphicsImageRenderer(size: CGSize(width: size.width * scale,height: size.height * scale), format: format).image { _ in image.draw(in: CGRect(x: 0,y: 0,width: size.width * scale,height: size.height * scale)) }.jpegData(compressionQuality: 0.8) } ?? nil; attachments.append(try await store.upload(jpeg ?? data, name: jpeg == nil ? "Photo.png" : "Photo.jpg")) } } catch { store.error = error.localizedDescription } } }
-        .fileImporter(isPresented: $pickFile, allowedContentTypes: [.item]) { result in Task { uploading = true; defer { uploading = false }; do { let url = try result.get(); let access = url.startAccessingSecurityScopedResource(); defer { if access { url.stopAccessingSecurityScopedResource() } }; let size = try url.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0; guard size <= 2_000_000 else { throw RemoteError("Choose a file smaller than 2 MB.") }; attachments.append(try await store.upload(Data(contentsOf: url), name: url.lastPathComponent)) } catch { store.error = error.localizedDescription } } }
+        .onChange(of: photo) { _, item in Task { await addPhoto(item) } }
+        .fileImporter(isPresented: $pickFile, allowedContentTypes: [.item]) { result in Task { await addFile(result) } }
         .sheet(isPresented: $activity) { ActivityView().environmentObject(store) }
         .sheet(isPresented: $workspace) { MobileWorkspace(project: project).environmentObject(store) }
         .sheet(item: Binding(get: { browser.map(BrowserLink.init) },set: { browser = $0?.url })) { link in MobileBrowser(url: link.url).ignoresSafeArea() }
         .environment(\.openURL, OpenURLAction { url in guard ["https","http"].contains(url.scheme ?? "") else { return .discarded }; browser = url; return .handled })
     }
+  }
+  private func addPhoto(_ item: PhotosPickerItem?) async {
+    guard let item else { return }
+    uploading = true; defer { uploading = false; photo = nil }
+    do {
+      guard let data = try await item.loadTransferable(type: Data.self), let image = UIImage(data: data) else { return }
+      let scale = min(1, 1600 / max(1, max(image.size.width, image.size.height)))
+      let size = CGSize(width: image.size.width * scale, height: image.size.height * scale)
+      let format = UIGraphicsImageRendererFormat(); format.scale = 1
+      let resized = UIGraphicsImageRenderer(size: size, format: format).image { _ in image.draw(in: CGRect(origin: .zero, size: size)) }
+      guard let jpeg = resized.jpegData(compressionQuality: 0.8) else { return }
+      attachments.append(try await store.upload(jpeg, name: "Photo.jpg"))
+    } catch { store.error = error.localizedDescription }
+  }
+  private func addFile(_ result: Result<URL, Error>) async {
+    uploading = true; defer { uploading = false }
+    do {
+      let url = try result.get(); let access = url.startAccessingSecurityScopedResource()
+      defer { if access { url.stopAccessingSecurityScopedResource() } }
+      let size = try url.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
+      guard size <= 2_000_000 else { throw RemoteError("Choose a file smaller than 2 MB.") }
+      attachments.append(try await store.upload(Data(contentsOf: url), name: url.lastPathComponent))
+    } catch { store.error = error.localizedDescription }
   }
   private var composer: some View {
     VStack(spacing: 8) {
