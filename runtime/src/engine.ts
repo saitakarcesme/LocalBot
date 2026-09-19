@@ -362,6 +362,8 @@ export class Engine {
       // A follow-up may have been queued before the preceding run asked its question.
       this.store.continueQuestions(task.conversationId);
       this.store.status(taskId, "running");
+      const first = c.members[0] ? this.store.agent(c.members[0]) : undefined;
+      this.store.addMessage(c.id, "assistant", startingMessage(first?.role ?? "assistant"), {taskId, agentId: first?.id});
     });
     this.changed();
     let runId: string | undefined;
@@ -400,7 +402,7 @@ export class Engine {
           now(),
         );
         this.store.react(task.messageId, agentId, "👀");
-        this.store.addMessage(c.id, "assistant", startingMessage(agent.role), { taskId, runId, agentId });
+        if (agentId !== c.members[0]) this.store.addMessage(c.id, "assistant", startingMessage(agent.role), { taskId, runId, agentId });
         this.changed();
         const memoryBudget = Math.min(6000, Math.floor(config.contextLength / 2));
         let sharedNotes = "";
