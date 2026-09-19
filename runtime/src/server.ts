@@ -16,7 +16,7 @@ import { randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 import { promises as fs, readFileSync, unlinkSync } from "node:fs";
 import { homedir } from "node:os";
 import { spawn } from "node:child_process";
-import { join, resolve } from "node:path";
+import { join, resolve, isAbsolute } from "node:path";
 import { Store } from "./store.js";
 import { Engine } from "./engine.js";
 import { provider, validateEndpoint } from "./providers.js";
@@ -111,7 +111,7 @@ function cleanAgent(a: any): Agent {
     typeof a.name !== "string" ||
     !a.name.trim() ||
     typeof a.workspace !== "string" ||
-    !a.workspace.startsWith("/")
+    !isAbsolute(a.workspace)
   )
     throw new Error("Agent requires a name and absolute workspace path");
   store.provider(a.providerId);
@@ -198,7 +198,7 @@ const server = createServer(async (req, res) => {
       return;
     }
     if (m === "GET" && p === "/snapshot") {
-      json(res, 200, { ...store.snapshot(), profile: JSON.parse(store.get("SELECT value FROM settings WHERE key='profile'")?.value ?? '{"name":"LocalBot User"}'), revision, instanceId });
+      json(res, 200, { ...store.snapshot(), hostName: process.env.LOCALBOT_HOST_NAME ?? "This Mac", profile: JSON.parse(store.get("SELECT value FROM settings WHERE key='profile'")?.value ?? '{"name":"LocalBot User"}'), revision, instanceId });
       return;
     }
     if (m === "POST" && p === "/profile") {

@@ -90,13 +90,23 @@ export async function modelRequest(
     body: Buffer.concat(chunks).toString("utf8"),
   };
 }
-export function centerGateway(file: string, server: ModelServer) {
+export function centerGateway(
+  file: string,
+  server: ModelServer,
+  workspace?: (
+    request: RPCRequest,
+    device: string,
+    signal: AbortSignal,
+  ) => Promise<any>,
+) {
   validateModelServer(server);
   const jobs = new ModelJobs();
   const gateway = new RemoteGateway(file, "center", (request, id, signal) =>
-    request.operation.startsWith("model_")
-      ? jobs.handle(server, request, id)
-      : modelRequest(server, request, signal),
+    request.operation === "workspace_api" && workspace
+      ? workspace(request, id, signal)
+      : request.operation.startsWith("model_")
+        ? jobs.handle(server, request, id)
+        : modelRequest(server, request, signal),
   );
   const revoke = gateway.revoke.bind(gateway);
   gateway.revoke = async (id) => {
