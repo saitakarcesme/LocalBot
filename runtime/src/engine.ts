@@ -1,3 +1,4 @@
+import { taskUsage } from "./token-usage.js";
 import { startingMessage, stepBudgetNotice } from "./task-progress.js";
 import { readDocument } from "./document-reader.js";
 import { personalContext, localPersonalProvider, queuePhoneAction, phoneActions } from "./personal.js";
@@ -504,7 +505,7 @@ export class Engine {
           reportProgress("Thinking");
           let output;
           try {
-            output = await this.makeProvider(config, this.secrets.get(config.id)).generate(messages, available, signal, reportProgress);
+            output = await taskUsage.run(taskId, () => this.makeProvider(config, this.secrets.get(config.id)).generate(messages, available, signal, reportProgress));
             this.store.exec("UPDATE run_events SET status='completed',output=?,updatedAt=? WHERE id=?", thinkingSummary || "Next step prepared.", now(), thinkingId);
           } catch (error) {
             this.store.exec("UPDATE run_events SET status=?,output=?,updatedAt=? WHERE id=?", signal.aborted ? "interrupted" : "failed", thinkingSummary || String(error), now(), thinkingId);

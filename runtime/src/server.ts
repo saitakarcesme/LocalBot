@@ -1,3 +1,4 @@
+import { AutoResearch, initResearch, researchStatus, saveResearch } from "./research.js";
 import { personalContext, savePersonalContext, phoneActions, updatePhoneAction } from "./personal.js";
 import { setTokenUsageSink } from "./token-usage.js";
 import { validateProfile } from "./profile.js";
@@ -60,10 +61,12 @@ process.on("exit", () => {
 const store = new Store(dir);
 store.seed(workspace);
 store.recover();
+initResearch(store);
 store.exec("CREATE TABLE IF NOT EXISTS token_usage(thread TEXT PRIMARY KEY, total INTEGER NOT NULL)");
 store.exec("CREATE TABLE IF NOT EXISTS token_usage_models(thread TEXT PRIMARY KEY, providerId TEXT NOT NULL, model TEXT NOT NULL)");
 setTokenUsageSink((thread, total, identity) => {
   store.exec("INSERT INTO token_usage VALUES(?,?) ON CONFLICT(thread) DO UPDATE SET total=MAX(total,excluded.total)", thread, total);
+  if (identity?.taskId) store.exec("INSERT INTO request_usage VALUES(?,?,?,?) ON CONFLICT(id) DO UPDATE SET total=MAX(total,excluded.total)",thread,identity.taskId,new Date().toISOString().slice(0,10),total);
   if (identity) store.exec("INSERT INTO token_usage_models VALUES(?,?,?) ON CONFLICT(thread) DO UPDATE SET providerId=excluded.providerId,model=excluded.model", thread, identity.providerId, identity.model);
 });
 const tokenPath = join(dir, "runtime-token");
@@ -83,6 +86,8 @@ const change = () => {
     s.write(`id: ${revision}\ndata: ${JSON.stringify({ revision })}\n\n`);
 };
 const engine = new Engine(store, change);
+const research = new AutoResearch(store,engine,change);
+const researchTimer=setInterval(()=>void research.tick(),60000);researchTimer.unref();
 async function body(req: IncomingMessage) {
   let text = "";
   for await (const b of req) {
@@ -190,6 +195,8 @@ const server = createServer(async (req, res) => {
       const device = req.headers["x-localbot-remote"] === "true" ? String(req.headers["x-localbot-device"] ?? "") : "";
       const value=updatePhoneAction(store,device,await body(req));change();json(res,200,value);return;
     }
+    if (m === "GET" && p === "/research") {json(res,200,researchStatus(store));return;}
+    if (m === "POST" && p === "/research") {saveResearch(store,await body(req));change();json(res,200,researchStatus(store));void research.tick();return;}
     if (m === "GET" && p === "/health") {
       json(res, 200, { ok: true, version: "0.2.0", pid: process.pid });
       return;
@@ -632,6 +639,7 @@ heartbeat.unref();
 for (const sig of ["SIGTERM", "SIGINT"] as const)
   process.on(sig, () => {
     void remoteHost.stop();
+    clearInterval(researchTimer);
     engine.shutdown();
     server.close();
     void MCPStdioTransport.shutdown().finally(() => setTimeout(() => process.exit(0), 50).unref());
