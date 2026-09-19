@@ -1,3 +1,4 @@
+import { RemoteTerminals } from "./terminal.js";
 import { RoutingPublisher, connectionRelay } from "./routing.js";
 import { join } from 'node:path';
 import { RemoteGateway } from './gateway.js';
@@ -6,7 +7,7 @@ import { remoteURL, type RPCRequest } from './protocol.js';
 
 // Deliberately excludes credentials, provider configuration and pairing administration.
 const reads = new Set(['/snapshot', '/messages', '/activity', '/artifacts', '/search', '/memory']);
-const writes = new Set(['/messages', '/cancel', '/approvals', '/reactions', '/conversations', '/conversations/archive', '/conversations/update', '/workspace/action']);
+const writes = new Set(['/messages', '/cancel', '/approvals', '/reactions', '/conversations', '/conversations/archive', '/conversations/update', '/workspace/action', '/terminal']);
 export function mobileRoute(request: RPCRequest) {
   if (request.operation !== 'api' || typeof request.path !== 'string' || !request.path.startsWith('/') || request.path.startsWith('//')) throw Error('Unsupported remote operation');
   const url = new URL(request.path, 'http://localhost');
@@ -16,6 +17,7 @@ export function mobileRoute(request: RPCRequest) {
 }
 export class RemoteHost {
   private gateway?: RemoteGateway;
+  private terminals?: RemoteTerminals;
   private tunnel = new PreviewTunnel();
   private routing = new RoutingPublisher();
   private publicURL?: string;
@@ -31,8 +33,22 @@ export class RemoteHost {
     this.starting = true;
     try {
       await this.stop();
+      this.terminals = new RemoteTerminals();
       const gateway = new RemoteGateway(join(this.dir, 'remote-devices.json'), 'remote', async (request, _device, signal) => {
         const route = mobileRoute(request), local = this.connection();
+        if (route.path === '/terminal') {
+          const body = request.body as any;
+          if (!body || typeof body !== 'object') throw Error('Invalid terminal request');
+          if (body.action !== 'open') return this.terminals!.handle(_device, body);
+          const response = await fetch(local.url+'/snapshot',{headers:{Authorization:'Bearer '+local.token},signal});
+          if (!response.ok) throw Error('Mac workspace is unavailable');
+          const state = await response.json() as any;
+          const conversation = state.conversations.find((c:any)=>c.id===body.conversationId);
+          if(!conversation)throw Error('Open a conversation before starting a terminal');
+          const workspace = conversation.projectId ? state.projects.find((p:any)=>p.id===conversation.projectId)?.workspace : state.agents.find((a:any)=>a.id===conversation.members[0])?.workspace;
+          if(!workspace)throw Error('Conversation has no workspace');
+          return this.terminals!.open(_device,workspace);
+        }
         const response = await fetch(local.url + route.path, { method: route.method, redirect: 'error', headers: { Authorization: 'Bearer ' + local.token, 'Content-Type': 'application/json', 'X-LocalBot-Remote': 'true' }, body: route.method === 'POST' ? JSON.stringify(request.body ?? {}) : undefined, signal });
         const text = await response.text();
         if (Buffer.byteLength(text) > 8_000_000) throw Error('This result is too large to load on the phone. Narrow the request.');
@@ -59,6 +75,6 @@ export class RemoteHost {
     if (!this.status().enabled || !this.gateway || !this.publicURL) throw Error('Enable Remote first');
     return { code: await this.gateway.pairing(this.publicURL, name, this.routing.host), ...this.status() };
   }
-  async revoke(id: string) { await this.gateway?.revoke(id); return this.status(); }
-  async stop() { this.routing.stop(); this.tunnel.stop(); const gateway = this.gateway; this.gateway = undefined; this.publicURL = undefined; if (gateway) await gateway.close(); }
+  async revoke(id: string) { this.terminals?.revoke(id); await this.gateway?.revoke(id); return this.status(); }
+  async stop() { this.terminals?.close(); this.terminals = undefined; this.routing.stop(); this.tunnel.stop(); const gateway = this.gateway; this.gateway = undefined; this.publicURL = undefined; if (gateway) await gateway.close(); }
 }
