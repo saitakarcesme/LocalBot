@@ -76,18 +76,17 @@ struct ConversationsView: View {
               Button { withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.22)) { if collapsed.contains(project.id) { collapsed.remove(project.id) } else { collapsed.insert(project.id) } } } label: {
                 Label(project.name, systemImage: collapsed.contains(project.id) ? "folder" : "folder.fill").frame(maxWidth: .infinity, alignment: .leading)
               }.buttonStyle(.plain).accessibilityValue(collapsed.contains(project.id) ? "Collapsed" : "Expanded")
-              Button { self.project = project; newChat = true; store.selected = nil; store.messages = []; store.activity = [] } label: { Image(systemName: "square.and.pencil").padding(8) }.accessibilityLabel("New chat in " + project.name)
+              Button { self.project = project; newChat = true; store.selected = nil; store.messages = []; store.activity = [] } label: { Image(systemName: "square.and.pencil").foregroundStyle(.secondary).padding(8) }.accessibilityLabel("New chat in " + project.name)
             }.textCase(nil)
           }
         }
         Section("Recents") { ForEach(conversations.filter { $0.projectId == nil }) { row($0) } }
       }.searchable(text: $search).navigationTitle("LocalBot")
         .toolbar {
-          ToolbarItem(placement: .topBarLeading) { Menu { Button("Disconnect this phone", role: .destructive) { store.disconnect() } } label: { Image(systemName: "gearshape") } }
+          ToolbarItem(placement: .topBarLeading) { Button { profile = true } label: { ProfileBadge(profile: store.snapshot?.profile ?? UserProfile()) }.accessibilityLabel("Profile and settings") }
           ToolbarItem(placement: .topBarTrailing) { Button { project = nil; newChat = true; store.selected = nil; store.messages = []; store.activity = [] } label: { Image(systemName: "square.and.pencil") }.accessibilityLabel("New conversation") }
         }
-        .safeAreaInset(edge: .bottom) { Button { profile = true } label: { ProfileBadge(profile: store.snapshot?.profile ?? UserProfile()).padding(12).frame(maxWidth: .infinity, alignment: .leading) }.buttonStyle(.plain).background(.thinMaterial) }
-        .sheet(isPresented: $profile) { ProfileEditor(profile: store.snapshot?.profile ?? UserProfile(), loadUsage: { try await store.read("/usage") }, save: { try await store.saveProfile($0) }) }
+        .sheet(isPresented: $profile) { ProfileEditor(profile: store.snapshot?.profile ?? UserProfile(), loadUsage: { try await store.read("/usage") }, save: { try await store.saveProfile($0) }, settings: { store.disconnect() }) }
         .navigationDestination(isPresented: $newChat) { MobileChat(project: project) }
     }
   }
@@ -105,7 +104,7 @@ struct ConversationsView: View {
   }
 }
 func palette(_ color: String?) -> LocalBotPalette {
-  switch color { case "purple": return .lavender; case "pink": return .rose; case "green": return .mint; case "orange": return .peach; default: return .sky }
+  switch color { case "purple": return .lavender; case "pink": return .rose; case "green": return .mint; case "orange": return .peach; case "yellow": return .gold; default: return .sky }
 }
 struct MobileChat: View {
   @EnvironmentObject private var store: RemoteStore

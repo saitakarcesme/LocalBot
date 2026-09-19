@@ -3,15 +3,19 @@ import SwiftTerm
 
 struct PhoneTerminal: View {
   @EnvironmentObject private var store: RemoteStore
+  var body: some View { PhoneTerminalContent(terminal: store.terminalSession()).environmentObject(store) }
+}
+struct PhoneTerminalContent: View {
+  @EnvironmentObject private var store: RemoteStore
   @Environment(\.scenePhase) private var phase
-  @StateObject private var terminal = PhoneTerminalSession()
+  @ObservedObject var terminal: PhoneTerminalSession
   var body: some View {
     VStack(spacing: 8) {
       HStack {
         Text(terminal.closed ? "Session ended" : "Terminal on your Mac").font(.caption).foregroundStyle(.secondary)
         Spacer()
         if terminal.closed { Button("New session") { terminal.restart() } }
-        else { Button("Ctrl-C") { terminal.input(Data([3])) } }
+        else { Button("Ctrl-C") { terminal.input(Data([3])) }; Button("End session") { terminal.close() } }
         Button("Keyboard") { terminal.view?.becomeFirstResponder() }
       }.font(.caption).padding(.horizontal)
       if let error = terminal.error {
@@ -20,7 +24,7 @@ struct PhoneTerminal: View {
       PhoneTerminalSurface(session: terminal).padding(.horizontal, 12).padding(.bottom, 8)
     }
     .task(id: "\(phase)-\(terminal.attempt)") { guard phase == .active else { return }; await terminal.run(store: store, conversation: store.selected) }
-    .onDisappear { terminal.close() }
+
   }
 }
 
@@ -29,7 +33,8 @@ struct PhoneTerminal: View {
   @Published var closed = false
   @Published var attempt = 0
   weak var view: TerminalView?
-  private var store: RemoteStore?
+  private weak var store: RemoteStore?
+  private(set) var history = Data()
   private var session: String?
   private var offset = 0
   private var sequence = 0
@@ -58,8 +63,8 @@ struct PhoneTerminal: View {
       while !Task.isCancelled && !disposed && !closed {
         do {
           let result = try await call(["action":"poll","offset":offset])
-          if result["reset"] as? Bool == true { view?.feed(text:"\u{1b}c[Older terminal output was discarded]\r\n") }
-          if let encoded = result["data"] as? String, let bytes = Data(base64Encoded:encoded) { view?.feed(byteArray:Array(bytes)[...]) }
+          if result["reset"] as? Bool == true { history = Data(); view?.feed(text:"\u{1b}c[Older terminal output was discarded]\r\n") }
+          if let encoded = result["data"] as? String, let bytes = Data(base64Encoded:encoded) { history.append(bytes); if history.count > 256000 { history.removeFirst(history.count - 256000) }; view?.feed(byteArray:Array(bytes)[...]) }
           offset = result["offset"] as? Int ?? offset
           closed = result["closed"] as? Bool ?? false
           if let message = result["error"] as? String { error = message }
@@ -75,7 +80,7 @@ struct PhoneTerminal: View {
   func restart() {
     Task {
       if session != nil { _ = try? await call(["action":"close"]) }
-      session = nil; closed = false; offset = 0; sequence = 0; pending = Data(); retryBatch = nil; error = nil; attempt += 1
+      session = nil; disposed = false; closed = false; history = Data(); view?.feed(text: "\u{1b}c"); offset = 0; sequence = 0; pending = Data(); retryBatch = nil; error = nil; attempt += 1
     }
   }
   func input(_ data: Data) {
@@ -123,6 +128,7 @@ struct PhoneTerminalSurface: UIViewRepresentable {
     view.nativeBackgroundColor = .systemBackground
     view.nativeForegroundColor = .label
     view.terminalDelegate = context.coordinator
+    view.feed(byteArray: Array(session.history)[...])
     session.view = view
     return view
   }

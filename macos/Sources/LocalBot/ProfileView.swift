@@ -27,6 +27,7 @@ struct ProfileEditor: View {
   @State var profile: UserProfile
   var loadUsage: () async throws -> Data
   var save: (UserProfile) async throws -> Void
+  var settings: (() -> Void)? = nil
   @State private var usage: UsageSummary?
   @State private var error: String?
   @State private var busy = false
@@ -37,6 +38,7 @@ struct ProfileEditor: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 20) {
       HStack { Text("Profile & usage").font(.title2.bold()); Spacer(); Button("Done") { dismiss() } }
+      if let settings { Menu { Button("Disconnect this phone", role: .destructive) { settings(); dismiss() } } label: { Label("Settings", systemImage: "gearshape") } }
       ProfileBadge(profile: profile)
       TextField("Your name", text: $profile.name).textFieldStyle(.roundedBorder)
       HStack {

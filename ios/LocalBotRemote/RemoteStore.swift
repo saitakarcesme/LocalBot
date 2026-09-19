@@ -10,6 +10,12 @@ import Security
   @Published var paired = false
   @Published var busy = false
   @Published var connected = false
+  private var terminals: [String: PhoneTerminalSession] = [:]
+  func terminalSession() -> PhoneTerminalSession {
+    let key = selected ?? "unselected"
+    if let session = terminals[key] { return session }
+    let session = PhoneTerminalSession(); terminals[key] = session; return session
+  }
   private var client: RemoteClient?
   private var refreshing = false
   private var loadedConversation: String?
@@ -31,7 +37,7 @@ import Security
       await refresh()
     } catch { self.error = error.localizedDescription }
   }
-  func disconnect() { PhoneKeychain.clear(); client = nil; paired = false; connected = false; snapshot = nil; messages = []; activity = []; selected = nil; loadedConversation = nil; loadedRevision = nil; loadedInstance = nil }
+  func disconnect() { terminals.values.forEach { $0.close() }; terminals.removeAll(); PhoneKeychain.clear(); client = nil; paired = false; connected = false; snapshot = nil; messages = []; activity = []; selected = nil; loadedConversation = nil; loadedRevision = nil; loadedInstance = nil }
   func refresh() async {
     guard let client, !refreshing else { return }
     let generation = client
