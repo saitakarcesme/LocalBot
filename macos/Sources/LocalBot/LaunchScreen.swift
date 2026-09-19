@@ -9,7 +9,7 @@ struct LaunchScreen: View {
   @State private var ended = false
   var body: some View {
     ZStack {
-      Color.black
+      Color(red: 17.0 / 255, green: 18.0 / 255, blue: 16.0 / 255)
       if let player { LaunchVideo(player: player).aspectRatio(16/9, contentMode: .fit) }
     }.ignoresSafeArea().accessibilityLabel("LocalBot is opening")
       .task {
