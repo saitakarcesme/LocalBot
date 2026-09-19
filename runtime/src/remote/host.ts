@@ -1,4 +1,4 @@
-import { RoutingPublisher } from "./routing.js";
+import { RoutingPublisher, connectionRelay } from "./routing.js";
 import { join } from 'node:path';
 import { RemoteGateway } from './gateway.js';
 import { PreviewTunnel } from './tunnel.js';
@@ -24,7 +24,7 @@ export class RemoteHost {
   constructor(private dir: string, private connection: () => { url: string; token: string }) {}
   protectDraft(id: string) { this.leases.set(id, Date.now()+300_000); }
   protectedDraft(id: string) { return (this.leases.get(id) ?? 0) > Date.now(); }
-  status() { return { enabled: !!this.gateway && (!!process.env.LOCALBOT_REMOTE_PUBLIC_URL || this.tunnel.running), starting: this.starting, preview: !process.env.LOCALBOT_REMOTE_PUBLIC_URL, devices: this.gateway?.list() ?? [] }; }
+  status() { return { enabled: !!this.gateway && (!!process.env.LOCALBOT_REMOTE_PUBLIC_URL || this.tunnel.running), starting: this.starting, preview: !process.env.LOCALBOT_REMOTE_PUBLIC_URL, persistentPairing: !!this.routing.host, devices: this.gateway?.list() ?? [] }; }
   async start() {
     if (this.starting) throw Error('Remote is already starting');
     if (this.status().enabled) return this.status();
@@ -47,9 +47,9 @@ export class RemoteHost {
       this.gateway = gateway;
       const localURL = await gateway.start(Number(process.env.LOCALBOT_REMOTE_PORT ?? 0));
       this.publicURL = process.env.LOCALBOT_REMOTE_PUBLIC_URL ? remoteURL(process.env.LOCALBOT_REMOTE_PUBLIC_URL) : await this.tunnel.start(localURL);
-      if (process.env.LOCALBOT_RELAY_URL) {
-        await this.routing.start(join(this.dir,"remote-host-key.json"),process.env.LOCALBOT_RELAY_URL,this.publicURL);
-        this.publicURL=remoteURL(process.env.LOCALBOT_RELAY_URL);
+      if (connectionRelay) {
+        await this.routing.start(join(this.dir,"remote-host-key.json"),connectionRelay,this.publicURL);
+        this.publicURL=remoteURL(connectionRelay);
       }
       return this.status();
     } catch (e) { await this.stop(); throw e; }

@@ -9,7 +9,7 @@ struct RemoteSettingsView: View {
   @State private var busy = false
   @State private var error: String?
   struct Device: Decodable, Identifiable { let id: String; let name: String; let paired: Bool }
-  struct Status: Decodable { let enabled: Bool; let preview: Bool; let devices: [Device]; let code: String? }
+  struct Status: Decodable { let enabled: Bool; let preview: Bool; let persistentPairing: Bool?; let devices: [Device]; let code: String? }
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {
       HStack {
@@ -24,7 +24,7 @@ struct RemoteSettingsView: View {
         .font(.caption).foregroundStyle(.secondary)
       if status?.enabled == true {
         if status?.preview == true {
-          Text("Preview connection: after restarting LocalBot, enable Remote and pair your phone again.")
+          Text(status?.persistentPairing == true ? "Preview service. Paired phones reconnect when LocalBot is running. Keep this Mac awake." : "Preview connection: after restarting LocalBot, enable Remote and pair your phone again.")
             .font(.caption).foregroundStyle(.secondary)
         }
         HStack(alignment: .center, spacing: 18) {

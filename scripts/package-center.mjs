@@ -17,7 +17,7 @@ await cp(`${vendor}/tunnel/windows-amd64/cloudflared-windows-amd64.exe`,`${targe
 const license=await fetch('https://raw.githubusercontent.com/cloudflare/cloudflared/2026.9.1/LICENSE');if(!license.ok)throw Error('License download failed');await writeFile(`${target}/Cloudflare-LICENSE.txt`,await license.text());
 await cp('runtime/dist',`${target}/runtime`,{recursive:true});
 await writeFile(`${target}/package.json`,JSON.stringify({type:'module'}));
-await writeFile(`${target}/Start LocalBot Center.cmd`,'@echo off\r\ncd /d "%~dp0"\r\ntitle LocalBot Center\r\nstart "" "http://127.0.0.1:8818"\r\nnode.exe runtime\\center-server.js\r\npause\r\n');
+await writeFile(`${target}/Start LocalBot Center.cmd`,'@echo off\r\ncd /d "%~dp0"\r\ntitle LocalBot Center\r\nset LOCALBOT_OPEN_CENTER=1\r\nnode.exe runtime\\center-server.js\r\npause\r\n');
 await cp('docs/remote/CENTER-WINDOWS.md',`${target}/Read me.md`);
 if(spawnSync('zip',['-qr','LocalBot-Center-Windows.zip','LocalBot-Center-Windows'],{cwd:'build'}).status!==0)throw Error('Packaging failed');
 console.log('Built build/LocalBot-Center-Windows.zip (Windows x64; requires Windows device validation).');

@@ -157,8 +157,8 @@ const server = createServer(async (req, res) => {
       p = u.pathname,
       m = req.method;
     if (m === "GET" && p === "/remote/status") { json(res,200,remoteHost.status()); return; }
-    if (m === "POST" && p === "/remote/start") { json(res,200,await remoteHost.start()); return; }
-    if (m === "POST" && p === "/remote/stop") { await remoteHost.stop(); json(res,200,remoteHost.status()); return; }
+    if (m === "POST" && p === "/remote/start") { const status=await remoteHost.start();await fs.writeFile(join(dir,"remote-enabled.json"),"true",{mode:0o600});json(res,200,status); return; }
+    if (m === "POST" && p === "/remote/stop") { await fs.writeFile(join(dir,"remote-enabled.json"),"false",{mode:0o600});await remoteHost.stop(); json(res,200,remoteHost.status()); return; }
     if (m === "POST" && p === "/remote/pair") { json(res,200,await remoteHost.pair()); return; }
     if (m === "POST" && p === "/remote/revoke") { json(res,200,await remoteHost.revoke(String((await body(req)).id))); return; }
     if (m === "GET" && p === "/browser/poll") { json(res,200,{action:browserBridge.poll()}); return; }
@@ -559,6 +559,7 @@ server.listen(port, "127.0.0.1", async () => {
   );
   console.log(`LocalBot runtime listening on 127.0.0.1:${actual}`);
   void engine.pump();
+  void fs.readFile(join(dir,"remote-enabled.json"),"utf8").then(value=>{if(value==="true")return remoteHost.start();}).catch(()=>{});
 });
 const heartbeat = setInterval(() => {
   for (const s of streams) s.write(": heartbeat\n\n");
