@@ -12,7 +12,7 @@
 ## What you can do
 
 - **Work with a team in one chat.** Research, implementation, critique, review, and testing share the same conversation and project files. Teammates execute in sequence and pass their results forward.
-- **Choose your model connection.** Use Ollama, an OpenAI-compatible endpoint, or your authenticated Codex CLI subscription. LocalBot does not silently switch providers.
+- **Choose your model connection.** Use Ollama, an OpenAI-compatible endpoint, or your authenticated Codex CLI subscription. Choose a default in Profile & usage, or override it with the model button beside a chat composer. LocalBot does not silently switch providers.
 - **Stay connected from iPhone.** Pair by scanning the Mac's QR code. Read conversations, send attachments, inspect activity, approve actions, and access workspace tools across networks.
 - **Keep context.** Projects, conversation history, shared memory, your profile, and recorded token usage stay with the Mac runtime.
 - **Inspect the work.** Tool activity shows commands and results. Approvals remain part of the workflow; an agent's statement is not proof that an action succeeded.
@@ -51,7 +51,7 @@ Quit LocalBot before installation. The verified installer preserves the previous
 
 - **Ollama:** provide the endpoint and a model installed on that server.
 - **Codex CLI:** sign in to the installed CLI with ChatGPT, then select Codex subscription and Save & Test. No OpenAI API key is required for this mode.
-- **Another computer:** use [LocalBot Center and remote setup](docs/remote/GETTING-STARTED.md). Windows/Ollama is the primary Center target; physical Windows validation is still pending.
+- **Another computer:** use [LocalBot Center and remote setup](docs/remote/GETTING-STARTED.md). Windows/Ollama has been verified on a dual RTX 3090 host through the encrypted relay.
 
 ### iPhone
 
@@ -70,7 +70,7 @@ Remote access includes powerful capabilities such as file editing and an interac
 - Remote availability depends on the host, relay, and outbound tunnel. This is not an availability-guaranteed service.
 - Phone uploads are currently limited to **2 MB per file**; photos are resized before upload.
 - Terminal sessions survive navigation while the host session remains available. They expire after 15 minutes without activity and end when the Mac runtime stops or access is revoked.
-- Token totals cover provider-reported Codex usage recorded since tracking was introduced; historical and unreported provider usage is excluded. Subscription limits are account-wide.
+- Token totals and model breakdowns use provider-reported counts from Ollama, OpenAI-compatible, Anthropic-compatible, and Codex connections. Historical counts without model identity appear as Earlier usage; unreported usage is excluded. Codex subscription limits are account-wide.
 - Mobile background notifications and full desktop feature parity are not complete.
 - Tool availability depends on the model, contact permissions, integrations, and approvals. Model answers can still be wrong.
 
