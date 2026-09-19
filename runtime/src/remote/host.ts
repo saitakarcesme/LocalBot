@@ -9,6 +9,7 @@ import { remoteURL, type RPCRequest } from "./protocol.js";
 const reads = new Set([
   "/snapshot",
   "/usage",
+  "/models",
   "/messages",
   "/activity",
   "/artifacts",
@@ -18,6 +19,7 @@ const reads = new Set([
 const writes = new Set([
   "/messages",
   "/profile",
+  "/models/select",
   "/attachments",
   "/conversations/discard-empty",
   "/cancel",

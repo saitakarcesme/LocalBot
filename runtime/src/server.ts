@@ -198,6 +198,29 @@ const server = createServer(async (req, res) => {
       store.exec("INSERT INTO settings VALUES('profile',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value", JSON.stringify(profile));
       change(); json(res, 200, profile); return;
     }
+    if (m === "GET" && p === "/models") {
+      const conversationId = u.searchParams.get("conversationId") || undefined;
+      if (conversationId) store.conversation(conversationId);
+      const options = (await Promise.all(store.providers().map(async config => {
+        try { const result = await provider(config, engine.secrets.get(config.id)).health(AbortSignal.timeout(8000));
+          return result.models.map(model => ({providerId: config.id, provider: config.name, model}));
+        } catch { return []; }
+      }))).flat();
+      json(res, 200, {options, selected: store.modelChoice(conversationId) ?? store.modelChoice()}); return;
+    }
+    if (m === "POST" && p === "/models/select") {
+      const b = await body(req), conversationId = b.conversationId || undefined;
+      if (conversationId) store.conversation(conversationId);
+      const active = conversationId
+        ? store.get("SELECT id FROM tasks WHERE conversationId=? AND status IN ('running','queued')", conversationId)
+        : store.get("SELECT id FROM tasks WHERE status IN ('running','queued')");
+      if (active) throw Error("Wait for the current task to finish before changing its model.");
+      const config = store.provider(b.providerId);
+      const health = await provider(config, engine.secrets.get(config.id)).health(AbortSignal.timeout(10000));
+      if (typeof b.model !== "string" || !health.models.includes(b.model)) throw Error("Select an available model.");
+      store.exec("INSERT INTO settings VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value", "model:" + (conversationId ?? "default"), JSON.stringify({providerId:config.id,model:b.model}));
+      change(); json(res,200,{ok:true}); return;
+    }
     if (m === "GET" && p === "/usage") {
       const config = store.providers().find(p => p.kind === "codex");
       const tokens = store.get("SELECT SUM(total) AS total FROM token_usage")?.total ?? null;

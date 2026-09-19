@@ -106,6 +106,16 @@ export class Store {
       JSON.stringify(p),
     );
   }
+  modelChoice(conversationId?: string) {
+    const row = this.get("SELECT value FROM settings WHERE key=?", "model:" + (conversationId ?? "default"));
+    return row ? JSON.parse(row.value) as { providerId: string; model: string } : null;
+  }
+  modelConfig(agent: Agent, conversationId?: string) {
+    const choice = (conversationId ? this.modelChoice(conversationId) : null) ?? this.modelChoice();
+    const config = this.provider(choice?.providerId ?? agent.providerId);
+    config.model = choice?.model ?? (agent.model || config.model);
+    return config;
+  }
   conversation(id: string) {
     const c = this.get("SELECT * FROM conversations WHERE id=?", id);
     if (!c) throw new Error("Conversation not found");
