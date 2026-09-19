@@ -373,6 +373,7 @@ const server = createServer(async (req, res) => {
     }
     if (m === "POST" && p === "/providers") {
       const b = await body(req);
+      const existingProvider = store.providers().find(p => p.id === b.id);
       if (!["ollama", "openai", "anthropic", "codex"].includes(b.kind))
         throw new Error("Unsupported provider");
       const config: ProviderConfig = {
@@ -388,7 +389,7 @@ const server = createServer(async (req, res) => {
         maxTokens: Math.floor(bounded(b.maxTokens, 128, 16000, 1200)),
         requiresAuth: b.requiresAuth === true,
         imageInput: b.imageInput === true,
-        ...(b.transport === "center" ? {transport:"center" as const} : {}),
+        ...((b.transport ?? existingProvider?.transport) === "center" ? {transport:"center" as const} : {}),
       };
       validateEndpoint(config);
       const previous = store.providers().find((p) => p.id === config.id);
