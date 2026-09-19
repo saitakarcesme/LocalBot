@@ -109,7 +109,7 @@ struct MobileChat: View {
           ForEach(store.snapshot?.approvals.filter { $0.status == "pending" && $0.taskId == running?.id } ?? []) { approval in
             VStack(alignment: .leading, spacing: 12) {
               Text(approval.summary).font(.callout)
-              HStack { Button("Deny", role: .destructive) { Task { await store.action("/approvals", body:["id":approval.id,"allow":false]) } }; Spacer(); Button("Allow once") { Task { await store.action("/approvals", body:["id":approval.id,"allow":true]) } }.buttonStyle(.bordered)
+              HStack { Button("Deny", role: .destructive) { Task { await store.action("/approvals", body:["id":approval.id,"allow":false]) } }; Spacer(); Button("Allow once") { Task { await store.action("/approvals", body:["id":approval.id,"allow":true]) } } }.buttonStyle(.bordered)
             }.padding().background(.thinMaterial, in: RoundedRectangle(cornerRadius: 20))
           }
           Color.clear.frame(height: 1).id("bottom")
