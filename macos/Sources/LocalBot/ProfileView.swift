@@ -28,6 +28,8 @@ struct ProfileEditor: View {
   var loadUsage: () async throws -> Data
   var save: (UserProfile) async throws -> Void
   var settings: (() -> Void)? = nil
+  var loadModels: (() async throws -> Data)? = nil
+  var selectModel: ((ModelOption) async throws -> Void)? = nil
   @State private var usage: UsageSummary?
   @State private var error: String?
   @State private var busy = false
@@ -36,7 +38,7 @@ struct ProfileEditor: View {
   @State private var photo: PhotosPickerItem?
   #endif
   var body: some View {
-    VStack(alignment: .leading, spacing: 20) {
+    ScrollView { VStack(alignment: .leading, spacing: 20) {
       HStack { Text("Profile & usage").font(.title2.bold()); Spacer(); Button("Done") { dismiss() } }
       if let settings { Menu { Button("Disconnect this phone", role: .destructive) { settings(); dismiss() } } label: { Label("Settings", systemImage: "gearshape") } }
       ProfileBadge(profile: profile)
@@ -50,11 +52,14 @@ struct ProfileEditor: View {
         #endif
         if profile.photo != nil { Button("Remove photo") { profile.photo = nil } }
       }
+      if let loadModels, let selectModel { HStack { Label("Model", systemImage: "cpu"); Spacer(); ModelSelector(load: loadModels, select: selectModel) } }
       Divider()
       Text("Token usage").font(.headline)
       if let usage {
         Text(usage.tokens.map { $0.formatted() + " tokens" } ?? "No token data recorded yet").font(.title3.monospacedDigit())
-        Text(usage.tokenNotice ?? "").font(.caption).foregroundStyle(.secondary)
+        ForEach(usage.models ?? []) { model in
+          HStack { Text(model.model).font(.caption).lineLimit(2); Spacer(); Text(model.tokens.formatted()).font(.callout.monospacedDigit()) }.padding(12).background(.thinMaterial, in: RoundedRectangle(cornerRadius: 14))
+        }
         ForEach(usage.windows) { window in
           VStack(alignment: .leading) {
             Text(window.label).font(.callout)
@@ -63,11 +68,11 @@ struct ProfileEditor: View {
             if let reset = window.reset { Text("Resets " + Date(timeIntervalSince1970: reset).formatted()).font(.caption).foregroundStyle(.secondary) }
           }
         }
-        Text(usage.notice ?? "").font(.caption).foregroundStyle(.secondary)
+
       } else { ProgressView("Loading usage…") }
       if let error { Text(error).font(.caption).foregroundStyle(.red) }
       HStack { Button("Refresh usage") { Task { await refresh() } }; Spacer(); Button("Save profile") { Task { busy = true; defer { busy = false }; do { try await save(profile); dismiss() } catch { self.error = error.localizedDescription } } }.buttonStyle(.borderedProminent).disabled(busy || profile.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty) }
-    }.padding(24)
+    }.padding(24) }
       .frame(minWidth: 300, idealWidth: 420)
       .task { await refresh() }
       .fileImporter(isPresented: $pickFile, allowedContentTypes: [.jpeg, .png]) { result in do { let url = try result.get(); let access = url.startAccessingSecurityScopedResource(); defer { if access { url.stopAccessingSecurityScopedResource() } }; try setPhoto(Data(contentsOf: url)) } catch { self.error = error.localizedDescription } }
@@ -88,6 +93,8 @@ struct ProfileEditor: View {
   }
 }
 struct UsageSummary: Decodable {
+  struct ModelUsage: Decodable, Identifiable { var providerId: String; var model: String; var tokens: Int; var id: String { providerId + ":" + model } }
+  var models: [ModelUsage]?
   var tokens: Int?
   var tokenNotice: String?
   var notice: String?
@@ -104,5 +111,48 @@ struct UsageSummary: Decodable {
         DisplayWindow(label: key + " · " + (window.windowDurationMins.map { "\($0 / 60) hour window" } ?? "Window \(index + 1)"), used: window.usedPercent, reset: window.resetsAt)
       }
     }
+  }
+}
+
+struct ModelOption: Codable, Identifiable, Equatable {
+  var providerId: String
+  var provider: String?
+  var model: String
+  var id: String { providerId + ":" + model }
+  var payload: [String: Any] { ["providerId": providerId, "model": model] }
+}
+struct ModelCatalog: Decodable {
+  var options: [ModelOption]
+  var selected: ModelOption?
+}
+struct ModelSelector: View {
+  var load: () async throws -> Data
+  var select: (ModelOption) async throws -> Void
+  @State private var presented = false
+  @State private var catalog: ModelCatalog?
+  @State private var error: String?
+  @State private var busy = false
+  var body: some View {
+    Button { presented = true } label: { Image(systemName: "cpu").frame(width: 28, height: 30) }
+      .buttonStyle(.plain).foregroundStyle(.secondary).accessibilityLabel("Choose model")
+      .sheet(isPresented: $presented) {
+        VStack(alignment: .leading, spacing: 16) {
+          HStack { Text("Model").font(.title2.bold()); Spacer(); Button("Done") { presented = false } }
+          if let catalog {
+            ScrollView {
+              LazyVStack(spacing: 8) {
+                ForEach(catalog.options) { option in
+                  Button { Task { busy = true; defer { busy = false }; do { try await select(option); self.catalog?.selected = option; presented = false } catch { self.error = error.localizedDescription } } } label: {
+                    HStack { VStack(alignment: .leading, spacing: 4) { Text(option.model).font(.callout).lineLimit(2); Text(option.provider ?? "").font(.caption).foregroundStyle(.secondary) }; Spacer(); if catalog.selected?.id == option.id { Image(systemName: "checkmark.circle.fill").foregroundStyle(Color.accentColor) } }.padding(14).frame(maxWidth: .infinity, alignment: .leading).background(.thinMaterial, in: RoundedRectangle(cornerRadius: 16))
+                  }.buttonStyle(.plain).disabled(busy)
+                }
+              }
+            }
+            if catalog.options.isEmpty { Text("No models available").foregroundStyle(.secondary) }
+          } else { ProgressView() }
+          if let error { Text(error).font(.caption).foregroundStyle(.red) }
+        }.padding(24).frame(minWidth: 300, idealWidth: 440, minHeight: 260, idealHeight: 440)
+          .task { do { catalog = try JSONDecoder().decode(ModelCatalog.self, from: await load()) } catch { self.error = error.localizedDescription } }
+      }
   }
 }

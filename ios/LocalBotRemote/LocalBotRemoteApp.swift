@@ -87,7 +87,7 @@ struct ConversationsView: View {
           ToolbarItem(placement: .topBarLeading) { Button { profile = true } label: { ProfileBadge(profile: store.snapshot?.profile ?? UserProfile()) }.accessibilityLabel("Profile and settings") }
           ToolbarItem(placement: .topBarTrailing) { Button { project = nil; newChat = true; store.selected = nil; store.messages = []; store.activity = [] } label: { Image(systemName: "square.and.pencil") }.accessibilityLabel("New conversation") }
         }
-        .sheet(isPresented: $profile) { ProfileEditor(profile: store.snapshot?.profile ?? UserProfile(), loadUsage: { try await store.read("/usage") }, save: { try await store.saveProfile($0) }, settings: { store.disconnect() }) }
+        .sheet(isPresented: $profile) { ProfileEditor(profile: store.snapshot?.profile ?? UserProfile(), loadUsage: { try await store.read("/usage") }, save: { try await store.saveProfile($0) }, settings: { store.disconnect() }, loadModels: { try await store.read("/models") }, selectModel: { try await store.selectModel($0) }) }
         .navigationDestination(isPresented: $newChat) { MobileChat(project: project) }
     }
   }
@@ -120,6 +120,7 @@ struct MobileChat: View {
   @State private var pickPhoto = false
   @State private var pickFile = false
   @State private var attachments: [Artifact] = []
+  @State private var chosenModel: ModelOption?
   @State private var uploading = false
   private var draftKey: String { "draft." + (store.selected ?? "new." + (project?.id ?? "recent")) }
   private var running: AgentTask? { store.snapshot?.tasks.first { $0.conversationId == store.selected && $0.active } }
@@ -189,8 +190,9 @@ struct MobileChat: View {
           Button("Photo library", systemImage: "photo") { pickPhoto = true }
           Button("Choose file", systemImage: "doc") { pickFile = true }
         } label: { Image(systemName: "plus").font(.title3).frame(width: 30, height: 40) }.disabled(uploading || attachments.count >= 4).accessibilityLabel("Add attachment")
+        ModelSelector(load: { try await store.read("/models" + (store.selected.map { "?conversationId=" + $0 } ?? "")) }, select: { option in if let id = store.selected { try await store.selectModel(option, conversationId: id) } else { chosenModel = option } })
         TextField("Message", text: $draft, axis: .vertical).lineLimit(1...6).padding(.vertical, 8)
-        Button { if let running { Task { await store.action("/cancel",body:["taskId":running.id]) } } else { let text = draft; let key = draftKey; Task { if await store.send(text,project:project?.id,agent:agent,attachments:attachments) { UserDefaults.standard.removeObject(forKey: key); draft = ""; attachments = [] } } } } label: { Image(systemName: running == nil ? "arrow.up.circle.fill" : "stop.circle.fill").font(.system(size: 32)).foregroundStyle(running == nil ? Color.accentColor : .orange) }
+        Button { if let running { Task { await store.action("/cancel",body:["taskId":running.id]) } } else { let text = draft; let key = draftKey; Task { if await store.send(text,project:project?.id,agent:agent,attachments:attachments,model:chosenModel) { UserDefaults.standard.removeObject(forKey: key); draft = ""; attachments = []; chosenModel = nil } } } } label: { Image(systemName: running == nil ? "arrow.up.circle.fill" : "stop.circle.fill").font(.system(size: 32)).foregroundStyle(running == nil ? Color.accentColor : .orange) }
           .disabled(store.busy || uploading || (running == nil && draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && attachments.isEmpty)).accessibilityLabel(running == nil ? "Send message" : "Stop task")
       }.padding(.horizontal, 14).padding(.vertical, 5).modifier(NativeGlass())
     }.padding(.horizontal, 14).padding(.vertical, 8)

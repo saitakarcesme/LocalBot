@@ -169,7 +169,7 @@ struct MainView: View {
         }
         HStack(spacing: 7) {
           Button { showProfile = true } label: { ProfileBadge(profile: model.profile) }.buttonStyle(.plain)
-            .sheet(isPresented: $showProfile) { ProfileEditor(profile: model.profile, loadUsage: { try await model.request("/usage") }, save: { profile in _ = try await model.request("/profile", body: ["name":profile.name,"photo":profile.photo ?? ""]); model.profile = profile }) }
+            .sheet(isPresented: $showProfile) { ProfileEditor(profile: model.profile, loadUsage: { try await model.request("/usage") }, save: { profile in _ = try await model.request("/profile", body: ["name":profile.name,"photo":profile.photo ?? ""]); model.profile = profile }, loadModels: { try await model.request("/models") }, selectModel: { _ = try await model.request("/models/select", body: $0.payload) }) }
           Spacer()
           Button { model.toggleArchiveList() } label: {
             Image(systemName: model.showingArchived ? "bubble.left.and.bubble.right" : "archivebox").font(.system(size: 17))
@@ -557,6 +557,10 @@ struct ConversationView: View {
         .sheet(isPresented: $showingAttachments) {
           AttachmentPicker { urls in attachments += await model.attach(urls: urls) }
         }
+        ModelSelector(load: { try await model.request("/models?conversationId=" + conversation.id) }, select: { option in
+          var body = option.payload; body["conversationId"] = conversation.id
+          _ = try await model.request("/models/select", body: body)
+        })
         HStack(alignment: .bottom, spacing: 8) {
           ComposerEditor(text: $draft, fontSize: messageFontSize, send: send)
             .overlay(alignment: .topLeading) {

@@ -58,7 +58,7 @@ import Security
     } catch { if self.client === generation, !Task.isCancelled { connected = false; self.error = error.localizedDescription } }
   }
   func select(_ id: String) { selected = id; messages = []; activity = []; loadedConversation = nil }
-  func send(_ text: String, project: String? = nil, agent: String? = nil, attachments: [Artifact] = []) async -> Bool {
+  func send(_ text: String, project: String? = nil, agent: String? = nil, attachments: [Artifact] = [], model: ModelOption? = nil) async -> Bool {
     guard let client, (!text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !attachments.isEmpty) else { return false }
     busy = true; defer { busy = false }
     do {
@@ -69,6 +69,7 @@ import Security
         selected = conversation.id
       }
       guard let selected else { return false }
+      if let model { var body = model.payload; body["conversationId"] = selected; _ = try await client.api("/models/select", body: body) }
       let requestKey = "pending-send." + selected
       let signature = Data((text + attachments.map(\.id).joined()).utf8).base64EncodedString()
       let saved = UserDefaults.standard.stringArray(forKey: requestKey)
@@ -78,6 +79,9 @@ import Security
       UserDefaults.standard.removeObject(forKey: requestKey)
       await refresh(); return true
     } catch { self.error = error.localizedDescription; return false }
+  }
+  func selectModel(_ option: ModelOption, conversationId: String? = nil) async throws {
+    guard let client else { throw RemoteError("Connect LocalBot first.") }; var body = option.payload; if let conversationId { body["conversationId"] = conversationId }; _ = try await client.api("/models/select", body: body)
   }
   func read(_ path: String) async throws -> Data {
     guard let client else { throw RemoteError("Connect LocalBot first.") }; return try await client.api(path)
