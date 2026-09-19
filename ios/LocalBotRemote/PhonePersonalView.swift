@@ -5,6 +5,7 @@ import EventKitUI
 
 struct PhoneAction: Decodable, Identifiable {
   var id: String; var conversationId: String; var kind: String; var payload: [String:String]; var status: String; var result: String?
+  static func date(_ value: String?) -> Date? { let f=ISO8601DateFormatter(); if let d=f.date(from:value ?? "") { return d }; f.formatOptions=[.withInternetDateTime,.withFractionalSeconds];return f.date(from:value ?? "") }
   var title: String { switch kind { case "compose_mail": return "Email"; case "create_event": return "Calendar event"; case "run_shortcut": return "Shortcut"; default: return "Open link" } }
   var symbol: String { switch kind { case "compose_mail": return "envelope"; case "create_event": return "calendar"; case "run_shortcut": return "square.stack.3d.up"; default: return "safari" } }
   var detail: String { payload["subject"] ?? payload["title"] ?? payload["name"] ?? payload["url"] ?? title }
@@ -72,6 +73,7 @@ struct PhonePersonalView: View {
     busy = true; defer { busy = false }
     do {
       if action.kind == "compose_mail" && !MFMailComposeViewController.canSendMail() { throw RemoteError("Set up an account in Apple Mail first, or ask LocalBot to use its Mac browser.") }
+      if action.kind == "create_event", (PhoneAction.date(action.payload["start"]) == nil || PhoneAction.date(action.payload["end"]) == nil) { throw RemoteError("Calendar dates could not be read.") }
       try await claim(action); selected = nil
       // Present the system editor after the review sheet has dismissed.
       if action.kind == "compose_mail" { try? await Task.sleep(for: .milliseconds(350)); mail = action; return }
@@ -94,7 +96,7 @@ struct MailActionComposer: UIViewControllerRepresentable {
 struct CalendarActionComposer:UIViewControllerRepresentable {
   var action:PhoneAction;var done:(String,String)->Void
   func makeCoordinator()->Coordinator {Coordinator(done)}
-  func makeUIViewController(context:Context)->EKEventEditViewController {let view=EKEventEditViewController();let store=EKEventStore();view.eventStore=store;let event=EKEvent(eventStore:store);event.title=action.payload["title"];let formatter=ISO8601DateFormatter();event.startDate=formatter.date(from:action.payload["start"] ?? "");event.endDate=formatter.date(from:action.payload["end"] ?? "");event.notes=action.payload["notes"];view.event=event;view.editViewDelegate=context.coordinator;return view}
+  func makeUIViewController(context:Context)->EKEventEditViewController {let view=EKEventEditViewController();let store=EKEventStore();view.eventStore=store;let event=EKEvent(eventStore:store);event.title=action.payload["title"];event.startDate=PhoneAction.date(action.payload["start"]);event.endDate=PhoneAction.date(action.payload["end"]);event.notes=action.payload["notes"];view.event=event;view.editViewDelegate=context.coordinator;return view}
   func updateUIViewController(_ controller:EKEventEditViewController,context:Context){}
   class Coordinator:NSObject,EKEventEditViewDelegate {let done:(String,String)->Void;init(_ done:@escaping(String,String)->Void){self.done=done};func eventEditViewController(_ controller:EKEventEditViewController,didCompleteWith action:EKEventEditViewAction){done(action == .saved ? "completed":"cancelled",action == .saved ? "Event saved through the Calendar editor.":"Calendar action cancelled.")} }
 }

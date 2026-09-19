@@ -1612,7 +1612,11 @@
     "ask_user",
     "react",
     "read_memory",
-    "forget_memory"
+    "forget_memory",
+    "read_personal_context",
+    "phone_request_action",
+    "phone_action_status",
+    "read_document"
   ],
   "verifiedIntegrationTransport": "MCP Streamable HTTP 2025-11-25 plus 2025-06-18/2025-03-26 negotiation",
   "controlCount": 13,

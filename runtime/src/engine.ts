@@ -1,3 +1,4 @@
+import { readDocument } from "./document-reader.js";
 import { personalContext, localPersonalProvider, queuePhoneAction, phoneActions } from "./personal.js";
 import { browserBridge } from "./browser-bridge.js";
 import { WorkspaceLocks } from "./workspace-lock.js";
@@ -427,7 +428,8 @@ export class Engine {
           const images: NonNullable<Chat["images"]> = [];
           for (const a of m.attachments) {
             text += `\nAttachment: ${a.name}`;
-            if (a.mime === "text/plain" && a.size <= 50_000)
+            if (a.name.toLowerCase().endsWith(".pdf")) text += ` (PDF: use read_document with attachment_id ${a.id}; text and scanned pages are supported)`;
+            else if (a.mime === "text/plain" && a.size <= 50_000)
               text +=
                 "\n" + (await fs.readFile(a.path, "utf8")).slice(0, 12000);
             else if (a.mime.startsWith("image/") && acceptsImages && imageCount < 4) {
@@ -672,6 +674,11 @@ export class Engine {
                 result = JSON.stringify(this.store.goal(c.id));
               } else if (name === "update_goal") {
                 result = JSON.stringify(this.store.updateGoal(c.id, args.id, args.status, args.evidence));
+              } else if (name === "read_document" && args.attachment_id) {
+                if (args.path) throw Error("Choose path or attachment_id, not both.");
+                const artifact = this.store.get("SELECT a.path FROM artifacts a JOIN messages m ON m.id=a.messageId WHERE a.id=? AND m.conversationId=? AND m.rowid <= (SELECT rowid FROM messages WHERE id=?)",args.attachment_id,c.id,task.messageId);
+                if(!artifact)throw Error("PDF attachment not found in this conversation’s current history.");
+                result=await readDocument(artifact.path,args.first_page,args.page_count,signal);
               } else if (name === "read_personal_context") {
                 if (!localPersonalProvider(config)) throw Error("Personal context is available only on a connected local model.");
                 const context = personalContext(this.store); const offset = Number(args.offset ?? "0");
