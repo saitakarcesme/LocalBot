@@ -204,7 +204,6 @@ struct MainView: View {
           description: Text("Choose a contact to begin."))
       }
     }
-    .padding(.top, 8)
     .overlay {
       if !model.hasLoaded {
         VStack(spacing: 18) {
