@@ -32,6 +32,7 @@ struct PhoneTerminal: View {
   private var offset = 0
   private var sequence = 0
   private var pending = Data()
+  private var retryBatch: Data?
   private var sending = false
   private var disposed = false
   private var size = (cols: 80, rows: 24)
@@ -80,10 +81,11 @@ struct PhoneTerminal: View {
       defer { sending = false }
       try? await Task.sleep(for:.milliseconds(40))
       while !pending.isEmpty && !disposed {
-        let batch = pending
+        let batch = retryBatch ?? pending
+        retryBatch = batch
         do {
           _ = try await call(["action":"input","sequence":sequence,"data":batch.base64EncodedString()])
-          pending.removeFirst(batch.count); sequence += 1; error = nil
+          pending.removeFirst(batch.count); sequence += 1; retryBatch = nil; error = nil
         } catch { self.error = error.localizedDescription; return }
       }
     }
