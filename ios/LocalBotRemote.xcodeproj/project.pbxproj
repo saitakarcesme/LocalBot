@@ -10,6 +10,7 @@
 		0294A03A2D88D55C52DF1405 /* RemoteStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFACA3C0D90860CC2C2503E2 /* RemoteStore.swift */; };
 		18A4B8CCAB5AE7FFAA5830DF /* QRScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0ECB2101A0508F0E977D4D59 /* QRScanner.swift */; };
 		2823D53C8366895EA8FB5ADC /* RemoteClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = E63C42BF7FE12BD10C52B27B /* RemoteClient.swift */; };
+		4B179B921307990694250996 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B323165EDDE7F2825A28E52F /* Assets.xcassets */; };
 		52D1D1DB58DBC6F37D3737AE /* LocalBotRemoteApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAB07FCFCDE224A8756AA314 /* LocalBotRemoteApp.swift */; };
 		5372A20265348B70786B7594 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23CBBA3AB008F097CC816099 /* Models.swift */; };
 		A9A3FEC3577F3BE4ECE295B5 /* LocalBotMascot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4457BBD412BA31B5B5619451 /* LocalBotMascot.swift */; };
@@ -20,6 +21,7 @@
 		23CBBA3AB008F097CC816099 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		418D7CCFFFAD283B026EBEA8 /* LocalBotRemote.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = LocalBotRemote.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4457BBD412BA31B5B5619451 /* LocalBotMascot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalBotMascot.swift; sourceTree = "<group>"; };
+		B323165EDDE7F2825A28E52F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		BAB07FCFCDE224A8756AA314 /* LocalBotRemoteApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalBotRemoteApp.swift; sourceTree = "<group>"; };
 		BFACA3C0D90860CC2C2503E2 /* RemoteStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteStore.swift; sourceTree = "<group>"; };
 		E63C42BF7FE12BD10C52B27B /* RemoteClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteClient.swift; sourceTree = "<group>"; };
@@ -29,6 +31,7 @@
 		4EFF4405BF2164D229E05742 /* LocalBotRemote */ = {
 			isa = PBXGroup;
 			children = (
+				B323165EDDE7F2825A28E52F /* Assets.xcassets */,
 				BAB07FCFCDE224A8756AA314 /* LocalBotRemoteApp.swift */,
 				0ECB2101A0508F0E977D4D59 /* QRScanner.swift */,
 				BFACA3C0D90860CC2C2503E2 /* RemoteStore.swift */,
@@ -81,6 +84,7 @@
 			buildConfigurationList = BE547234333B4CE009718D7E /* Build configuration list for PBXNativeTarget "LocalBotRemote" */;
 			buildPhases = (
 				F2FBE01F6857AD5C9E895AFE /* Sources */,
+				F82F009046CC3AAC52877CA4 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -125,6 +129,17 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		F82F009046CC3AAC52877CA4 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4B179B921307990694250996 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		F2FBE01F6857AD5C9E895AFE /* Sources */ = {

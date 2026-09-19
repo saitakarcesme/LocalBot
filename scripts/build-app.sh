@@ -35,6 +35,11 @@ fi
 if [ -f "$APP/Contents/Resources/node" ]; then chmod u+w "$APP/Contents/Resources/node"; fi
 cp "build/vendor/$NODE_DIST/bin/node" "$APP/Contents/Resources/node"
 cp "build/vendor/$NODE_DIST/LICENSE" "$APP/Contents/Resources/Node-LICENSE"
+if [ "$NODE_ARCH" = arm64 ]; then
+  node scripts/fetch-tunnel.mjs darwin-arm64
+  cp build/vendor/tunnel/darwin-arm64/cloudflared "$APP/Contents/Resources/cloudflared"
+  curl --fail --location --silent --show-error https://raw.githubusercontent.com/cloudflare/cloudflared/2026.9.1/LICENSE -o "$APP/Contents/Resources/Cloudflare-LICENSE"
+fi
 printf '{"type":"module"}\n' > "$APP/Contents/Resources/runtime/package.json"
 cat > "$APP/Contents/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>

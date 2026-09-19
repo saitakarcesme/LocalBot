@@ -71,7 +71,7 @@ actor RemoteClient {
       if (response as? HTTPURLResponse)?.statusCode == 401 { throw RemoteError("Connection was revoked or expired. Pair with your Mac again.") }
       throw RemoteError("Cannot reach your Mac. Keep LocalBot open and Remote enabled.")
     }
-    guard data.count < 16_000_000, let wire = try JSONSerialization.jsonObject(with: data) as? [String:String], let encrypted = wire["box"].flatMap { Data(base64Encoded: $0) } else { throw RemoteError("Invalid host response.") }
+    guard data.count < 16_000_000, let wire = try JSONSerialization.jsonObject(with: data) as? [String:String], let encrypted = wire["box"].flatMap({ Data(base64Encoded: $0) }) else { throw RemoteError("Invalid host response.") }
     let plain = try AES.GCM.open(AES.GCM.SealedBox(combined: encrypted), using: key, authenticating: aad("response"))
     if let result = try JSONSerialization.jsonObject(with: plain) as? [String:Any], let error = result["error"] as? String { throw RemoteError(error) }
     return plain

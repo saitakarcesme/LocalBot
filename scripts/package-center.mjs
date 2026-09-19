@@ -1,0 +1,23 @@
+import {mkdir,readFile,writeFile,cp} from 'node:fs/promises';
+import {spawnSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
+const version='22.22.2', asset=`node-v${version}-win-x64.zip`, vendor='build/vendor';
+await mkdir(vendor,{recursive:true});
+const sums=await (await fetch(`https://nodejs.org/dist/v${version}/SHASUMS256.txt`)).text();
+const sha=sums.split('\n').find(l=>l.endsWith('  '+asset))?.split(' ')[0];
+if(!sha)throw Error('Node checksum unavailable');
+let data=await readFile(`${vendor}/${asset}`).catch(()=>null);
+if(!data||createHash('sha256').update(data).digest('hex')!==sha){const r=await fetch(`https://nodejs.org/dist/v${version}/${asset}`);if(!r.ok)throw Error('Node download failed');data=Buffer.from(await r.arrayBuffer());if(createHash('sha256').update(data).digest('hex')!==sha)throw Error('Node checksum mismatch');await writeFile(`${vendor}/${asset}`,data);}
+if(spawnSync('unzip',['-oq',`${vendor}/${asset}`,'-d',vendor]).status!==0)throw Error('Node unpack failed');
+if(spawnSync(process.execPath,['scripts/fetch-tunnel.mjs','windows-amd64'],{stdio:'inherit'}).status!==0)throw Error('Tunnel download failed');
+const target='build/LocalBot-Center-Windows';await mkdir(target,{recursive:true});
+await cp(`${vendor}/node-v${version}-win-x64/node.exe`,`${target}/node.exe`);
+await cp(`${vendor}/node-v${version}-win-x64/LICENSE`,`${target}/Node-LICENSE.txt`);
+await cp(`${vendor}/tunnel/windows-amd64/cloudflared-windows-amd64.exe`,`${target}/cloudflared.exe`);
+const license=await fetch('https://raw.githubusercontent.com/cloudflare/cloudflared/2026.9.1/LICENSE');if(!license.ok)throw Error('License download failed');await writeFile(`${target}/Cloudflare-LICENSE.txt`,await license.text());
+await cp('runtime/dist',`${target}/runtime`,{recursive:true});
+await writeFile(`${target}/package.json`,JSON.stringify({type:'module'}));
+await writeFile(`${target}/Start LocalBot Center.cmd`,'@echo off\r\ncd /d "%~dp0"\r\ntitle LocalBot Center\r\nstart "" "http://127.0.0.1:8818"\r\nnode.exe runtime\\center-server.js\r\npause\r\n');
+await cp('docs/remote/CENTER-WINDOWS.md',`${target}/Read me.md`);
+if(spawnSync('zip',['-qr','LocalBot-Center-Windows.zip','LocalBot-Center-Windows'],{cwd:'build'}).status!==0)throw Error('Packaging failed');
+console.log('Built build/LocalBot-Center-Windows.zip (Windows x64; requires Windows device validation).');
