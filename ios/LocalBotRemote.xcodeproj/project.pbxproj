@@ -18,6 +18,7 @@
 		5372A20265348B70786B7594 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23CBBA3AB008F097CC816099 /* Models.swift */; };
 		65A555988A767A02264227E5 /* MobileWorkspace.swift in Sources */ = {isa = PBXBuildFile; fileRef = 613423EDAAACC95C41B6ED5C /* MobileWorkspace.swift */; };
 		7339F69AD47C11E272AA09E4 /* SwiftTerm-LICENSE.txt in Resources */ = {isa = PBXBuildFile; fileRef = 29BC18247F4FEF3F4B606F8F /* SwiftTerm-LICENSE.txt */; };
+		A74C06E72D32FB806D770390 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B8F868E434ECE5F248F3EFE /* ProfileView.swift */; };
 		A9A3FEC3577F3BE4ECE295B5 /* LocalBotMascot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4457BBD412BA31B5B5619451 /* LocalBotMascot.swift */; };
 /* End PBXBuildFile section */
 
@@ -25,6 +26,7 @@
 		0ECB2101A0508F0E977D4D59 /* QRScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRScanner.swift; sourceTree = "<group>"; };
 		23CBBA3AB008F097CC816099 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		29BC18247F4FEF3F4B606F8F /* SwiftTerm-LICENSE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "SwiftTerm-LICENSE.txt"; sourceTree = "<group>"; };
+		3B8F868E434ECE5F248F3EFE /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 		418D7CCFFFAD283B026EBEA8 /* LocalBotRemote.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = LocalBotRemote.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4457BBD412BA31B5B5619451 /* LocalBotMascot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalBotMascot.swift; sourceTree = "<group>"; };
 		45CE18871F08D21D146E00C3 /* NativeGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeGlass.swift; sourceTree = "<group>"; };
@@ -86,6 +88,7 @@
 			children = (
 				4457BBD412BA31B5B5619451 /* LocalBotMascot.swift */,
 				23CBBA3AB008F097CC816099 /* Models.swift */,
+				3B8F868E434ECE5F248F3EFE /* ProfileView.swift */,
 			);
 			name = LocalBot;
 			path = ../macos/Sources/LocalBot;
@@ -182,6 +185,7 @@
 				5372A20265348B70786B7594 /* Models.swift in Sources */,
 				133FA26C968F83E1092D8BF4 /* NativeGlass.swift in Sources */,
 				4644FB53AF210AE9490379FA /* PhoneTerminal.swift in Sources */,
+				A74C06E72D32FB806D770390 /* ProfileView.swift in Sources */,
 				18A4B8CCAB5AE7FFAA5830DF /* QRScanner.swift in Sources */,
 				2823D53C8366895EA8FB5ADC /* RemoteClient.swift in Sources */,
 				0294A03A2D88D55C52DF1405 /* RemoteStore.swift in Sources */,
