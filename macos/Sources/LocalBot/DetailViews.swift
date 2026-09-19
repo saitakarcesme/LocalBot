@@ -493,7 +493,7 @@ struct SettingsView: View {
       Stepper(
         "Concurrent tasks: \(editing?.concurrency ?? 1)", value: numberField(\.concurrency),
         in: 1...4)
-      Text("Use 1 on an 8 GB Mac. Tasks sharing a workspace always run in sequence.").font(
+      Text("Use 1 on an 8 GB Mac. Increase only if the model server can handle parallel requests.").font(
         .caption2
       ).foregroundStyle(.secondary)
       if editing?.kind != "codex" { Toggle(
