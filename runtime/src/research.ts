@@ -110,7 +110,7 @@ export class AutoResearch {
       if (
         s.latest &&
         s.latest.id !== s.acknowledgedTask &&
-        ["failed", "interrupted", "cancelled"].includes(s.latest.status)
+        ["failed", "interrupted", "cancelled", "completed_with_errors"].includes(s.latest.status)
       ) {
         const next = {
           ...researchSettings(this.store),

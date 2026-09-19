@@ -137,6 +137,7 @@ class HTTPProvider implements ModelProvider {
     tools: ToolDefinition[],
     signal: AbortSignal,
     onProgress?: (phase: string, summary?: string) => void,
+    emptyRetried = false,
   ): Promise<Generation> {
     const p = this.p;
     messages = fitContext(messages, tools, p);
@@ -358,8 +359,14 @@ class HTTPProvider implements ModelProvider {
       .replace(/<think>[\s\S]*?<\/think>/g, "")
       .replace(/<\/?think>/g, "")
       .trim();
-    if (!content && !calls.size)
-      throw new Error("Model returned no message or tool calls.");
+    if (!content && !calls.size) {
+      if (!emptyRetried) {
+        signal.throwIfAborted();
+        onProgress?.("Retrying an empty model response");
+        return this.generate([...messages, {role: "user", content: "Your previous generation was empty. Return a concise answer or the next necessary tool call. Do not claim any work has executed."}], tools, signal, onProgress, true);
+      }
+      throw new Error("Model returned no message or tool calls after one retry. Try a focused follow-up or another model.");
+    }
     return {
       content: content
         .replace(/<think>[\s\S]*?<\/think>/g, "")
