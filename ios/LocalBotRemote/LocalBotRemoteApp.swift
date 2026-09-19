@@ -139,7 +139,7 @@ struct MobileChat: View {
         TextField("Message", text: $draft, axis: .vertical).lineLimit(1...6).padding(.vertical, 8)
         Button { if let running { Task { await store.action("/cancel",body:["taskId":running.id]) } } else { let text = draft; let key = draftKey; Task { if await store.send(text,project:project?.id,agent:agent) { UserDefaults.standard.removeObject(forKey: key); draft = "" } } } } label: { Image(systemName: running == nil ? "arrow.up.circle.fill" : "stop.circle.fill").font(.system(size: 32)).foregroundStyle(running == nil ? Color.accentColor : .orange) }
           .disabled(store.busy || (running == nil && draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)).accessibilityLabel(running == nil ? "Send message" : "Stop task")
-      }.padding(.horizontal, 14).padding(.vertical, 5).background(.regularMaterial, in: RoundedRectangle(cornerRadius: 26))
+      }.padding(.horizontal, 14).padding(.vertical, 5).modifier(NativeGlass())
     }.padding(.horizontal, 14).padding(.vertical, 8)
   }
   private func messageRow(_ message: ChatMessage) -> some View {

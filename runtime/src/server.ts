@@ -368,7 +368,7 @@ const server = createServer(async (req, res) => {
       const config: ProviderConfig = {id:randomUUID(),name:paired.name,kind:info.kind,endpoint:paired.url,transport:"center",model:"",contextLength:8192,timeout:240,concurrency:1,temperature:0.3,maxTokens:2000,requiresAuth:true};
       const credential=encodeLink(paired), health=await provider(config,credential).health();
       if (!health.models.length) throw Error("No models are installed in Center yet.");
-      config.model=health.models[0];store.saveProvider(config);engine.secrets.set(config.id,credential);
+      config.model=health.models[0];store.transaction(()=>{store.saveProvider(config);if(b.useForAll===true)for(const agent of store.agents())store.saveAgent({...agent,providerId:config.id,model:config.model});});engine.secrets.set(config.id,credential);
       change();json(res,201,{provider:config,credential,models:health.models});return;
     }
     if (m === "POST" && p === "/providers") {

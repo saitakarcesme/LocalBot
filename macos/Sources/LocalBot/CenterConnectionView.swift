@@ -5,6 +5,7 @@ struct CenterConnectionView: View {
   @Environment(\.dismiss) private var dismiss
   @State private var code = ""
   @State private var connecting = false
+  @State private var useForAll = true
   @State private var error: String?
   var body: some View {
     VStack(alignment: .leading, spacing: 18) {
@@ -14,6 +15,7 @@ struct CenterConnectionView: View {
       SecureField("LocalBot Center pairing code", text: $code).textFieldStyle(.roundedBorder)
       Text("Your computers can be on different networks. Keep Center running while you use its models.")
         .font(.caption).foregroundStyle(.secondary)
+      Toggle("Use this connection for all bots", isOn: $useForAll)
       if let error { Text(error).font(.callout).foregroundStyle(.red).textSelection(.enabled) }
       HStack {
         Button("Cancel") { dismiss() }.disabled(connecting)
@@ -30,7 +32,7 @@ struct CenterConnectionView: View {
       defer { connecting = false }
       do {
         struct Result: Decodable { let provider: Provider; let credential: String }
-        let result = try JSONDecoder().decode(Result.self, from: await model.request("/center/connect", body: ["code": code]))
+        let result = try JSONDecoder().decode(Result.self, from: await model.request("/center/connect", body: ["code": code, "useForAll": useForAll]))
         try Keychain.save(result.credential, id: result.provider.id + "@" + result.provider.endpoint)
         code = ""
         await model.refresh()

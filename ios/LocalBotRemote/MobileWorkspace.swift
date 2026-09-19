@@ -38,7 +38,7 @@ struct MobileWorkspace: View {
           }
         }
       }.navigationTitle("Workspace").navigationBarTitleDisplayMode(.inline)
-        .toolbar { ToolbarItem(placement:.cancellationAction) { Button("Done") { dismiss() } }; ToolbarItem(placement:.topBarTrailing) { Button { sideChat=true } label:{ Image(systemName:"bubble.left.and.bubble.right") }.accessibilityLabel("Side chat") } }
+        .toolbar { ToolbarItem(placement:.cancellationAction) { Button("Done") { if file != nil && content != original { showDiscard = true } else { dismiss() } } }; ToolbarItem(placement:.topBarTrailing) { Button { sideChat=true } label:{ Image(systemName:"bubble.left.and.bubble.right") }.accessibilityLabel("Side chat") } }
         .task { load() }.onChange(of:choice) { _,_ in content="";file=nil;load() }
         .confirmationDialog("Discard unsaved changes?",isPresented:$showDiscard) { Button("Discard changes",role:.destructive) { file=nil;content=original } }
         .sheet(isPresented:$sideChat) { RemoteSideChat(project:project) }
