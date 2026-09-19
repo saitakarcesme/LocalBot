@@ -577,7 +577,6 @@ export class Engine {
             let result = "",
               failed = false;
             try {
-              if (!available.some(t => t.function.name === name)) throw new Error(`Tool is unavailable for this run: ${name}`);
               const args = JSON.parse(call.function.arguments);
               validateArguments(name, args);
               if (name === "view_image" && !this.makeProvider(config).capabilities().images) throw new Error("Selected provider cannot inspect images");
@@ -587,6 +586,7 @@ export class Engine {
                 throw new Error("Workspace changed during this run. Send a new request to work in the new folder.");
               if (!allowed(live, name))
                 throw new Error(`Permission denied: ${name}`);
+              if (!available.some(t => t.function.name === name)) throw new Error(`Tool is unavailable for this run: ${name}`);
               const mcpIntegration = ["mcp_call", "mcp_list_tools", "mcp_list_resources", "mcp_list_resource_templates", "mcp_read_resource"].includes(name)
                 ? authorizedMCPConnection(live.integrations, this.store.integrations(), args.integrationId) : undefined;
               const actionKey = JSON.stringify([project?.workspace ?? live.workspace, name, Object.fromEntries(Object.entries(args).sort(([a], [b]) => a.localeCompare(b)))]);
