@@ -208,6 +208,7 @@ struct MainView: View {
           description: Text("Choose a contact to begin."))
       }
     }
+    .ignoresSafeArea(.container, edges: model.isFullscreen ? .top : [])
     .padding(.top, model.isFullscreen ? 8 : 0)
     .onReceive(NotificationCenter.default.publisher(for: NSWindow.didEnterFullScreenNotification)) { _ in model.isFullscreen = true }
     .onReceive(NotificationCenter.default.publisher(for: NSWindow.didExitFullScreenNotification)) { _ in model.isFullscreen = false }
