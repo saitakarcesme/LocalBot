@@ -57,7 +57,8 @@ actor RemoteClient {
   }
   private func invoke(operation: String, path: String? = nil, body: [String:Any]? = nil) async throws -> Data {
     let requestID = UUID().uuidString.lowercased()
-    let key = SymmetricKey(data: Data(base64Encoded: link.key)!)
+    guard let keyData = Data(base64Encoded: link.key), keyData.count == 32 else { throw RemoteError("Saved connection is invalid. Pair with your Mac again.") }
+    let key = SymmetricKey(data: keyData)
     func aad(_ direction: String) -> Data { Data("localbot.v1|\(link.id)|\(requestID)|\(direction)".utf8) }
     var payload: [String:Any] = ["operation": operation, "timestamp": Date().timeIntervalSince1970 * 1000]
     if let path { payload["path"] = path; payload["method"] = body == nil ? "GET" : "POST" }

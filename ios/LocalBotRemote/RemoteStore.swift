@@ -31,7 +31,7 @@ import Security
       await refresh()
     } catch { self.error = error.localizedDescription }
   }
-  func disconnect() { PhoneKeychain.clear(); client = nil; paired = false; connected = false; snapshot = nil; messages = []; activity = []; selected = nil }
+  func disconnect() { PhoneKeychain.clear(); client = nil; paired = false; connected = false; snapshot = nil; messages = []; activity = []; selected = nil; loadedConversation = nil; loadedRevision = nil; loadedInstance = nil }
   func refresh() async {
     guard let client, !refreshing else { return }
     let generation = client
@@ -47,11 +47,11 @@ import Security
         let query = id.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? id
         let items = try JSONDecoder().decode([ChatMessage].self, from: await client.api("/messages?conversationId=" + query))
         let events = try JSONDecoder().decode([Activity].self, from: await client.api("/activity?conversationId=" + query))
-        if selected == id { if messages != items { messages = items }; if activity != events { activity = events }; loadedConversation = id; loadedRevision = state.revision; loadedInstance = state.instanceId }
+        if self.client === generation, selected == id { if messages != items { messages = items }; if activity != events { activity = events }; loadedConversation = id; loadedRevision = state.revision; loadedInstance = state.instanceId }
       }
-    } catch { if !Task.isCancelled { connected = false; self.error = error.localizedDescription } }
+    } catch { if self.client === generation, !Task.isCancelled { connected = false; self.error = error.localizedDescription } }
   }
-  func select(_ id: String) { selected = id; messages = []; activity = [] }
+  func select(_ id: String) { selected = id; messages = []; activity = []; loadedConversation = nil }
   func send(_ text: String, project: String? = nil, agent: String? = nil) async -> Bool {
     guard let client, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
     busy = true; defer { busy = false }
@@ -66,7 +66,7 @@ import Security
       let requestKey = "pending-send." + selected
       let signature = Data(text.utf8).base64EncodedString()
       let saved = UserDefaults.standard.stringArray(forKey: requestKey)
-      let requestID = saved?.first == signature ? saved!.last! : UUID().uuidString
+      let requestID = saved?.count == 2 && saved?.first == signature ? saved![1] : UUID().uuidString
       UserDefaults.standard.set([signature, requestID], forKey: requestKey)
       _ = try await client.api("/messages", body: ["conversationId":selected,"content":text,"requestId":requestID])
       UserDefaults.standard.removeObject(forKey: requestKey)
