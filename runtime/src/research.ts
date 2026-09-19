@@ -171,3 +171,6 @@ export class AutoResearch {
     }
   }
 }
+
+// Background research is read-only even if a chosen contact has broader permissions.
+export const researchTools = new Set(["web_search", "web_fetch", "current_time", "search_history", "read_history", "list_conversations", "list_tasks", "read_activity", "list_agents", "read_memory", "react"]);

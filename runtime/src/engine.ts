@@ -1,3 +1,4 @@
+import { researchTools } from "./research.js";
 import { taskUsage } from "./token-usage.js";
 import { startingMessage, stepBudgetNotice } from "./task-progress.js";
 import { readDocument } from "./document-reader.js";
@@ -489,7 +490,8 @@ export class Engine {
             now(),
             runId,
           );
-          const available = this.availableTools(this.store.agent(agentId), config);
+          const backgroundResearch = this.store.get("SELECT name FROM sqlite_master WHERE type='table' AND name='research_passes'") && this.store.get("SELECT taskId FROM research_passes WHERE taskId=?", taskId);
+          const available = this.availableTools(this.store.agent(agentId), config).filter(t => !backgroundResearch || researchTools.has(t.function.name));
           const thinkingId = randomUUID();
           this.store.exec("INSERT INTO run_events VALUES(?,?,?,?,?,?,?,?)", thinkingId, runId, "thinking", "{}", "running", "Preparing the next step…", now(), now());
           let lastProgress = 0;
