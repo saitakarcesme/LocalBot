@@ -193,7 +193,7 @@
     "source_commit": "5ea321a",
     "native_tests": 6,
     "preview_100_repeats_ms_before": 4603,
-    "preview_100_repeats_ms_after": "3–5",
+    "preview_100_repeats_ms_after": "3\u20135",
     "verified": [
       "native glass normal and fullscreen",
       "compact project rows with supplied colored logo",
@@ -284,5 +284,26 @@
     "status": "plan_only",
     "path": "docs/LOCALBOT-REMOTE-IPHONE-PLAN.md",
     "next_decision": "LAN-first milestone or include internet relay in first delivery"
+  },
+  "connected_preview": {
+    "date": "2026-09-19",
+    "status": "packaging_and_terminal_ui_verification",
+    "branch": "codex/center-iphone-remote",
+    "runtime_tests": 141,
+    "native_tests": 8,
+    "relay": "https://relay-five-lake.vercel.app",
+    "verified": [
+      "public encrypted Swift/Node exchange",
+      "signed simulator pairing and message round trip",
+      "phone file edit independently checked",
+      "PTY host input resize ownership and revocation"
+    ],
+    "pending": [
+      "physical Windows Ollama",
+      "physical iPhone installation",
+      "interactive terminal phone UI",
+      "updated Mac installation"
+    ],
+    "simulators_maximum": 1
   }
 }

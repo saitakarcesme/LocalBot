@@ -5,7 +5,7 @@
 3. Double-click **Start LocalBot Center.cmd**. Keep its window open. If the browser opens before Center is ready, refresh it.
 4. Select your detected model server and click **Connect this PC**.
 5. Copy the pairing code. On the Mac, open LocalBot → Settings → **Connect another PC**, paste it, and connect.
-6. Choose the new connection and a model in each bot's settings.
+6. Leave **Use this connection for all bots** enabled to switch the team at once. You can change individual bot models later in Settings.
 
 Center probes Ollama first. LM Studio and other OpenAI-compatible local servers are also supported. A custom server must run on the same PC as Center. You do not need to expose Ollama to your network, forward router ports, or share a Wi-Fi network with the Mac.
 
