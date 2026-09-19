@@ -21,6 +21,7 @@
 		5372A20265348B70786B7594 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23CBBA3AB008F097CC816099 /* Models.swift */; };
 		65A555988A767A02264227E5 /* MobileWorkspace.swift in Sources */ = {isa = PBXBuildFile; fileRef = 613423EDAAACC95C41B6ED5C /* MobileWorkspace.swift */; };
 		7339F69AD47C11E272AA09E4 /* SwiftTerm-LICENSE.txt in Resources */ = {isa = PBXBuildFile; fileRef = 29BC18247F4FEF3F4B606F8F /* SwiftTerm-LICENSE.txt */; };
+		A51471E6385D27562E445A42 /* ResearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 264A5381BAAB737B018FEED7 /* ResearchView.swift */; };
 		A74C06E72D32FB806D770390 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B8F868E434ECE5F248F3EFE /* ProfileView.swift */; };
 		A9A3FEC3577F3BE4ECE295B5 /* LocalBotMascot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4457BBD412BA31B5B5619451 /* LocalBotMascot.swift */; };
 		E7942508EAEF03FA0493152C /* LaunchScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8070A747C71B4FF18979E1A /* LaunchScreen.swift */; };
@@ -30,6 +31,7 @@
 		0ECB2101A0508F0E977D4D59 /* QRScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRScanner.swift; sourceTree = "<group>"; };
 		1F2A633C07AE163C924E8682 /* PhonePersonalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhonePersonalView.swift; sourceTree = "<group>"; };
 		23CBBA3AB008F097CC816099 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		264A5381BAAB737B018FEED7 /* ResearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResearchView.swift; sourceTree = "<group>"; };
 		29BC18247F4FEF3F4B606F8F /* SwiftTerm-LICENSE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "SwiftTerm-LICENSE.txt"; sourceTree = "<group>"; };
 		3B8F868E434ECE5F248F3EFE /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 		418D7CCFFFAD283B026EBEA8 /* LocalBotRemote.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = LocalBotRemote.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -101,6 +103,7 @@
 				23CBBA3AB008F097CC816099 /* Models.swift */,
 				6047BF98519E72B6614A0BC9 /* PersonalContextView.swift */,
 				3B8F868E434ECE5F248F3EFE /* ProfileView.swift */,
+				264A5381BAAB737B018FEED7 /* ResearchView.swift */,
 			);
 			name = LocalBot;
 			path = ../macos/Sources/LocalBot;
@@ -214,6 +217,7 @@
 				18A4B8CCAB5AE7FFAA5830DF /* QRScanner.swift in Sources */,
 				2823D53C8366895EA8FB5ADC /* RemoteClient.swift in Sources */,
 				0294A03A2D88D55C52DF1405 /* RemoteStore.swift in Sources */,
+				A51471E6385D27562E445A42 /* ResearchView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

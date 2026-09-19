@@ -43,6 +43,7 @@ export class Engine {
     if (!runConfig && agent.model) config.model = agent.model;
     const model = this.makeProvider(config, this.secrets.get(config.id));
     return definitions.filter(t => allowed(agent, t.function.name)
+      && (process.platform === "darwin" || !["terminal","run_tests","git","process_start","process_input","process_poll","process_stop","read_document"].includes(t.function.name))
       && (t.function.name !== "read_personal_context" || localPersonalProvider(config))
       && (!t.function.name.startsWith("browser_") || browserBridge.available)
       && (t.function.name !== "get_usage_limits" || !!model.usage)

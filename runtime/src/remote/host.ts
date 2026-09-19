@@ -100,6 +100,7 @@ export class RemoteHost {
           const route = mobileRoute(request),
             local = this.connection();
           if (route.path === "/terminal") {
+            if (process.platform !== "darwin") throw Error("Interactive terminal is not yet supported on this workspace host.");
             const body = request.body as any;
             if (!body || typeof body !== "object")
               throw Error("Invalid terminal request");

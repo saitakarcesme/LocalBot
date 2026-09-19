@@ -1,7 +1,6 @@
 import type { Store } from "./store.js";
 import type { Engine } from "./engine.js";
 import { localPersonalProvider } from "./personal.js";
-const active = ["queued", "running", "awaiting_approval", "awaiting_input"];
 export type ResearchSettings = {
   enabled: boolean;
   topic: string;
@@ -18,6 +17,7 @@ export function researchSettings(store: Store): ResearchSettings {
   );
 }
 export function saveResearch(store: Store, input: any) {
+  initResearch(store);
   if (
     typeof input.enabled !== "boolean" ||
     typeof input.topic !== "string" ||
@@ -132,6 +132,7 @@ export class AutoResearch {
         return;
       if (s.passes >= s.maxPasses || s.tokens >= s.dailyTarget) return;
       const c = this.store.conversation(s.conversationId);
+      if (!c.members.length) throw Error("Choose a configured research team.");
       for (const id of c.members)
         if (
           !localPersonalProvider(

@@ -196,7 +196,9 @@ const server = createServer(async (req, res) => {
       const value=updatePhoneAction(store,device,await body(req));change();json(res,200,value);return;
     }
     if (m === "GET" && p === "/research") {json(res,200,researchStatus(store));return;}
-    if (m === "POST" && p === "/research") {saveResearch(store,await body(req));change();json(res,200,researchStatus(store));void research.tick();return;}
+    if (m === "POST" && p === "/research") {const settings=saveResearch(store,await body(req));
+      if (!settings.enabled) { const latest=researchStatus(store).latest; if(latest && ["queued","running","awaiting_approval","awaiting_input"].includes(latest.status)) engine.cancel(latest.id); }
+      change();json(res,200,researchStatus(store));void research.tick();return;}
     if (m === "GET" && p === "/health") {
       json(res, 200, { ok: true, version: "0.2.0", pid: process.pid });
       return;
