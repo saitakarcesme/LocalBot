@@ -30,7 +30,7 @@ const wait = async (fn) => {
   throw new Error("Timed out waiting for state");
 };
 test("identities, conversations, tasks, threads persist independently", () => {
-  assert.equal(store.agents().length, 5);
+  assert.equal(store.agents().length, 6);
   assert.equal(store.providers().length, 1);
   assert.equal(store.conversations().length, 6);
   const c = store.createConversation("Second", ["coder"]);
