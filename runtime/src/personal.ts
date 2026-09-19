@@ -25,7 +25,7 @@ export function phoneActions(store: Store, conversationId?: string) {
   return store.all('SELECT * FROM phone_actions '+(conversationId?'WHERE conversationId=? ':'')+'ORDER BY createdAt DESC LIMIT 50',...(conversationId?[conversationId]:[])).map(x=>({...x,payload:JSON.parse(x.payload)}));
 }
 export function queuePhoneAction(store: Store, taskId: string, kind: string, payload: any) {
-  initPhoneActions(store);validatePhoneAction(kind,payload);const task=store.get('SELECT conversationId FROM tasks WHERE id=?',taskId);if(!task)throw Error('Task unavailable.');
+  initPhoneActions(store);phoneActions(store);validatePhoneAction(kind,payload);const task=store.get('SELECT conversationId FROM tasks WHERE id=?',taskId);if(!task)throw Error('Task unavailable.');
   if(store.get("SELECT COUNT(*) AS n FROM phone_actions WHERE status IN ('pending','claimed')").n>=30)throw Error('Review pending phone actions first.');
   const id=randomUUID(),date=new Date().toISOString();store.exec('INSERT INTO phone_actions VALUES(?,?,?,?,?,?,?,?,?,?)',id,task.conversationId,taskId,kind,JSON.stringify(payload),'pending',null,null,date,date);
   return {id,status:'pending',message:'Waiting for review in LocalBot Remote → Personal → Phone actions. Nothing has been executed. Use phone_action_status for recorded results; do not claim success.'};

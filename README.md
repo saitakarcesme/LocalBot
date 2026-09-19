@@ -59,6 +59,10 @@ The native app targets iOS 17+. Generate `ios/LocalBotRemote.xcodeproj` with Xco
 
 Open **Settings → iPhone Remote** on the Mac and scan its pairing QR from the phone. Keep the Mac awake and LocalBot running. The devices do not need to share Wi-Fi.
 
+## Personal assistance
+
+Manage local personal context from Profile & usage → Personal workspace. Bots can prepare phone email, calendar, Shortcut and link actions for review in LocalBot Remote. PDF attachments support paginated text extraction and local OCR on the Mac. Read the [capability audit and phone-control guide](docs/PERSONAL-AGENT-AUDIT.md) for exact behavior and limitations.
+
 ## Privacy and control
 
 Chat history, project memory, and workspace files live on the Mac. Model input goes to the provider you select. Remote payloads are encrypted between paired devices and the host; the relay still handles routing and connection metadata. Pairing can be revoked from the Mac.
