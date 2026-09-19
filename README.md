@@ -66,7 +66,7 @@ To back up history, close the app, stop its runtime when no task is active, then
 
 ## Current limits
 
-This is a usable local development release, not a notarized public distribution. The 2×3090 machine and the requested 27B model have not been available for hardware validation. API adapters have protocol tests; the Codex ChatGPT subscription bridge has live agent and project tests. Interactive browser automation, Anthropic image input, conversation branches and automatic crash replay remain unimplemented. Local HTTP vision payloads have loopback protocol tests; real local vision inference remains unverified. Shell execution is macOS-only until equivalent Windows/Linux sandboxing exists.
+This is a usable local development release, not a notarized public distribution. The 2×3090 machine and the requested 27B model have not been available for hardware validation. API adapters have protocol tests; the Codex ChatGPT subscription bridge has live agent and project tests. Bounded browser automation is implemented for the desktop’s persistent browser; actual email sending remains unverified. Anthropic image input, conversation branches and automatic crash replay remain unimplemented. Local HTTP vision payloads have loopback protocol tests; real local vision inference remains unverified. Shell execution is macOS-only until equivalent Windows/Linux sandboxing exists.
 
 - [Architecture and security boundaries](docs/ARCHITECTURE.md)
 - [Remote PC setup](docs/REMOTE-MODELS.md)
@@ -142,3 +142,7 @@ After building, quit LocalBot and keep it closed throughout installation. Run `n
 Installation stages and verifies the copy, preserves the old app as `LocalBot.backup-<id>.app`, promotes the new app, and verifies it again. Failed verification restores the previous app when possible and retains the failed stage for diagnosis. User data is untouched. The app is not automatically launched. Keep the backup until the installed version has been checked; backups consume disk space. A process started concurrently during installation is outside this check's guarantee.
 
 Automatic project routing considers each contact's currently permitted tools and provider capabilities as well as its role. The same tool-availability logic supplies worker execution. Integration authentication and user approvals can still be required; runtime permissions remain enforced for every action. `node scripts/routing-capabilities-smoke.mjs` verifies sole-writer selection through the authenticated Codex subscription in an isolated workspace.
+
+## Connected preview
+
+Windows Ollama/compatible model servers can pair through LocalBot Center. The native iPhone client pairs by QR and uses the hosted encrypted relay across different networks. See [setup](docs/remote/GETTING-STARTED.md) and [verification/limits](docs/remote/IMPLEMENTATION.md). Physical Windows and iPhone installation checks remain pending.

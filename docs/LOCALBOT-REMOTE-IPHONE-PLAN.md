@@ -12,4 +12,4 @@
 
 See [the connected-release implementation record](remote/IMPLEMENTATION.md) for what is implemented, exact verification evidence, the hosted relay and remaining parity gaps.
 
-The first signed iPhone build is a development preview. Interactive terminal parity, background notifications, complete attachment support and physical Windows/iPhone verification must be completed before calling this a full desktop-equivalent release.
+The first signed iPhone build is a development preview. Background notifications, complete attachment support and physical Windows/iPhone verification must be completed before calling this a full desktop-equivalent release.
