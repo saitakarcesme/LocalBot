@@ -193,8 +193,8 @@ test('contact directory paginates public role data and runs without filesystem o
   const calls=f.store.all('SELECT t.* FROM tool_calls t JOIN runs r ON r.id=t.runId WHERE r.taskId=?',task.id);
   assert.equal(calls.length,1);assert.equal(calls[0].name,'list_agents');assert.equal(calls[0].status,'completed');
   const first=JSON.parse(calls[0].output);assert.equal(first.agents.length,20);assert(first.nextAfter);
-  const second=f.store.agentDirectory(task.id,first.nextAfter);assert.equal(second.agents.length,7);assert.equal(second.nextAfter,null);
-  const all=[...first.agents,...second.agents];assert.equal(new Set(all.map(a=>a.id)).size,27);
+  const second=f.store.agentDirectory(task.id,first.nextAfter);assert.equal(second.agents.length,8);assert.equal(second.nextAfter,null);
+  const all=[...first.agents,...second.agents];assert.equal(new Set(all.map(a=>a.id)).size,28);
   assert.deepEqual(all.filter(a=>a.inConversation).map(a=>a.id),['researcher']);
   const data=JSON.stringify(all);assert(!data.includes('PRIVATE_MEMORY'));assert(!data.includes('PRIVATE_SYSTEM_PROMPT'));assert(!data.includes(contact.workspace));
   assert(all.every(a=>Object.keys(a).sort().join(',')==='id,inConversation,name,permissions,role'));

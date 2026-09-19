@@ -145,4 +145,4 @@ Automatic project routing considers each contact's currently permitted tools and
 
 ## Connected preview
 
-Windows Ollama/compatible model servers can pair through LocalBot Center. The native iPhone client pairs by QR and uses the hosted encrypted relay across different networks. See [setup](docs/remote/GETTING-STARTED.md) and [verification/limits](docs/remote/IMPLEMENTATION.md). Physical Windows and iPhone installation checks remain pending.
+Windows Ollama/compatible model servers can pair through LocalBot Center. The native iPhone client pairs by QR and uses the hosted encrypted relay across different networks. See [setup](remote/GETTING-STARTED.md) and [verification/limits](remote/IMPLEMENTATION.md). Physical iPhone installation and launch have been verified; physical Windows validation remains pending.
