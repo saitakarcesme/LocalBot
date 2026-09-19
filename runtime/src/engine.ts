@@ -1,3 +1,4 @@
+import { startingMessage, stepBudgetNotice } from "./task-progress.js";
 import { readDocument } from "./document-reader.js";
 import { personalContext, localPersonalProvider, queuePhoneAction, phoneActions } from "./personal.js";
 import { browserBridge } from "./browser-bridge.js";
@@ -399,6 +400,7 @@ export class Engine {
           now(),
         );
         this.store.react(task.messageId, agentId, "👀");
+        this.store.addMessage(c.id, "assistant", startingMessage(agent.role), { taskId, runId, agentId });
         this.changed();
         const memoryBudget = Math.min(6000, Math.floor(config.contextLength / 2));
         let sharedNotes = "";
@@ -476,6 +478,7 @@ export class Engine {
         const maxSteps = agentStepLimit(agent.maxSteps);
         for (let step = 0; step < maxSteps; step++) {
           signal.throwIfAborted();
+          if (maxSteps - step <= 3) messages.push({ role: "user", content: stepBudgetNotice(maxSteps - step) });
           this.store.exec(
             "UPDATE runs SET checkpoint=?,updatedAt=? WHERE id=?",
             JSON.stringify(messages),
@@ -769,7 +772,7 @@ export class Engine {
         }
         if (!ended)
           throw new Error(
-            `Reached this contact's ${maxSteps}-step limit. Completed actions are preserved. Review Activity, adjust the contact's task step limit if needed, and send a follow-up to continue.`,
+            `Paused at the ${maxSteps}-step limit after ${toolCount} tool calls. Saved results are in Activity. Send a focused follow-up to continue, or change the limit in Contact details.`,
           );
         this.store.exec(
           "UPDATE runs SET status=?,updatedAt=? WHERE id=?",
