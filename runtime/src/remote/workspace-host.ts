@@ -161,7 +161,7 @@ export class WorkspaceHost {
       )
         await this.start();
     } catch (e) {
-      this.error = String(e);
+      if ((e as NodeJS.ErrnoException).code !== "ENOENT") this.error = String(e);
     }
   }
   stop() {

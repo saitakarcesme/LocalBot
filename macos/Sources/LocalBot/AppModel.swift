@@ -43,6 +43,8 @@ enum Keychain {
 }
 @MainActor final class AppModel: ObservableObject {
   @Published var profile = UserProfile()
+  @Published var isFullscreen = false
+  @Published var sidebarVisibility: NavigationSplitViewVisibility = .all
   let persistsSelection: Bool
   private static let openModels = NSHashTable<AppModel>.weakObjects()
   init(persistsSelection: Bool = true) {

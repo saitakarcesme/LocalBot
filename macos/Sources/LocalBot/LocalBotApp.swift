@@ -98,8 +98,11 @@ struct MainView: View {
   @FocusState var searchFocused: Bool
   @State private var collapsedProjects = Set(UserDefaults.standard.stringArray(forKey: "collapsedProjects") ?? [])
   var body: some View {
-    NavigationSplitView {
+    NavigationSplitView(columnVisibility: $model.sidebarVisibility) {
       VStack(spacing: 0) {
+        if model.isFullscreen {
+          HStack { Spacer(); FullscreenNavigationControls() }.frame(height: 44).padding(.horizontal, 14)
+        }
         HStack(spacing: 6) {
           Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
           TextField("Search", text: $model.search).textFieldStyle(.plain).focused($searchFocused)
@@ -204,6 +207,9 @@ struct MainView: View {
           description: Text("Choose a contact to begin."))
       }
     }
+    .padding(.top, model.isFullscreen ? 8 : 0)
+    .onReceive(NotificationCenter.default.publisher(for: NSWindow.didEnterFullScreenNotification)) { _ in model.isFullscreen = true }
+    .onReceive(NotificationCenter.default.publisher(for: NSWindow.didExitFullScreenNotification)) { _ in model.isFullscreen = false }
     .overlay {
       if !model.hasLoaded {
         VStack(spacing: 18) {
@@ -419,7 +425,7 @@ struct ConversationView: View {
         .modifier(PanelGlass())
         .clipShape(RoundedRectangle(cornerRadius: 22))
 
-        .padding(.top, 8).padding(.trailing, 10).padding(.bottom, 10)
+        .padding(.top, model.isFullscreen ? 0 : 8).padding(.trailing, 10).padding(.bottom, 10)
         .ignoresSafeArea(.container, edges: .top)
         .overlay(alignment: .leading) {
           PanelResizeHandle { delta in panelWidth = max(280, min(900, panelWidth - delta)) }.frame(width: 8)
@@ -440,10 +446,20 @@ struct ConversationView: View {
     }
     .ignoresSafeArea(.container, edges: .top)
     .background(Color.clear)
+    .overlay(alignment: .top) {
+      if model.isFullscreen && !isSideChat {
+        HStack(spacing: 14) {
+          if model.sidebarVisibility == .detailOnly { FullscreenNavigationControls() }
+          Menu { ForEach(members) { a in Button(a.name) { model.editingAgent = a } } } label: { Text(conversation.title).font(.headline).lineLimit(1).padding(.horizontal, 10) }.menuStyle(.borderlessButton).frame(maxWidth: 380)
+          Spacer(minLength: 12)
+          RightPanelControls().padding(.horizontal, 12)
+        }.padding(.horizontal, 14).frame(height: 44)
+      }
+    }
     .navigationTitle("")
     .toolbarBackground(.hidden, for: .windowToolbar)
     .toolbar {
-      if !isSideChat {
+      if !isSideChat && !model.isFullscreen {
       ToolbarItem(placement: .navigation) {
         Menu {
           ForEach(members) { a in Button("\(a.name) · \(a.role)") { model.editingAgent = a } }
@@ -821,7 +837,7 @@ struct TransparentWindowChrome: NSViewRepresentable {
       window.styleMask.insert(.fullSizeContentView)
       window.titlebarAppearsTransparent = true
       window.toolbarStyle = .unified
-      window.toolbar?.isVisible = true
+      window.toolbar?.isVisible = !window.styleMask.contains(.fullScreen)
       if window.styleMask.contains(.fullScreen), NSApp.presentationOptions.contains(.autoHideToolbar) {
         NSApp.presentationOptions.remove(.autoHideToolbar)
       }
