@@ -97,6 +97,8 @@ struct MobileChat: View {
   @State private var activity = false
   @State private var browser: URL?
   @State private var agent: String?
+  @State private var followsOutput = true
+  private var draftKey: String { "draft." + (store.selected ?? "new." + (project?.id ?? "recent")) }
   private var running: AgentTask? { store.snapshot?.tasks.first { $0.conversationId == store.selected && $0.active } }
   var body: some View {
     ScrollViewReader { proxy in
@@ -112,18 +114,19 @@ struct MobileChat: View {
               HStack { Button("Deny", role: .destructive) { Task { await store.action("/approvals", body:["id":approval.id,"allow":false]) } }; Spacer(); Button("Allow once") { Task { await store.action("/approvals", body:["id":approval.id,"allow":true]) } } }.buttonStyle(.bordered)
             }.padding().background(.thinMaterial, in: RoundedRectangle(cornerRadius: 20))
           }
-          Color.clear.frame(height: 1).id("bottom")
+          Color.clear.frame(height: 1).id("bottom").onAppear { followsOutput = true }.onDisappear { followsOutput = false }
         }.padding(16)
       }.defaultScrollAnchor(.bottom)
-        .onChange(of: store.messages.last?.id) { _, _ in withAnimation(.easeOut(duration: 0.2)) { proxy.scrollTo("bottom",anchor: .bottom) } }
+        .onChange(of: store.messages.last?.id) { _, _ in guard followsOutput else { return }; withAnimation(.easeOut(duration: 0.2)) { proxy.scrollTo("bottom",anchor: .bottom) } }
         .safeAreaInset(edge: .bottom) { composer }
         .navigationTitle(store.snapshot?.conversations.first { $0.id == store.selected }?.title ?? project?.name ?? "New conversation")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .topBarTrailing) { Button { activity = true } label: { Image(systemName: "waveform.path") }.accessibilityLabel("Activity") } }
-        .task(id: store.selected) { await store.refresh() }
+        .task(id: store.selected) { if draft.isEmpty { draft = UserDefaults.standard.string(forKey: draftKey) ?? "" }; await store.refresh() }
+        .onChange(of: draft) { _, value in UserDefaults.standard.set(value,forKey: draftKey) }
         .sheet(isPresented: $activity) { ActivityView().environmentObject(store) }
         .sheet(item: Binding(get: { browser.map(BrowserLink.init) },set: { browser = $0?.url })) { link in MobileBrowser(url: link.url).ignoresSafeArea() }
-        .environment(\.openURL, OpenURLAction { url in browser = url; return .handled })
+        .environment(\.openURL, OpenURLAction { url in guard ["https","http"].contains(url.scheme ?? "") else { return .discarded }; browser = url; return .handled })
     }
   }
   private var composer: some View {

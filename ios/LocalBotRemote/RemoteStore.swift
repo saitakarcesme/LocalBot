@@ -12,6 +12,9 @@ import Security
   @Published var connected = false
   private var client: RemoteClient?
   private var refreshing = false
+  private var loadedConversation: String?
+  private var loadedRevision: Int?
+  private var loadedInstance: String?
   init() {
     if let data = PhoneKeychain.read(), let link = try? JSONDecoder().decode(PairingLink.self, from: data) {
       client = RemoteClient(link: link); paired = true
@@ -31,16 +34,20 @@ import Security
   func disconnect() { PhoneKeychain.clear(); client = nil; paired = false; connected = false; snapshot = nil; messages = []; activity = []; selected = nil }
   func refresh() async {
     guard let client, !refreshing else { return }
+    let generation = client
     refreshing = true
     defer { refreshing = false }
     do {
       let state = try JSONDecoder().decode(Snapshot.self, from: await client.api("/snapshot"))
-      snapshot = state; connected = true; error = nil
-      if let id = selected {
+      guard self.client === generation else { return }
+      let changed = snapshot?.revision != state.revision || snapshot?.instanceId != state.instanceId
+      if changed { snapshot = state }
+      connected = true; error = nil
+      if let id = selected, loadedConversation != id || loadedRevision != state.revision || loadedInstance != state.instanceId {
         let query = id.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? id
         let items = try JSONDecoder().decode([ChatMessage].self, from: await client.api("/messages?conversationId=" + query))
         let events = try JSONDecoder().decode([Activity].self, from: await client.api("/activity?conversationId=" + query))
-        if selected == id { messages = items; activity = events }
+        if selected == id { if messages != items { messages = items }; if activity != events { activity = events }; loadedConversation = id; loadedRevision = state.revision; loadedInstance = state.instanceId }
       }
     } catch { if !Task.isCancelled { connected = false; self.error = error.localizedDescription } }
   }
@@ -56,7 +63,13 @@ import Security
         selected = conversation.id
       }
       guard let selected else { return false }
-      _ = try await client.api("/messages", body: ["conversationId":selected,"content":text,"requestId":UUID().uuidString])
+      let requestKey = "pending-send." + selected
+      let signature = Data(text.utf8).base64EncodedString()
+      let saved = UserDefaults.standard.stringArray(forKey: requestKey)
+      let requestID = saved?.first == signature ? saved!.last! : UUID().uuidString
+      UserDefaults.standard.set([signature, requestID], forKey: requestKey)
+      _ = try await client.api("/messages", body: ["conversationId":selected,"content":text,"requestId":requestID])
+      UserDefaults.standard.removeObject(forKey: requestKey)
       await refresh(); return true
     } catch { self.error = error.localizedDescription; return false }
   }
