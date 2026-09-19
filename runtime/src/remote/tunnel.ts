@@ -1,9 +1,11 @@
 import { spawn, type ChildProcess } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, writeFileSync, mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 export class PreviewTunnel {
   private child?: ChildProcess;
   private logTail = "";
+  private configDirectory?: string;
   get diagnostic() {
     return this.logTail
       .split("\n")
@@ -24,10 +26,13 @@ export class PreviewTunnel {
       throw Error(
         "The connection helper is missing. Install the complete LocalBot build.",
       );
+    this.configDirectory = mkdtempSync(join(tmpdir(), "localbot-tunnel-"));
+    const config = join(this.configDirectory, "config.yml");
+    writeFileSync(config, "{}\n", {mode: 0o600});
     return new Promise((resolve, reject) => {
       const child = spawn(
         executable,
-        ["tunnel", "--no-autoupdate", "--url", localURL, "--protocol", "http2"],
+        ["tunnel", "--config", config, "--no-autoupdate", "--url", localURL, "--protocol", "http2"],
         { stdio: ["ignore", "pipe", "pipe"], windowsHide: true },
       );
       this.child = child;
@@ -80,5 +85,6 @@ export class PreviewTunnel {
   stop() {
     this.child?.kill();
     this.child = undefined;
+    if (this.configDirectory) { rmSync(this.configDirectory, {recursive:true,force:true}); this.configDirectory = undefined; }
   }
 }
