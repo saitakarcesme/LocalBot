@@ -121,8 +121,8 @@ struct PhoneTerminalSurface: UIViewRepresentable {
   final class Coordinator: NSObject, TerminalViewDelegate {
     let session: PhoneTerminalSession
     init(_ session: PhoneTerminalSession) { self.session = session }
-    func send(source: TerminalView, data: ArraySlice<UInt8>) { session.input(Data(data)) }
-    func sizeChanged(source: TerminalView, newCols: Int, newRows: Int) { session.resize(cols:newCols,rows:newRows) }
+    func send(source: TerminalView, data: ArraySlice<UInt8>) { let bytes = Data(data); Task { @MainActor in session.input(bytes) } }
+    func sizeChanged(source: TerminalView, newCols: Int, newRows: Int) { Task { @MainActor in session.resize(cols:newCols,rows:newRows) } }
     func setTerminalTitle(source: TerminalView, title: String) {}
     func hostCurrentDirectoryUpdate(source: TerminalView, directory: String?) {}
     func scrolled(source: TerminalView, position: Double) {}
