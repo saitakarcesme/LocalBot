@@ -94,3 +94,14 @@ This pass does not send a real message, connect a new email account, or claim en
 - [Run a shortcut using a URL](https://support.apple.com/guide/shortcuts/apd624386f42/ios)
 - [Mail composer](https://developer.apple.com/documentation/messageui/mfmailcomposeviewcontroller)
 - [Calendar access and system editors](https://developer.apple.com/documentation/technotes/tn3152-migrating-to-the-latest-calendar-access-levels)
+
+## Verification completed on September 19, 2026
+
+- 159 runtime tests passed, including stale context writes, local-provider boundaries, phone ownership, expiration, idempotent acknowledgments, invalid inputs and complete tool-turn context trimming.
+- Native PDF fixtures passed selectable text, scanned-page Vision OCR, pagination and invalid page-range checks.
+- The actual Windows Qwen 3.8 27B Q8 model used `read_personal_context`, read an attached two-page PDF (including its scanned page), and queued an HTTPS phone action. Its answer reproduced both expected codes and correctly reported the action as awaiting review.
+- Mac signed bundle verified and installed; the Personal context screen was visually checked. The signed iPhone Release build was installed and launched on the paired iPhone 15 Pro.
+- Email Send, Calendar Save and installed Shortcut execution were not exercised on the physical phone. No real email was sent. The queued example.com link remains available for the user to review.
+- Local-provider context budgeting now includes tool definitions, retains complete tool-call/result groups and explicitly rejects a window too small for instructions and tools. New local configurations default to 16K; existing provider choices are preserved. This is conservative character-based budgeting, not exact tokenization.
+
+These checks establish the specific flows above. They are not a benchmark showing parity with Codex, a full regression of every integration, or a measured iPhone frame-time test.

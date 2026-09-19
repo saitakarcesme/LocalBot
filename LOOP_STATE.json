@@ -337,5 +337,25 @@
       "no sustained throughput or phone frame-time benchmark",
       "keep Center and Ollama and Mac runtime running"
     ]
+  },
+  "personal_agent": {
+    "status": "implemented_installed_verified_with_documented_limits",
+    "runtime_tests": 159,
+    "built_in_tools": 47,
+    "mac_source": "44b8b70",
+    "physical_iphone": "signed_build_installed_and_launched",
+    "live_qwen": [
+      "personal context retrieval",
+      "PDF text and scanned OCR",
+      "phone action queued awaiting review"
+    ],
+    "guide": "docs/PERSONAL-AGENT-AUDIT.md",
+    "remaining": [
+      "physical phone Mail/Calendar/Shortcut execution verification",
+      "dedicated email connector and account setup",
+      "unattended task resume/scheduling",
+      "local image/video generation service",
+      "scored Codex-quality benchmark"
+    ]
   }
 }
