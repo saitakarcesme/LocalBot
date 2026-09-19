@@ -20,7 +20,7 @@ if [ -f "$APP/Contents/Resources/SwiftTerm-LICENSE" ]; then chmod u+w "$APP/Cont
 cp "$SWIFT_BUILD_DIR/checkouts/SwiftTerm/LICENSE" "$APP/Contents/Resources/SwiftTerm-LICENSE"
 chmod u+w "$APP/Contents/Resources/SwiftTerm-LICENSE"
 cp macos/Sources/LocalBot/Resources/LocalBotMark.png "$APP/Contents/Resources/LocalBotMark.png"
-cp runtime/dist/*.js "$APP/Contents/Resources/runtime/"
+cp -R runtime/dist/. "$APP/Contents/Resources/runtime/"
 NODE_VERSION=22.22.2
 NODE_ARCH="$(uname -m)"
 if [ "$NODE_ARCH" = x86_64 ]; then NODE_ARCH=x64; fi
