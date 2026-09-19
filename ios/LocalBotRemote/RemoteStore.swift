@@ -86,6 +86,9 @@ import Security
   func read(_ path: String) async throws -> Data {
     guard let client else { throw RemoteError("Connect LocalBot first.") }; return try await client.api(path)
   }
+  func personalWrite(_ path: String, body: [String:Any]) async throws -> Data {
+    guard let client else { throw RemoteError("Connect LocalBot first.") }; return try await client.api(path, body: body)
+  }
   func saveProfile(_ profile: UserProfile) async throws {
     guard let client else { throw RemoteError("Connect LocalBot first.") }
     _ = try await client.api("/profile", body: ["name":profile.name,"photo":profile.photo ?? ""]); await refresh()

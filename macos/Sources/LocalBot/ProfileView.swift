@@ -30,6 +30,8 @@ struct ProfileEditor: View {
   var settings: (() -> Void)? = nil
   var loadModels: (() async throws -> Data)? = nil
   var selectModel: ((ModelOption) async throws -> Void)? = nil
+  var personal: (() -> AnyView)? = nil
+  @State private var showPersonal = false
   @State private var usage: UsageSummary?
   @State private var currentModel: ModelOption?
   @State private var error: String?
@@ -56,6 +58,7 @@ struct ProfileEditor: View {
       if let loadModels, let selectModel {
         HStack { VStack(alignment: .leading, spacing: 5) { Text("Model").font(.caption).foregroundStyle(.secondary); Text(currentModel?.model ?? "Agent defaults").font(.callout).lineLimit(2) }; Spacer(); ModelSelector(load: loadModels, select: { option in try await selectModel(option); currentModel = option }) }.padding(16).background(.thinMaterial, in: RoundedRectangle(cornerRadius: 20))
       }
+      if personal != nil { Button { showPersonal = true } label: { Label("Personal workspace", systemImage: "person.text.rectangle").frame(maxWidth: .infinity, alignment: .leading).padding(14).background(.thinMaterial, in: RoundedRectangle(cornerRadius: 18)) }.buttonStyle(.plain) }
       Divider()
       Text("Token usage").font(.headline)
       if let usage {
@@ -78,6 +81,7 @@ struct ProfileEditor: View {
     }.padding(24) }
       .frame(minWidth: 300, idealWidth: 420)
       .task { await refresh(); if let loadModels { currentModel = try? JSONDecoder().decode(ModelCatalog.self, from: await loadModels()).selected } }
+      .sheet(isPresented: $showPersonal) { if let personal { personal() } }
       .fileImporter(isPresented: $pickFile, allowedContentTypes: [.jpeg, .png]) { result in do { let url = try result.get(); let access = url.startAccessingSecurityScopedResource(); defer { if access { url.stopAccessingSecurityScopedResource() } }; try setPhoto(Data(contentsOf: url)) } catch { self.error = error.localizedDescription } }
   }
   private func refresh() async { do { usage = try JSONDecoder().decode(UsageSummary.self, from: await loadUsage()); error = nil } catch { self.error = error.localizedDescription; usage = UsageSummary() } }
