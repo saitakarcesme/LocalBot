@@ -109,6 +109,9 @@ enum Keychain {
       }
     }
   }
+  @Published var workspaceProviderId: String?
+  @Published var centerConnections: [Provider] = []
+  private var restoredWorkspace = false
   @Published var connected = false
   @Published var hasLoaded = false
   @Published var error: String?
@@ -141,7 +144,7 @@ enum Keychain {
       await connect()
       while !Task.isCancelled {
         await refresh()
-        if persistsSelection && connected { await browserAutomation.poll(self) }
+        if persistsSelection && connected && workspaceProviderId == nil { await browserAutomation.poll(self) }
         try? await Task.sleep(for: .seconds(connected ? 1 : 3))
         if !connected { await connect() }
       }
@@ -207,7 +210,12 @@ enum Keychain {
     }
   }
   func request(_ path: String, body: [String: Any]? = nil) async throws -> Data {
-    guard let c = connection, let url = URL(string: c.url + path) else {
+    var destination = path
+    if let host = workspaceProviderId, path != "/health", path != "/credentials", !path.hasPrefix("/workspace-host/") {
+      var parts = URLComponents();parts.path = "/workspace-host/api";parts.queryItems = [URLQueryItem(name: "providerId", value: host), URLQueryItem(name: "path", value: path)]
+      destination = parts.string ?? path
+    }
+    guard let c = connection, let url = URL(string: c.url + destination) else {
       throw URLError(.cannotConnectToHost)
     }
     var req = URLRequest(url: url)
@@ -226,6 +234,15 @@ enum Keychain {
       throw NSError(domain: "LocalBot", code: 2, userInfo: [NSLocalizedDescriptionKey: detail])
     }
     return data
+  }
+  func selectWorkspaceHost(_ id: String?) async throws {
+    if let id {
+      var parts=URLComponents();parts.path="/workspace-host/api";parts.queryItems=[URLQueryItem(name:"providerId",value:id),URLQueryItem(name:"path",value:"/snapshot")]
+      _ = try await request(parts.string!)
+    }
+    workspaceProviderId = id; restoredWorkspace = true
+    if let id { UserDefaults.standard.set(id,forKey:"workspaceProviderId") } else { UserDefaults.standard.removeObject(forKey:"workspaceProviderId") }
+    selectedId=nil;messages=[];activity=[];snapshotCursor.reset();await refresh()
   }
   func refresh() async {
     guard connection != nil else { return }
@@ -252,7 +269,8 @@ enum Keychain {
       if conversations != (s.conversations) { conversations = s.conversations }
       if tasks != (s.tasks) { tasks = s.tasks }
       if approvals != (s.approvals) { approvals = s.approvals }
-      if first {
+      if first && workspaceProviderId == nil {
+        centerConnections = providers.filter { $0.transport == "center" }
         for i in integrations {
           if let secret = Keychain.read("mcp:" + i.id + "@" + i.endpoint) {
             _ = try? await request("/integrations/credentials", body: ["id": i.id, "secret": secret])
@@ -262,6 +280,12 @@ enum Keychain {
           if let secret = Keychain.read(p.id + "@" + p.endpoint) {
             _ = try? await request("/credentials", body: ["providerId": p.id, "secret": secret])
           }
+        }
+      }
+      if !restoredWorkspace && workspaceProviderId == nil {
+        restoredWorkspace = true
+        if let saved = UserDefaults.standard.string(forKey: "workspaceProviderId"), centerConnections.contains(where: { $0.id == saved }) {
+          workspaceProviderId = saved;snapshotCursor.reset();await refresh();return
         }
       }
       if first, persistsSelection, !creatingConversation {

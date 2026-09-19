@@ -166,6 +166,14 @@ const server = createServer(async (req, res) => {
     const u = new URL(req.url ?? "/", "http://localhost"),
       p = u.pathname,
       m = req.method;
+    if (p === "/workspace-host/api") {
+      if(req.headers["x-localbot-remote"] === "true") throw Error("Use a direct workspace pairing on your phone.");
+      const config=store.provider(String(u.searchParams.get("providerId")));const credential=engine.secrets.get(config.id);
+      if(config.transport!=="center"||!credential)throw Error("Unlock the model PC connection first.");
+      const link=parseLink(credential);if(link.kind!=="center"||link.url!==new URL(config.endpoint).origin)throw Error("Workspace connection does not match this PC.");
+      const request={operation:"workspace_api",path:String(u.searchParams.get("path")),method:m,body:m==="POST"?await body(req):undefined};
+      json(res,200,await invoke(link,request,AbortSignal.timeout(180000)));return;
+    }
     if (m === "GET" && p === "/remote/status") { json(res,200,remoteHost.status()); return; }
     if (m === "POST" && p === "/remote/start") { const status=await remoteHost.start();await fs.writeFile(join(dir,"remote-enabled.json"),"true",{mode:0o600});json(res,200,status); return; }
     if (m === "POST" && p === "/remote/stop") { await fs.writeFile(join(dir,"remote-enabled.json"),"false",{mode:0o600});await remoteHost.stop(); json(res,200,remoteHost.status()); return; }
