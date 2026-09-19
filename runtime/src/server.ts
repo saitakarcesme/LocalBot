@@ -1,3 +1,4 @@
+import { browserBridge } from "./browser-bridge.js";
 import { RemoteHost } from "./remote/host.js";
 import { claim, invoke, parseLink, encodeLink } from "./remote/protocol.js";
 import { defaultProjectFolder } from "./project-folder.js";
@@ -159,6 +160,8 @@ const server = createServer(async (req, res) => {
     if (m === "POST" && p === "/remote/stop") { await remoteHost.stop(); json(res,200,remoteHost.status()); return; }
     if (m === "POST" && p === "/remote/pair") { json(res,200,await remoteHost.pair()); return; }
     if (m === "POST" && p === "/remote/revoke") { json(res,200,await remoteHost.revoke(String((await body(req)).id))); return; }
+    if (m === "GET" && p === "/browser/poll") { json(res,200,{action:browserBridge.poll()}); return; }
+    if (m === "POST" && p === "/browser/result") { const b=await body(req); json(res,200,{accepted:browserBridge.complete(b.id,b.result,b.error)}); return; }
     if (m === "GET" && p === "/health") {
       json(res, 200, { ok: true, version: "0.2.0", pid: process.pid });
       return;

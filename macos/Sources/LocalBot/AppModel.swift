@@ -64,6 +64,7 @@ enum Keychain {
     } catch { /* Retry unused drafts on the next launch if the runtime is unavailable. */ }
   }
   let workspace = WorkspaceState()
+  let browserAutomation = BrowserAutomation()
   var browserHandler: ((URL) -> Void)?
   @Published var rightPanel: RightPanel?
   var showActivity: Bool {
@@ -139,6 +140,7 @@ enum Keychain {
       await connect()
       while !Task.isCancelled {
         await refresh()
+        if persistsSelection && connected { await browserAutomation.poll(self) }
         try? await Task.sleep(for: .seconds(connected ? 1 : 3))
         if !connected { await connect() }
       }

@@ -1570,6 +1570,11 @@
     }
   ],
   "localbotBuiltins": [
+    "browser_open",
+    "browser_snapshot",
+    "browser_click",
+    "browser_type",
+    "browser_scroll",
     "get_usage_limits",
     "list_conversations",
     "rename_conversation",

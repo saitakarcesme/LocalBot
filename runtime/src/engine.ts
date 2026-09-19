@@ -1,3 +1,4 @@
+import { browserBridge } from "./browser-bridge.js";
 import { WorkspaceLocks } from "./workspace-lock.js";
 import { conversationTool } from "./conversation-tools.js";
 import { isDeepStrictEqual } from "node:util";
@@ -38,6 +39,7 @@ export class Engine {
     if (!runConfig && agent.model) config.model = agent.model;
     const model = this.makeProvider(config, this.secrets.get(config.id));
     return definitions.filter(t => allowed(agent, t.function.name)
+      && (!t.function.name.startsWith("browser_") || browserBridge.available)
       && (t.function.name !== "get_usage_limits" || !!model.usage)
       && (t.function.name !== "web_search" || !!model.search)
       && (t.function.name !== "view_image" || model.capabilities().images));
