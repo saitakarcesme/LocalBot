@@ -20,7 +20,7 @@ struct RemoteSettingsView: View {
           perform(status?.enabled == true ? "/remote/stop" : "/remote/start")
         }.disabled(busy)
       }
-      Text("Scan a pairing code in LocalBot Remote on your iPhone. Your phone and Mac can use different networks. Keep this Mac awake and LocalBot open.")
+      Text("Scan a pairing code in LocalBot Remote on your iPhone. Paired phones can read chats, edit workspace files, approve actions, and run terminals on this Mac. Different networks are supported. Keep this Mac awake and LocalBot open.")
         .font(.caption).foregroundStyle(.secondary)
       if status?.enabled == true {
         if status?.preview == true {

@@ -82,7 +82,7 @@ struct ConversationsView: View {
         if conversation.projectId != nil { HStack(spacing: -8) { ForEach(conversation.members.prefix(3), id: \.self) { id in
           LocalBotMascot(state: .success, color: palette(store.snapshot?.agents.first { $0.id == id }?.color)).frame(width: 25,height: 25)
         } } }
-        Text(conversation.title).lineLimit(1).foregroundStyle(.primary)
+        Text(conversation.title).lineLimit(1).foregroundStyle(Color.primary)
       }.padding(.vertical, 3)
     }
   }

@@ -26,7 +26,7 @@ Some DNS resolvers returned NXDOMAIN for Quick Tunnel names. The relay resolves 
 
 - Relay envelopes: 3.5 MB request, 4 MB response; host results may be larger locally. Image-heavy requests need lower payloads or a larger-capacity deployment.
 - Center model generation uses bounded jobs and polled encrypted chunks, avoiding a single long public request. Model output is limited to 8 MB and jobs to 15 minutes; the Mac's configured provider timeout still applies. Two concurrent Center generations maximum.
-- The mobile terminal currently executes sandboxed commands with a 60-second limit and no network. It is **not an interactive PTY**. Desktop terminal parity remains incomplete.
+- The mobile terminal is an interactive macOS PTY with SwiftTerm rendering, keyboard input, resizing, Ctrl-C and bounded output. It runs as the Mac user, like the desktop terminal. Sessions close on view dismissal, device revocation, host shutdown or fifteen minutes without requests. Background iOS suspension can interrupt transport.
 - iPhone browser links open in an embedded native browser; Mac cookies/tabs are not mirrored.
 - APNs/background completion notifications, full mobile image attachment workflow, and large-file previews remain unimplemented.
 - Browser DOM automation does not cover cross-origin iframe controls, file pickers, CAPTCHA, OS dialogs or password entry. Actual email sending has not been tested or performed.
@@ -40,6 +40,6 @@ Some DNS resolvers returned NXDOMAIN for Quick Tunnel names. The relay resolves 
 - Relay identity tests reject modified signatures, expired records and non-tunnel destinations.
 - Mac build passed after browser bridge and settings changes.
 - iPhone simulator build passed; iPhone device build signed with the available Apple development account. Connected iPhone discovery reports the phone unavailable.
-- Simulator first boot required over four minutes of migration. Only one simulator was started and it was shut down to free memory; no claim of completed interactive UI verification.
+- Simulator first boot required over four minutes of migration. Only one simulator ran. Signed simulator UI passed public-relay pairing, conversation loading, message round trip, file reading/editing and disconnect using an isolated fixture. Saved file content was independently checked on disk. The simulator was shut down between builds. Interactive terminal UI is a subsequent addition requiring its own check.
 
 Use `node scripts/test-public-remote.mjs` for local cross-language verification and `LOCALBOT_RELAY_URL=https://relay-five-lake.vercel.app node scripts/test-public-remote.mjs --public` for the isolated public fixture. Neither test accesses real chats or model data.
