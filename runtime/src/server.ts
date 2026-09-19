@@ -1,3 +1,4 @@
+import { RemoteHost } from "./remote/host.js";
 import { claim, invoke, parseLink, encodeLink } from "./remote/protocol.js";
 import { defaultProjectFolder } from "./project-folder.js";
 import { agentStepLimit } from "./run-limits.js";
@@ -130,6 +131,11 @@ function cleanAgent(a: any): Agent {
     integrations: Array.isArray(a.integrations) ? a.integrations.filter((id: unknown) => store.integrations().some(i => i.id === id)).slice(0, 20) : [],
   };
 }
+const remoteHost = new RemoteHost(dir, () => {
+  const address = server.address();
+  if (!address || typeof address === "string") throw Error("Runtime is not ready");
+  return {url: `http://127.0.0.1:${address.port}`, token};
+});
 const server = createServer(async (req, res) => {
   try {
     const host = req.headers.host ?? "";
@@ -148,6 +154,11 @@ const server = createServer(async (req, res) => {
     const u = new URL(req.url ?? "/", "http://localhost"),
       p = u.pathname,
       m = req.method;
+    if (m === "GET" && p === "/remote/status") { json(res,200,remoteHost.status()); return; }
+    if (m === "POST" && p === "/remote/start") { json(res,200,await remoteHost.start()); return; }
+    if (m === "POST" && p === "/remote/stop") { await remoteHost.stop(); json(res,200,remoteHost.status()); return; }
+    if (m === "POST" && p === "/remote/pair") { json(res,200,await remoteHost.pair()); return; }
+    if (m === "POST" && p === "/remote/revoke") { json(res,200,await remoteHost.revoke(String((await body(req)).id))); return; }
     if (m === "GET" && p === "/health") {
       json(res, 200, { ok: true, version: "0.2.0", pid: process.pid });
       return;
@@ -297,7 +308,7 @@ const server = createServer(async (req, res) => {
     if (m === "POST" && p === "/conversations/discard-empty") {
       const b = await body(req);
       if (typeof b.id !== "string") throw new Error("Conversation ID required");
-      const result = store.discardEmptyConversation(b.id);
+      const result = remoteHost.protectedDraft(b.id) ? {deleted:false} : store.discardEmptyConversation(b.id);
       if (result.deleted) change();
       json(res, 200, result); return;
     }
@@ -548,6 +559,7 @@ const heartbeat = setInterval(() => {
 heartbeat.unref();
 for (const sig of ["SIGTERM", "SIGINT"] as const)
   process.on(sig, () => {
+    void remoteHost.stop();
     engine.shutdown();
     server.close();
     void MCPStdioTransport.shutdown().finally(() => setTimeout(() => process.exit(0), 50).unref());

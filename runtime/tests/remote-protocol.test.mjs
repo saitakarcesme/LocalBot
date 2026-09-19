@@ -22,3 +22,12 @@ test('pairing is single-use, encrypted requests execute, revoked devices stop an
   await gateway.revoke(paired.id);await assert.rejects(invoke(paired,{operation:'api'}),/revoked/);
  }finally{await gateway.close();await rm(root,{recursive:true,force:true});}
 });
+
+test('mobile capability cannot forward credential, pairing or arbitrary-origin requests', async () => {
+  const {mobileRoute}=await import('../dist/remote/host.js');
+  assert.deepEqual(mobileRoute({operation:'api',path:'/messages?conversationId=abc'}),{method:'GET',path:'/messages?conversationId=abc'});
+  for(const path of ['/credentials','/providers','/remote/pair','//evil.test/messages','https://evil.test/messages','/messages#fragment','/foo/../credentials']) {
+    assert.throws(()=>mobileRoute({operation:'api',path,method:'POST'}));
+  }
+  assert.throws(()=>mobileRoute({operation:'api',path:'/messages',method:'DELETE'}));
+});
