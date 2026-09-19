@@ -1,3 +1,4 @@
+import { recordTokenUsage } from "./token-usage.js";
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { createInterface } from "node:readline";
 import { existsSync } from "node:fs";
@@ -32,6 +33,7 @@ export class CodexRPC {
           () => this.send({ id: message.id, error: { code: -32601, message: "Request is not permitted by LocalBot" } }),
         );
       } else if (message.method) {
+        if (message.method === "thread/tokenUsage/updated") recordTokenUsage(message.params);
         this.onNotification(message.method, message.params);
       } else {
         const pending = this.pending.get(message.id);

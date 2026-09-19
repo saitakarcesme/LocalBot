@@ -1,3 +1,6 @@
+import { setTokenUsageSink } from "./token-usage.js";
+import { validateProfile } from "./profile.js";
+import { codexUsage } from "./codex-usage.js";
 import { workspaceAction } from "./remote/workspace.js";
 import { browserBridge } from "./browser-bridge.js";
 import { RemoteHost } from "./remote/host.js";
@@ -56,6 +59,8 @@ process.on("exit", () => {
 const store = new Store(dir);
 store.seed(workspace);
 store.recover();
+store.exec("CREATE TABLE IF NOT EXISTS token_usage(thread TEXT PRIMARY KEY, total INTEGER NOT NULL)");
+setTokenUsageSink((thread, total) => store.exec("INSERT INTO token_usage VALUES(?,?) ON CONFLICT(thread) DO UPDATE SET total=MAX(total,excluded.total)", thread, total));
 const tokenPath = join(dir, "runtime-token");
 let token: string;
 try {
@@ -181,8 +186,19 @@ const server = createServer(async (req, res) => {
       return;
     }
     if (m === "GET" && p === "/snapshot") {
-      json(res, 200, { ...store.snapshot(), revision, instanceId });
+      json(res, 200, { ...store.snapshot(), profile: JSON.parse(store.get("SELECT value FROM settings WHERE key='profile'")?.value ?? '{"name":"LocalBot User"}'), revision, instanceId });
       return;
+    }
+    if (m === "POST" && p === "/profile") {
+      const profile = validateProfile(await body(req));
+      store.exec("INSERT INTO settings VALUES('profile',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value", JSON.stringify(profile));
+      change(); json(res, 200, profile); return;
+    }
+    if (m === "GET" && p === "/usage") {
+      const config = store.providers().find(p => p.kind === "codex");
+      const tokens = store.get("SELECT SUM(total) AS total FROM token_usage")?.total ?? null;
+      let limits: any = {}; try { if (config) limits = await codexUsage(config, AbortSignal.timeout(30000)); } catch { limits.notice = "Subscription limits are temporarily unavailable."; }
+      json(res, 200, { ...limits, tokens, tokenNotice: "Provider-reported Codex tokens recorded by LocalBot since this update. Earlier usage and other providers are excluded." }); return;
     }
     if (m === "GET" && p === "/messages") {
       json(

@@ -8,6 +8,7 @@ import { remoteURL, type RPCRequest } from "./protocol.js";
 // Deliberately excludes credentials, provider configuration and pairing administration.
 const reads = new Set([
   "/snapshot",
+  "/usage",
   "/messages",
   "/activity",
   "/artifacts",
@@ -16,6 +17,9 @@ const reads = new Set([
 ]);
 const writes = new Set([
   "/messages",
+  "/profile",
+  "/attachments",
+  "/conversations/discard-empty",
   "/cancel",
   "/approvals",
   "/reactions",
