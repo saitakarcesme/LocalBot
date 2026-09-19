@@ -480,7 +480,8 @@ export class Engine {
           )
           .map((m) => m[1])
           .filter((n) => definitions.some((t) => t.function.name === n));
-        const maxSteps = agentStepLimit(agent.maxSteps);
+        const backgroundResearch = !!(this.store.get("SELECT name FROM sqlite_master WHERE type='table' AND name='research_passes'") && this.store.get("SELECT taskId FROM research_passes WHERE taskId=?", taskId));
+        const maxSteps = backgroundResearch ? Math.min(8, agentStepLimit(agent.maxSteps)) : agentStepLimit(agent.maxSteps);
         for (let step = 0; step < maxSteps; step++) {
           signal.throwIfAborted();
           if (maxSteps - step <= 3) messages.push({ role: "user", content: stepBudgetNotice(maxSteps - step) });
@@ -490,8 +491,9 @@ export class Engine {
             now(),
             runId,
           );
-          const backgroundResearch = this.store.get("SELECT name FROM sqlite_master WHERE type='table' AND name='research_passes'") && this.store.get("SELECT taskId FROM research_passes WHERE taskId=?", taskId);
-          const available = this.availableTools(this.store.agent(agentId), config).filter(t => !backgroundResearch || researchTools.has(t.function.name));
+          const wrappingUp = step === maxSteps - 1;
+          if (wrappingUp) messages.push({role: "user", content: "This is the final synthesis round. No more tools are available. Summarize only observed findings, cite sources already read, identify unresolved questions explicitly, and hand off to the next teammate. Do not claim unverified work is complete."});
+          const available = wrappingUp ? [] : this.availableTools(this.store.agent(agentId), config).filter(t => !backgroundResearch || researchTools.has(t.function.name));
           const thinkingId = randomUUID();
           this.store.exec("INSERT INTO run_events VALUES(?,?,?,?,?,?,?,?)", thinkingId, runId, "thinking", "{}", "running", "Preparing the next step…", now(), now());
           let lastProgress = 0;
@@ -553,6 +555,7 @@ export class Engine {
             this.changed();
           }
           if (!output.calls.length) {
+            if (wrappingUp && !backgroundResearch) { hadErrors = true; runHadErrors = true; }
             ended = true;
             break;
           }
