@@ -102,8 +102,9 @@ enum Keychain {
         hasEarlierMessages = false
         loadingEarlierMessages = false
         activity = []
+        let previousHost = workspaceProviderId
         Task {
-          if let oldValue { await discardUnusedConversation(oldValue) }
+          if let oldValue, previousHost == workspaceProviderId { await discardUnusedConversation(oldValue) }
           await refreshConversation()
         }
       }
@@ -240,6 +241,9 @@ enum Keychain {
       var parts=URLComponents();parts.path="/workspace-host/api";parts.queryItems=[URLQueryItem(name:"providerId",value:id),URLQueryItem(name:"path",value:"/snapshot")]
       _ = try await request(parts.string!)
     }
+    guard !workspace.tabs.contains(where: { $0.hasUnsavedChanges }) else { throw NSError(domain: "LocalBot", code: 1, userInfo: [NSLocalizedDescriptionKey: "Save or close edited files before switching workspace hosts."]) }
+    for tab in workspace.tabs { workspace.close(tab) }
+    selectedId = nil
     workspaceProviderId = id; restoredWorkspace = true
     if let id { UserDefaults.standard.set(id,forKey:"workspaceProviderId") } else { UserDefaults.standard.removeObject(forKey:"workspaceProviderId") }
     selectedId=nil;messages=[];activity=[];snapshotCursor.reset();await refresh()
@@ -269,8 +273,8 @@ enum Keychain {
       if conversations != (s.conversations) { conversations = s.conversations }
       if tasks != (s.tasks) { tasks = s.tasks }
       if approvals != (s.approvals) { approvals = s.approvals }
+      if workspaceProviderId == nil { centerConnections = providers.filter { $0.transport == "center" } }
       if first && workspaceProviderId == nil {
-        centerConnections = providers.filter { $0.transport == "center" }
         for i in integrations {
           if let secret = Keychain.read("mcp:" + i.id + "@" + i.endpoint) {
             _ = try? await request("/integrations/credentials", body: ["id": i.id, "secret": secret])

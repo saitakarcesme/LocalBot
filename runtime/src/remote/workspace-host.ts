@@ -33,6 +33,14 @@ export class WorkspaceHost {
     await fs.mkdir(this.dir, { recursive: true, mode: 0o700 });
     const data = join(this.dir, "workspace-data");
     await fs.mkdir(data, { recursive: true, mode: 0o700 });
+    // Center can restart while its durable workspace is still alive.
+    try {
+      const existing = JSON.parse(await fs.readFile(join(data, "connection.json"), "utf8"));
+      if (/^http:\/\/127\.0\.0\.1:\d+$/.test(existing.url) && typeof existing.token === "string") {
+        const response = await fetch(existing.url + "/snapshot", { headers: { Authorization: "Bearer " + existing.token }, signal: AbortSignal.timeout(1000) });
+        if (response.ok) { this.connection = existing; return; }
+      }
+    } catch { /* A stale descriptor is normal after shutdown. */ }
     const child = spawn(
       process.execPath,
       [join(dirname(fileURLToPath(import.meta.url)), "..", "server.js")],
