@@ -96,7 +96,7 @@ struct ConversationsView: View {
       HStack(spacing: 10) {
         if conversation.projectId != nil { HStack(spacing: -8) { ForEach(conversation.members.prefix(3), id: \.self) { id in
           LocalBotMascot(state: .success, color: palette(store.snapshot?.agents.first { $0.id == id }?.color)).frame(width: 25,height: 25)
-        } }.frame(width: 52, alignment: .leading) }
+        } }.frame(width: 60, alignment: .leading) }
         Text(conversation.title).lineLimit(1).foregroundStyle(Color.primary)
         Spacer(minLength: 0)
         if store.snapshot?.tasks.contains(where: { $0.conversationId == conversation.id && $0.active }) == true { ProgressView().controlSize(.small).accessibilityLabel("Working") }
@@ -205,6 +205,9 @@ struct MobileChat: View {
         if !user, let bot { Text(bot.name).font(.caption).foregroundStyle(.secondary).padding(.leading, 8) }
         Text(.init(message.content)).textSelection(.enabled).padding(14)
           .foregroundStyle(user ? .white : .primary).background(user ? Color.accentColor : Color(uiColor: .secondarySystemBackground),in: RoundedRectangle(cornerRadius: 22))
+        ForEach(message.attachments) { attachment in
+          Label(attachment.name, systemImage: attachment.mime.hasPrefix("image/") ? "photo" : "doc").font(.caption).lineLimit(2).padding(8).background(.thinMaterial, in: RoundedRectangle(cornerRadius: 10))
+        }
         if !user && !events.isEmpty {
           Button { activity = true } label: { Label(events.last?.name.replacingOccurrences(of: "_",with: " ").capitalized ?? "Activity",systemImage: "waveform.path").font(.caption).lineLimit(1).padding(10).frame(maxWidth: .infinity) }.buttonStyle(.plain).background(.thinMaterial,in: RoundedRectangle(cornerRadius: 14)).padding(.horizontal, 12)
         }
