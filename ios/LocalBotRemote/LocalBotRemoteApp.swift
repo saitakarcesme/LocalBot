@@ -189,10 +189,10 @@ struct MobileChat: View {
         Menu {
           Button("Photo library", systemImage: "photo") { pickPhoto = true }
           Button("Choose file", systemImage: "doc") { pickFile = true }
-        } label: { Image(systemName: "plus").font(.title3).frame(width: 30, height: 40) }.disabled(uploading || attachments.count >= 4).accessibilityLabel("Add attachment")
+        } label: { Image(systemName: "plus").font(.system(size: 20)).frame(width: 44, height: 44) }.disabled(uploading || attachments.count >= 4).accessibilityLabel("Add attachment")
         ModelSelector(load: { try await store.read("/models" + (store.selected.map { "?conversationId=" + $0 } ?? "")) }, select: { option in if let id = store.selected { try await store.selectModel(option, conversationId: id) } else { chosenModel = option } })
         TextField("Message", text: $draft, axis: .vertical).lineLimit(1...6).padding(.vertical, 8)
-        Button { if let running { Task { await store.action("/cancel",body:["taskId":running.id]) } } else { let text = draft; let key = draftKey; Task { if await store.send(text,project:project?.id,agent:agent,attachments:attachments,model:chosenModel) { UserDefaults.standard.removeObject(forKey: key); draft = ""; attachments = []; chosenModel = nil } } } } label: { Image(systemName: running == nil ? "arrow.up.circle.fill" : "stop.circle.fill").font(.system(size: 32)).foregroundStyle(running == nil ? Color.accentColor : .orange) }
+        Button { if let running { Task { await store.action("/cancel",body:["taskId":running.id]) } } else { let text = draft; let key = draftKey; Task { if await store.send(text,project:project?.id,agent:agent,attachments:attachments,model:chosenModel) { UserDefaults.standard.removeObject(forKey: key); draft = ""; attachments = []; chosenModel = nil } } } } label: { Image(systemName: running == nil ? "arrow.up.circle.fill" : "stop.circle.fill").font(.system(size: 32)).frame(width: 44, height: 44).foregroundStyle(running == nil ? Color.accentColor : .orange) }
           .disabled(store.busy || uploading || (running == nil && draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && attachments.isEmpty)).accessibilityLabel(running == nil ? "Send message" : "Stop task")
       }.padding(.horizontal, 14).padding(.vertical, 5).modifier(NativeGlass())
     }.padding(.horizontal, 14).padding(.vertical, 8)

@@ -181,7 +181,7 @@ struct MainView: View {
           } label: {
             Image(systemName: "gearshape").font(.system(size: 17))
           }.buttonStyle(.plain).help("Model settings")
-        }.padding(14)
+        }.frame(height: 40).padding(.horizontal, 14).padding(.bottom, 16).padding(.top, 7)
       }
       .navigationSplitViewColumnWidth(min: 250, ideal: 300, max: 380)
       .toolbar {
@@ -204,6 +204,7 @@ struct MainView: View {
           description: Text("Choose a contact to begin."))
       }
     }
+    .padding(.top, 8)
     .overlay {
       if !model.hasLoaded {
         VStack(spacing: 18) {
@@ -419,7 +420,7 @@ struct ConversationView: View {
         .modifier(PanelGlass())
         .clipShape(RoundedRectangle(cornerRadius: 22))
 
-        .padding(.trailing, 10).padding(.bottom, 10).padding(.top, 8)
+        .padding(.trailing, 10).padding(.bottom, 10)
         .ignoresSafeArea(.container, edges: .top)
         .overlay(alignment: .leading) {
           PanelResizeHandle { delta in panelWidth = max(280, min(900, panelWidth - delta)) }.frame(width: 8)
@@ -484,7 +485,7 @@ struct ConversationView: View {
       if let activeAgent { Avatar(agent: activeAgent, size: 32, motion: progress == .approval ? .needsInput : (model.activity.last?.status == "running" && model.activity.last?.name != "thinking" ? .working : .thinking)) }
       switch progress {
       case .typing:
-        TypingDots().accessibilityLabel("\(activeAgent?.name ?? "Agent") is typing")
+        HStack(spacing: 8) { ProgressView().controlSize(.mini); Text(activeRun?.phase ?? "Preparing the next step…").font(.caption).foregroundStyle(.secondary) }
       case .approval:
         Text("Waiting for your approval…").font(.caption).foregroundStyle(.secondary)
       case .queued:
@@ -552,7 +553,7 @@ struct ConversationView: View {
         Button {
           showingAttachments = true
         } label: {
-          Image(systemName: "plus").font(.system(size: 18)).frame(width: 30, height: 32)
+          Image(systemName: "plus").font(.system(size: 18)).frame(width: 32, height: 40)
         }.buttonStyle(.plain).foregroundStyle(.secondary).help("Attach files").disabled(model.attaching)
         .sheet(isPresented: $showingAttachments) {
           AttachmentPicker { urls in attachments += await model.attach(urls: urls) }

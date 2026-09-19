@@ -136,6 +136,7 @@ class HTTPProvider implements ModelProvider {
     messages: Chat[],
     tools: ToolDefinition[],
     signal: AbortSignal,
+    onProgress?: (phase: string, summary?: string) => void,
   ): Promise<Generation> {
     const p = this.p;
     messages = fitContext(messages, tools, p);
@@ -258,6 +259,9 @@ class HTTPProvider implements ModelProvider {
         throw new Error("Malformed model stream");
       }
       if (d.error) throw new Error("Model server reported an inference error.");
+      if (d.message?.thinking || d.choices?.[0]?.delta?.reasoning_content) onProgress?.("Thinking through the next step");
+      else if (d.message?.content || d.choices?.[0]?.delta?.content || d.delta?.text) onProgress?.("Writing a response");
+      else if (d.message?.tool_calls || d.choices?.[0]?.delta?.tool_calls) onProgress?.("Preparing an action");
       if (p.kind === "ollama") {
         content += d.message?.content ?? "";
         for (const t of d.message?.tool_calls ?? []) {

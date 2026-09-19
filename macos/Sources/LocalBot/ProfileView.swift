@@ -140,7 +140,7 @@ struct ModelSelector: View {
   @State private var error: String?
   @State private var busy = false
   var body: some View {
-    Button { presented = true } label: { Image(systemName: "cpu").frame(width: 28, height: 30) }
+    Button { presented = true } label: { Image(systemName: "cpu").font(.system(size: 18)).frame(width: 40, height: 40) }
       .buttonStyle(.plain).foregroundStyle(.secondary).accessibilityLabel("Choose model")
       .sheet(isPresented: $presented) {
         VStack(alignment: .leading, spacing: 16) {
