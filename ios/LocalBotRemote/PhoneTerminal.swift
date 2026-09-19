@@ -10,15 +10,16 @@ struct PhoneTerminal: View {
       HStack {
         Text(terminal.closed ? "Session ended" : "Terminal on your Mac").font(.caption).foregroundStyle(.secondary)
         Spacer()
-        Button("Ctrl-C") { terminal.input(Data([3])) }.disabled(terminal.closed)
+        if terminal.closed { Button("New session") { terminal.restart() } }
+        else { Button("Ctrl-C") { terminal.input(Data([3])) } }
         Button("Keyboard") { terminal.view?.becomeFirstResponder() }
       }.font(.caption).padding(.horizontal)
       if let error = terminal.error {
-        HStack { Text(error).font(.caption).foregroundStyle(.red); Button("Retry") { terminal.error = nil; terminal.flush() } }.padding(.horizontal)
+        HStack { Text(error).font(.caption).foregroundStyle(.red); Button("Retry") { terminal.retry() } }.padding(.horizontal)
       }
       PhoneTerminalSurface(session: terminal).padding(.horizontal, 12).padding(.bottom, 8)
     }
-    .task(id: phase) { guard phase == .active else { return }; await terminal.run(store: store, conversation: store.selected) }
+    .task(id: "\(phase)-\(terminal.attempt)") { guard phase == .active else { return }; await terminal.run(store: store, conversation: store.selected) }
     .onDisappear { terminal.close() }
   }
 }
@@ -26,6 +27,7 @@ struct PhoneTerminal: View {
 @MainActor final class PhoneTerminalSession: ObservableObject {
   @Published var error: String?
   @Published var closed = false
+  @Published var attempt = 0
   weak var view: TerminalView?
   private var store: RemoteStore?
   private var session: String?
@@ -68,6 +70,13 @@ struct PhoneTerminal: View {
         }
       }
     } catch { if !Task.isCancelled { self.error = error.localizedDescription } }
+  }
+  func retry() { error = nil; flush(); attempt += 1 }
+  func restart() {
+    Task {
+      if session != nil { _ = try? await call(["action":"close"]) }
+      session = nil; closed = false; offset = 0; sequence = 0; pending = Data(); retryBatch = nil; error = nil; attempt += 1
+    }
   }
   func input(_ data: Data) {
     guard session != nil, !closed, !disposed else { return }
