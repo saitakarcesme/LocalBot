@@ -17,6 +17,7 @@ struct PhonePersonalView: View {
   @State private var actions: [PhoneAction] = []
   @State private var context = false
   @State private var selected: PhoneAction?
+  @State private var pendingEditor: PhoneAction?
   @State private var mail: PhoneAction?
   @State private var calendar: PhoneAction?
   @State private var busy = false
@@ -41,11 +42,12 @@ struct PhonePersonalView: View {
       }.padding(20) }.navigationTitle("Personal").navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
         .sheet(isPresented: $context) { PersonalContextView(load: { try await store.read("/personal/context") }, save: { try await store.personalWrite("/personal/context", body: $0) }) }
-        .sheet(item: $selected) { action in
+        .sheet(item: $selected, onDismiss: presentEditor) { action in
           NavigationStack { ScrollView { VStack(alignment: .leading, spacing: 18) {
             Label(action.title, systemImage: action.symbol).font(.title2.bold())
             ForEach(action.payload.keys.sorted(), id: \.self) { key in VStack(alignment: .leading, spacing: 6) { Text(key.capitalized).font(.caption).foregroundStyle(.secondary); Text(action.payload[key] ?? "").textSelection(.enabled) } }
             Text(action.kind == "run_shortcut" ? "Opens this installed shortcut. Its own permissions and actions apply." : "Review the exact details before continuing.").font(.caption).foregroundStyle(.secondary)
+            if let error { Text(error).font(.caption).foregroundStyle(.red) }
             HStack { Button("Decline", role: .destructive) { Task { await decline(action) } }; Spacer(); Button("Continue") { Task { await execute(action) } }.buttonStyle(.borderedProminent) }.disabled(busy)
           }.padding(24) }.toolbar { ToolbarItem(placement: .cancellationAction) { Button("Close") { selected = nil } } } }
         }
@@ -53,6 +55,10 @@ struct PhonePersonalView: View {
         .sheet(item: $calendar) { action in CalendarActionComposer(action: action) { status, result in calendar = nil; Task { await finish(action, status, result) } }.interactiveDismissDisabled() }
         .task { while !Task.isCancelled { await refresh(); do { try await Task.sleep(for: .seconds(5)) } catch { return } } }
     }
+  }
+  private func presentEditor() {
+    guard let action = pendingEditor else { return }; pendingEditor = nil
+    if action.kind == "compose_mail" { mail = action } else { calendar = action }
   }
   private func statusLabel(_ status: String) -> String { switch status { case "pending": return "Needs review"; case "claimed": return "In progress"; case "handed_off": return "Opened"; default: return status.capitalized } }
   private func refresh() async {
@@ -74,10 +80,9 @@ struct PhonePersonalView: View {
     do {
       if action.kind == "compose_mail" && !MFMailComposeViewController.canSendMail() { throw RemoteError("Set up an account in Apple Mail first, or ask LocalBot to use its Mac browser.") }
       if action.kind == "create_event", (PhoneAction.date(action.payload["start"]) == nil || PhoneAction.date(action.payload["end"]) == nil) { throw RemoteError("Calendar dates could not be read.") }
-      try await claim(action); selected = nil
-      // Present the system editor after the review sheet has dismissed.
-      if action.kind == "compose_mail" { try? await Task.sleep(for: .milliseconds(350)); mail = action; return }
-      if action.kind == "create_event" { try? await Task.sleep(for: .milliseconds(350)); calendar = action; return }
+      try await claim(action)
+      if action.kind == "compose_mail" || action.kind == "create_event" { pendingEditor = action; selected = nil; return }
+      selected = nil
       var url: URL?
       if action.kind == "run_shortcut" { var parts = URLComponents(); parts.scheme="shortcuts"; parts.host="run-shortcut"; parts.queryItems=[URLQueryItem(name:"name",value:action.payload["name"]),URLQueryItem(name:"input",value:"text"),URLQueryItem(name:"text",value:action.payload["input"] ?? "")]; url=parts.url }
       else if action.kind == "open_url", let candidate=URL(string:action.payload["url"] ?? ""), candidate.scheme == "https" { url=candidate }
