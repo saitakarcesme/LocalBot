@@ -51,6 +51,7 @@ export function provider(p: ProviderConfig, secret?: string): ModelProvider {
   return new HTTPProvider(p, secret);
 }
 class HTTPProvider implements ModelProvider {
+  async usage(signal: AbortSignal) { signal.throwIfAborted(); return { provider: this.p.id, model: this.p.model, rateLimits: null, notice: "This backend does not report subscription limits." }; }
   search(query: string, signal: AbortSignal) { return localSearch(query, signal); }
   constructor(
     private p: ProviderConfig,

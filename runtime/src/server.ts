@@ -226,7 +226,7 @@ const server = createServer(async (req, res) => {
       const tokens = store.get("SELECT SUM(total) AS total FROM token_usage")?.total ?? null;
       let limits: any = {}; try { if (config) limits = await codexUsage(config, AbortSignal.timeout(30000)); } catch { limits.notice = "Subscription limits are temporarily unavailable."; }
       const models = store.all("SELECT COALESCE(m.providerId,'legacy') AS providerId, COALESCE(m.model,'Earlier usage') AS model, SUM(t.total) AS tokens FROM token_usage t LEFT JOIN token_usage_models m ON m.thread=t.thread GROUP BY m.providerId,m.model ORDER BY tokens DESC");
-      json(res, 200, { ...limits, tokens, models, tokenNotice: "Provider-reported Codex tokens recorded by LocalBot since this update. Earlier usage and other providers are excluded." }); return;
+      json(res, 200, { ...limits, tokens, models, tokenNotice: "Recorded provider-reported tokens. Earlier usage may be unattributed." }); return;
     }
     if (m === "GET" && p === "/messages") {
       json(
