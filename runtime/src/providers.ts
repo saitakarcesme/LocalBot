@@ -1,3 +1,4 @@
+import { fitContext } from "./context-window.js";
 import { localSearch } from "./local-search.js";
 import { recordModelUsage } from "./token-usage.js";
 import { invoke, parseLink } from "./remote/protocol.js";
@@ -137,6 +138,7 @@ class HTTPProvider implements ModelProvider {
     signal: AbortSignal,
   ): Promise<Generation> {
     const p = this.p;
+    messages = fitContext(messages, tools, p);
     const usageRequest = randomUUID();
     if (messages.some(m => m.images?.length)) {
       if (!this.capabilities().images) throw new Error("Enable image input for a vision-capable Ollama or compatible model");
