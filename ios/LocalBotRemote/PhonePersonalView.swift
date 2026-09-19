@@ -21,7 +21,7 @@ struct PhonePersonalView: View {
   @State private var calendar: PhoneAction?
   @State private var busy = false
   @State private var error: String?
-  private let outboxKey = "phone-action-results-v1"
+  private var outboxKey: String { store.phoneActionOutboxKey }
   var body: some View {
     NavigationStack {
       ScrollView { VStack(alignment: .leading, spacing: 18) {

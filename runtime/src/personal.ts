@@ -15,7 +15,7 @@ export function validatePhoneAction(kind: string, payload: any) {
   for(const key of Object.keys(payload)) if(!fields[key] || typeof payload[key] !== 'string' || payload[key].length > fields[key]) throw Error('Invalid phone action field: '+key);
   const required:Record<string,string[]>={compose_mail:['to','subject','body'],create_event:['title','start','end'],run_shortcut:['name'],open_url:['url']};
   for(const key of required[kind]) if(typeof payload[key] !== 'string' || !payload[key].trim()) throw Error('Missing '+key);
-  if(kind==='open_url' && new URL(payload.url).protocol !== 'https:') throw Error('Only HTTPS links can be opened.');
+  if(kind==='open_url') { const url=new URL(payload.url); if(url.protocol !== 'https:' || url.username || url.password) throw Error('Only HTTPS links without embedded credentials can be opened.'); }
   if(kind==='compose_mail' && (/[\r\n]/.test(payload.to) || !payload.to.split(',').every((x:string)=>/^[^\s@,]+@[^\s@,]+\.[^\s@,]+$/.test(x.trim())))) throw Error('Enter comma-separated email addresses.');
   if(kind==='create_event' && (!/T.*(Z|[+-]\d\d:\d\d)$/.test(payload.start) || !/T.*(Z|[+-]\d\d:\d\d)$/.test(payload.end) || !Number.isFinite(Date.parse(payload.start)) || !Number.isFinite(Date.parse(payload.end)) || Date.parse(payload.end)<=Date.parse(payload.start))) throw Error('Use ISO dates with timezone and an end after the start.');
   return payload;
@@ -31,9 +31,9 @@ export function queuePhoneAction(store: Store, taskId: string, kind: string, pay
   return {id,status:'pending',message:'Waiting for review in LocalBot Remote → Personal → Phone actions. Nothing has been executed. Use phone_action_status for recorded results; do not claim success.'};
 }
 export function updatePhoneAction(store: Store, device: string, input:any) {
-  initPhoneActions(store);if(!device)throw Error('Open this action on a paired phone.');
+  initPhoneActions(store);if(!['claim','finish'].includes(input.operation))throw Error('Invalid action operation.');if(!device)throw Error('Open this action on a paired phone.');
   return store.transaction(()=> {const row=store.get('SELECT * FROM phone_actions WHERE id=?',input.id);if(!row)throw Error('Action not found.');
     if(input.operation==='claim') {if(row.status!=='pending'||Date.parse(row.createdAt)<Date.now()-86400000)throw Error('Action already handled or expired.');store.exec("UPDATE phone_actions SET status='claimed',device=?,updatedAt=? WHERE id=?",device,new Date().toISOString(),row.id);}
     else {if(row.device===device && row.status===input.status && row.result===input.result && row.status!=='claimed') return {...row,payload:JSON.parse(row.payload)}; if(row.status!=='claimed'||row.device!==device)throw Error('This phone does not own the active action.');if(!['completed','failed','cancelled','handed_off'].includes(input.status)||typeof input.result!=='string'||input.result.length>10000)throw Error('Invalid action result.');store.exec('UPDATE phone_actions SET status=?,result=?,updatedAt=? WHERE id=?',input.status,input.result,new Date().toISOString(),row.id);}
-    return phoneActions(store).find(x=>x.id===row.id);});
+    const updated=store.get('SELECT * FROM phone_actions WHERE id=?',row.id);return {...updated,payload:JSON.parse(updated.payload)};});
 }

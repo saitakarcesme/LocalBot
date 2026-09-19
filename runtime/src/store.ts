@@ -574,7 +574,7 @@ export class Store {
       kind: "ollama",
       endpoint: "http://127.0.0.1:11434",
       model: "qwen3:1.7b",
-      contextLength: 4096,
+      contextLength: 16384,
       timeout: 180,
       concurrency: 1,
       temperature: 0.3,

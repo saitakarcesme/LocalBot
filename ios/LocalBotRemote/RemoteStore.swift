@@ -16,6 +16,10 @@ import Security
     if let session = terminals[key] { return session }
     let session = PhoneTerminalSession(); terminals[key] = session; return session
   }
+  var phoneActionOutboxKey: String {
+    guard let data = PhoneKeychain.read(), let link = try? JSONDecoder().decode(PairingLink.self, from: data) else { return "phone-action-results-unpaired" }
+    return "phone-action-results-v1." + (link.host ?? link.id)
+  }
   private var client: RemoteClient?
   private var refreshing = false
   private var loadedConversation: String?
