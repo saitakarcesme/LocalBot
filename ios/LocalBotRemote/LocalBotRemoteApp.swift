@@ -1,5 +1,7 @@
 import SwiftUI
 import SafariServices
+import PhotosUI
+import UniformTypeIdentifiers
 
 @main struct LocalBotRemoteApp: App {
   @StateObject private var store = RemoteStore()
@@ -56,6 +58,9 @@ struct ConversationsView: View {
   @State private var search = ""
   @State private var newChat = false
   @State private var project: Project?
+  @State private var collapsed: Set<String> = []
+  @State private var profile = false
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
   var conversations: [Conversation] { (store.snapshot?.conversations ?? []).filter { $0.archived != true && (search.isEmpty || $0.title.localizedCaseInsensitiveContains(search)) } }
   var body: some View {
     NavigationStack {
@@ -63,9 +68,17 @@ struct ConversationsView: View {
         if !store.connected { Section { Label(store.error ?? "Connecting to your Mac…", systemImage: "wifi.exclamationmark").font(.callout).foregroundStyle(.secondary) } }
         ForEach(store.snapshot?.projects ?? []) { project in
           Section {
-            ForEach(conversations.filter { $0.projectId == project.id }) { row($0) }
-            Button { self.project = project; newChat = true; store.selected = nil; store.messages = []; store.activity = [] } label: { Label("New conversation", systemImage: "plus") }
-          } header: { Label(project.name, systemImage: "folder") }
+            if !collapsed.contains(project.id) || !search.isEmpty {
+              ForEach(conversations.filter { $0.projectId == project.id }) { row($0) }
+            }
+          } header: {
+            HStack {
+              Button { withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.22)) { if collapsed.contains(project.id) { collapsed.remove(project.id) } else { collapsed.insert(project.id) } } } label: {
+                Label(project.name, systemImage: collapsed.contains(project.id) ? "folder" : "folder.fill").frame(maxWidth: .infinity, alignment: .leading)
+              }.buttonStyle(.plain).accessibilityValue(collapsed.contains(project.id) ? "Collapsed" : "Expanded")
+              Button { self.project = project; newChat = true; store.selected = nil; store.messages = []; store.activity = [] } label: { Image(systemName: "square.and.pencil").padding(8) }.accessibilityLabel("New chat in " + project.name)
+            }.textCase(nil)
+          }
         }
         Section("Recents") { ForEach(conversations.filter { $0.projectId == nil }) { row($0) } }
       }.searchable(text: $search).navigationTitle("LocalBot")
@@ -73,6 +86,8 @@ struct ConversationsView: View {
           ToolbarItem(placement: .topBarLeading) { Menu { Button("Disconnect this phone", role: .destructive) { store.disconnect() } } label: { Image(systemName: "gearshape") } }
           ToolbarItem(placement: .topBarTrailing) { Button { project = nil; newChat = true; store.selected = nil; store.messages = []; store.activity = [] } label: { Image(systemName: "square.and.pencil") }.accessibilityLabel("New conversation") }
         }
+        .safeAreaInset(edge: .bottom) { Button { profile = true } label: { ProfileBadge(profile: store.snapshot?.profile ?? UserProfile()).padding(12).frame(maxWidth: .infinity, alignment: .leading) }.buttonStyle(.plain).background(.thinMaterial) }
+        .sheet(isPresented: $profile) { ProfileEditor(profile: store.snapshot?.profile ?? UserProfile(), loadUsage: { try await store.read("/usage") }, save: { try await store.saveProfile($0) }) }
         .navigationDestination(isPresented: $newChat) { MobileChat(project: project) }
     }
   }
@@ -81,8 +96,10 @@ struct ConversationsView: View {
       HStack(spacing: 10) {
         if conversation.projectId != nil { HStack(spacing: -8) { ForEach(conversation.members.prefix(3), id: \.self) { id in
           LocalBotMascot(state: .success, color: palette(store.snapshot?.agents.first { $0.id == id }?.color)).frame(width: 25,height: 25)
-        } } }
+        } }.frame(width: 52, alignment: .leading) }
         Text(conversation.title).lineLimit(1).foregroundStyle(Color.primary)
+        Spacer(minLength: 0)
+        if store.snapshot?.tasks.contains(where: { $0.conversationId == conversation.id && $0.active }) == true { ProgressView().controlSize(.small).accessibilityLabel("Working") }
       }.padding(.vertical, 3)
     }
   }
@@ -99,6 +116,11 @@ struct MobileChat: View {
   @State private var browser: URL?
   @State private var agent: String?
   @State private var followsOutput = true
+  @State private var photo: PhotosPickerItem?
+  @State private var pickPhoto = false
+  @State private var pickFile = false
+  @State private var attachments: [Artifact] = []
+  @State private var uploading = false
   private var draftKey: String { "draft." + (store.selected ?? "new." + (project?.id ?? "recent")) }
   private var running: AgentTask? { store.snapshot?.tasks.first { $0.conversationId == store.selected && $0.active } }
   var body: some View {
@@ -122,9 +144,12 @@ struct MobileChat: View {
         .safeAreaInset(edge: .bottom) { composer }
         .navigationTitle(store.snapshot?.conversations.first { $0.id == store.selected }?.title ?? project?.name ?? "New conversation")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar { ToolbarItemGroup(placement: .topBarTrailing) { Button { activity = true } label: { Image(systemName: "waveform.path") }.accessibilityLabel("Activity"); Button { workspace = true } label: { Image(systemName: "rectangle.split.2x1") }.accessibilityLabel("Workspace").disabled(store.selected == nil) } }
+        .toolbar { ToolbarItemGroup(placement: .topBarTrailing) { if store.selected == nil { Menu { ForEach(store.snapshot?.agents ?? []) { item in Button(item.name) { agent = item.id } } } label: { Image(systemName: "person.2") }.accessibilityLabel("Choose bot") }; Button { activity = true } label: { Image(systemName: "waveform.path") }.accessibilityLabel("Activity"); Button { workspace = true } label: { Image(systemName: "rectangle.split.2x1") }.accessibilityLabel("Workspace").disabled(store.selected == nil) } }
         .task(id: store.selected) { if draft.isEmpty { draft = UserDefaults.standard.string(forKey: draftKey) ?? "" }; await store.refresh() }
         .onChange(of: draft) { _, value in UserDefaults.standard.set(value,forKey: draftKey) }
+        .photosPicker(isPresented: $pickPhoto, selection: $photo, matching: .images)
+        .onChange(of: photo) { _, item in Task { guard let item else { return }; uploading = true; defer { uploading = false; photo = nil }; do { if let data = try await item.loadTransferable(type: Data.self) { attachments.append(try await store.upload(data, name: "Photo." + (item.supportedContentTypes.first?.preferredFilenameExtension ?? "jpg"))) } } catch { store.error = error.localizedDescription } } }
+        .fileImporter(isPresented: $pickFile, allowedContentTypes: [.item]) { result in Task { uploading = true; defer { uploading = false }; do { let url = try result.get(); let access = url.startAccessingSecurityScopedResource(); defer { if access { url.stopAccessingSecurityScopedResource() } }; let size = try url.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0; guard size <= 5_000_000 else { throw RemoteError("Choose a file smaller than 5 MB.") }; attachments.append(try await store.upload(Data(contentsOf: url), name: url.lastPathComponent)) } catch { store.error = error.localizedDescription } } }
         .sheet(isPresented: $activity) { ActivityView().environmentObject(store) }
         .sheet(isPresented: $workspace) { MobileWorkspace(project: project).environmentObject(store) }
         .sheet(item: Binding(get: { browser.map(BrowserLink.init) },set: { browser = $0?.url })) { link in MobileBrowser(url: link.url).ignoresSafeArea() }
@@ -133,12 +158,17 @@ struct MobileChat: View {
   }
   private var composer: some View {
     VStack(spacing: 8) {
+      if uploading { ProgressView("Uploading…") }
+      if !attachments.isEmpty { ScrollView(.horizontal) { HStack { ForEach(attachments) { file in Button { attachments.removeAll { $0.id == file.id } } label: { Label(file.name, systemImage: "xmark.circle").font(.caption).padding(8) }.buttonStyle(.bordered) } } } }
       if let error = store.error { Text(error).font(.caption).foregroundStyle(.red).lineLimit(3) }
       HStack(alignment: .bottom, spacing: 10) {
-        if store.selected == nil { Menu { ForEach(store.snapshot?.agents ?? []) { item in Button(item.name) { agent = item.id } } } label: { Image(systemName: "person.crop.circle") }.accessibilityLabel("Choose agent") }
+        Menu {
+          Button("Photo library", systemImage: "photo") { pickPhoto = true }
+          Button("Choose file", systemImage: "doc") { pickFile = true }
+        } label: { Image(systemName: "plus").font(.title3).frame(width: 30, height: 40) }.disabled(uploading || attachments.count >= 4).accessibilityLabel("Add attachment")
         TextField("Message", text: $draft, axis: .vertical).lineLimit(1...6).padding(.vertical, 8)
-        Button { if let running { Task { await store.action("/cancel",body:["taskId":running.id]) } } else { let text = draft; let key = draftKey; Task { if await store.send(text,project:project?.id,agent:agent) { UserDefaults.standard.removeObject(forKey: key); draft = "" } } } } label: { Image(systemName: running == nil ? "arrow.up.circle.fill" : "stop.circle.fill").font(.system(size: 32)).foregroundStyle(running == nil ? Color.accentColor : .orange) }
-          .disabled(store.busy || (running == nil && draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)).accessibilityLabel(running == nil ? "Send message" : "Stop task")
+        Button { if let running { Task { await store.action("/cancel",body:["taskId":running.id]) } } else { let text = draft; let key = draftKey; Task { if await store.send(text,project:project?.id,agent:agent,attachments:attachments) { UserDefaults.standard.removeObject(forKey: key); draft = ""; attachments = [] } } } } label: { Image(systemName: running == nil ? "arrow.up.circle.fill" : "stop.circle.fill").font(.system(size: 32)).foregroundStyle(running == nil ? Color.accentColor : .orange) }
+          .disabled(store.busy || uploading || (running == nil && draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)).accessibilityLabel(running == nil ? "Send message" : "Stop task")
       }.padding(.horizontal, 14).padding(.vertical, 5).modifier(NativeGlass())
     }.padding(.horizontal, 14).padding(.vertical, 8)
   }

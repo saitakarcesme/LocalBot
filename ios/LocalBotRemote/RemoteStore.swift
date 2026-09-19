@@ -52,7 +52,7 @@ import Security
     } catch { if self.client === generation, !Task.isCancelled { connected = false; self.error = error.localizedDescription } }
   }
   func select(_ id: String) { selected = id; messages = []; activity = []; loadedConversation = nil }
-  func send(_ text: String, project: String? = nil, agent: String? = nil) async -> Bool {
+  func send(_ text: String, project: String? = nil, agent: String? = nil, attachments: [Artifact] = []) async -> Bool {
     guard let client, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
     busy = true; defer { busy = false }
     do {
@@ -64,14 +64,26 @@ import Security
       }
       guard let selected else { return false }
       let requestKey = "pending-send." + selected
-      let signature = Data(text.utf8).base64EncodedString()
+      let signature = Data((text + attachments.map(\.id).joined()).utf8).base64EncodedString()
       let saved = UserDefaults.standard.stringArray(forKey: requestKey)
       let requestID = saved?.count == 2 && saved?.first == signature ? saved![1] : UUID().uuidString
       UserDefaults.standard.set([signature, requestID], forKey: requestKey)
-      _ = try await client.api("/messages", body: ["conversationId":selected,"content":text,"requestId":requestID])
+      _ = try await client.api("/messages", body: ["conversationId":selected,"content":text,"requestId":requestID,"attachments":attachments.map(\.id)])
       UserDefaults.standard.removeObject(forKey: requestKey)
       await refresh(); return true
     } catch { self.error = error.localizedDescription; return false }
+  }
+  func read(_ path: String) async throws -> Data {
+    guard let client else { throw RemoteError("Connect LocalBot first.") }; return try await client.api(path)
+  }
+  func saveProfile(_ profile: UserProfile) async throws {
+    guard let client else { throw RemoteError("Connect LocalBot first.") }
+    _ = try await client.api("/profile", body: ["name":profile.name,"photo":profile.photo ?? ""]); await refresh()
+  }
+  func upload(_ data: Data, name: String) async throws -> Artifact {
+    guard let client else { throw RemoteError("Connect LocalBot first.") }
+    guard data.count <= 5_000_000 else { throw RemoteError("Choose a file smaller than 5 MB.") }
+    return try JSONDecoder().decode(Artifact.self, from: await client.api("/attachments", body: ["name":name,"data":data.base64EncodedString()]))
   }
   func workspace(_ action: String, extras: [String:Any] = [:]) async throws -> Data {
     guard let client, let selected else { throw RemoteError("Open a conversation first.") }
