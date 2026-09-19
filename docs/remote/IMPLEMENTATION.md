@@ -35,11 +35,11 @@ Some DNS resolvers returned NXDOMAIN for Quick Tunnel names. The relay resolves 
 
 ## Verification
 
-- Runtime suite: 139 passing tests; an additional Center stream ownership/offset/revocation test passes.
+- Runtime suite: 141 passing tests, including Center stream ownership/offset/revocation and interactive PTY ownership/input replay/resize tests.
 - Swift CryptoKit ↔ Node AES-GCM pairing/response: passed both loopback and public HTTPS relay fixture.
 - Relay identity tests reject modified signatures, expired records and non-tunnel destinations.
 - Mac build passed after browser bridge and settings changes.
 - iPhone simulator build passed; iPhone device build signed with the available Apple development account. Connected iPhone discovery reports the phone unavailable.
-- Simulator first boot required over four minutes of migration. Only one simulator ran. Signed simulator UI passed public-relay pairing, conversation loading, message round trip, file reading/editing and disconnect using an isolated fixture. Saved file content was independently checked on disk. The simulator was shut down between builds. Interactive terminal UI is a subsequent addition requiring its own check.
+- Simulator first boot required over four minutes of migration. Only one simulator ran. Signed simulator UI passed public-relay pairing, conversation loading, message round trip, file reading/editing and disconnect using an isolated fixture. Saved file content was independently checked on disk. The simulator was shut down between builds. The subsequent interactive terminal UI check passed: real shell prompt, `pwd`, `stty size` (42 rows × 49 columns), Ctrl-C, and helper process exit after closing the workspace.
 
 Use `node scripts/test-public-remote.mjs` for local cross-language verification and `LOCALBOT_RELAY_URL=https://relay-five-lake.vercel.app node scripts/test-public-remote.mjs --public` for the isolated public fixture. Neither test accesses real chats or model data.
