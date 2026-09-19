@@ -453,7 +453,7 @@ test('automatic routing sees executable tool permissions rather than trusting co
    assert(!restricted.tools.includes('write_file'));
    assert(!restricted.tools.includes('terminal'));
    assert(!restricted.tools.includes('view_image'));
-   assert(!restricted.tools.includes('web_search'));
+   assert(restricted.tools.includes('web_search')); // Local providers now have public web search.
    assert(restricted.tools.includes('read_file'));
    assert(capable.tools.includes('write_file'));
    assert(!JSON.stringify(data.agents).includes('PRIVATE_CONTACT_MEMORY'));
@@ -559,7 +559,7 @@ test('each model step receives current permissions while the run keeps its selec
    reply(res,{content:'',tool_calls:[{function:{name:'write_file',arguments:{path:'revoked.txt',content:'must not write'}}}]});
   }else if(step===2){
    assert(!names.includes('write_file'));assert(!names.includes('terminal'));assert(names.includes('read_file'));
-   assert(!names.includes('web_search'));assert(!names.includes('view_image')); // The active local run cannot inherit Codex-only capabilities.
+   assert(names.includes('web_search'));assert(!names.includes('view_image')); // Search is local-provider independent; vision remains opt-in.
    const a=f.store.agent('coder');f.store.saveAgent({...a,permissions:{...a.permissions,filesystem:'write'}});
    reply(res,{content:'',tool_calls:[{function:{name:'current_time',arguments:{}}}]});
   }else if(step===3){

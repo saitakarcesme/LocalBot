@@ -31,6 +31,7 @@ struct ProfileEditor: View {
   var loadModels: (() async throws -> Data)? = nil
   var selectModel: ((ModelOption) async throws -> Void)? = nil
   @State private var usage: UsageSummary?
+  @State private var currentModel: ModelOption?
   @State private var error: String?
   @State private var busy = false
   @State private var pickFile = false
@@ -41,7 +42,7 @@ struct ProfileEditor: View {
     ScrollView { VStack(alignment: .leading, spacing: 20) {
       HStack { Text("Profile & usage").font(.title2.bold()); Spacer(); Button("Done") { dismiss() } }
       if let settings { Menu { Button("Disconnect this phone", role: .destructive) { settings(); dismiss() } } label: { Label("Settings", systemImage: "gearshape") } }
-      ProfileBadge(profile: profile)
+      ProfileBadge(profile: profile).font(.headline)
       TextField("Your name", text: $profile.name).textFieldStyle(.roundedBorder)
       HStack {
         #if os(iOS)
@@ -52,7 +53,9 @@ struct ProfileEditor: View {
         #endif
         if profile.photo != nil { Button("Remove photo") { profile.photo = nil } }
       }
-      if let loadModels, let selectModel { HStack { Label("Model", systemImage: "cpu"); Spacer(); ModelSelector(load: loadModels, select: selectModel) } }
+      if let loadModels, let selectModel {
+        HStack { VStack(alignment: .leading, spacing: 5) { Text("Model").font(.caption).foregroundStyle(.secondary); Text(currentModel?.model ?? "Agent defaults").font(.callout).lineLimit(2) }; Spacer(); ModelSelector(load: loadModels, select: { option in try await selectModel(option); currentModel = option }) }.padding(16).background(.thinMaterial, in: RoundedRectangle(cornerRadius: 20))
+      }
       Divider()
       Text("Token usage").font(.headline)
       if let usage {
@@ -74,7 +77,7 @@ struct ProfileEditor: View {
       HStack { Button("Refresh usage") { Task { await refresh() } }; Spacer(); Button("Save profile") { Task { busy = true; defer { busy = false }; do { try await save(profile); dismiss() } catch { self.error = error.localizedDescription } } }.buttonStyle(.borderedProminent).disabled(busy || profile.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty) }
     }.padding(24) }
       .frame(minWidth: 300, idealWidth: 420)
-      .task { await refresh() }
+      .task { await refresh(); if let loadModels { currentModel = try? JSONDecoder().decode(ModelCatalog.self, from: await loadModels()).selected } }
       .fileImporter(isPresented: $pickFile, allowedContentTypes: [.jpeg, .png]) { result in do { let url = try result.get(); let access = url.startAccessingSecurityScopedResource(); defer { if access { url.stopAccessingSecurityScopedResource() } }; try setPhoto(Data(contentsOf: url)) } catch { self.error = error.localizedDescription } }
   }
   private func refresh() async { do { usage = try JSONDecoder().decode(UsageSummary.self, from: await loadUsage()); error = nil } catch { self.error = error.localizedDescription; usage = UsageSummary() } }

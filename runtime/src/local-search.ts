@@ -1,5 +1,5 @@
 import { fetchPage } from './web-fetch.js';
-const decode = (value: string) => value.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1').replace(/&(amp|lt|gt|quot|apos);/g, (_, n) => ({amp:'&',lt:'<',gt:'>',quot:'"',apos:"'"}[n] ?? '')).replace(/<[^>]*>/g, '').trim();
+const decode = (value: string) => value.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1').replace(/&(amp|lt|gt|quot|apos);/g, (_, n: string) => (({amp:'&',lt:'<',gt:'>',quot:'"',apos:"'"} as Record<string, string>)[n] ?? '')).replace(/<[^>]*>/g, '').trim();
 export function searchResults(xml: string) {
   return [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)].slice(0, 10).flatMap((match) => {
     const field = (name: string) => decode(match[1].match(new RegExp(`<${name}>([\\s\\S]*?)</${name}>`))?.[1] ?? '');
