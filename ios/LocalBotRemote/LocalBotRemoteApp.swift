@@ -8,8 +8,8 @@ import UniformTypeIdentifiers
   @State private var launching = true
   var body: some Scene { WindowGroup {
     #if DEBUG
-    if ProcessInfo.processInfo.arguments.contains("--research-preview") {
-      NavigationStack {ResearchDashboard(request:researchFixture,save:{_ in try researchFixture("/research")},conversations:[])}
+    if ProcessInfo.processInfo.arguments.contains("--fine-tune-preview") {
+      NavigationStack {FineTuneDashboard(request:researchFixture,write:{_,_ in Data("{}".utf8)})}
     } else {root}
     #else
     root
@@ -19,10 +19,12 @@ import UniformTypeIdentifiers
   #if DEBUG
   private func researchFixture(_ path:String)throws->Data {
     let object:Any
-    if path == "/research" {object=["enabled":false,"topic":"Qwen fine-tuning research","conversationId":"preview","dailyTarget":1000000000,"maxPasses":24,"passes":3,"tokens":379880] as [String:Any]}
+    if path == "/fine-tune" {object=["jobs":[]] as [String:Any]}
+    else if path == "/fine-tune/models" {object=["options":[["providerId":"preview","provider":"Preview","model":"Qwen3.8 27B · Very long model name for responsive layout verification"]]]}
+    else if path == "/research" {object=["enabled":false,"topic":"Qwen fine-tuning research","conversationId":"preview","dailyTarget":1000000000,"maxPasses":24,"passes":3,"tokens":379880] as [String:Any]}
     else if path == "/telemetry/gpus" {
-      let first:[String:Any]=["id":"gpu-0","name":"NVIDIA GeForce RTX 3090","utilization":65.0,"temperature":61.0,"memoryUsedMB":16384.0,"memoryTotalMB":24576.0,"powerWatts":275.0]
-      var second=first;second["id"]="gpu-1";second["utilization"]=72.0
+      let first:[String:Any]=["id":"GPU-preview-0","name":"NVIDIA GeForce RTX 3090","utilization":65.0,"temperature":61.0,"memoryUsedMB":16384.0,"memoryTotalMB":24576.0,"powerWatts":275.0]
+      var second=first;second["id"]="GPU-preview-1";second["utilization"]=72.0
       object=["sampledAt":ISO8601DateFormatter().string(from:Date()),"available":true,"gpus":[first,second]] as [String:Any]
     }
     else {object=[["id":"preview","conversationId":"preview","agentId":"Athena","role":"assistant","content":"## Verification findings\nCompare the base model and adapter on held-out examples. Keep provenance and independent validation separate from generated proposals.","createdAt":"2026-09-20T00:00:00Z","reactions":[],"attachments":[]] as [String:Any]]}

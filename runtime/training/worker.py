@@ -78,7 +78,7 @@ def main():
     else: baseline=json.loads(baseline_path.read_text())['loss']
     trainer.train(resume_from_checkpoint=checkpoint)
     if trainer.state.global_step<cfg['maxSteps']:
-        emit('paused',step=trainer.state.global_step)
+        emit('paused',step=trainer.state.global_step,reason='overnight' if cfg['overnight'] and 7<=datetime.now().hour<22 and not (root/'pause').exists() else 'requested')
         return
     final=trainer.evaluate()['eval_loss']
     trainer.save_model(str(root/'adapter'));tokenizer.save_pretrained(str(root/'adapter'))

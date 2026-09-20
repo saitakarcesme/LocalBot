@@ -69,6 +69,7 @@ private struct FineTuneCreate:View {
   @State private var gpuIds=Set<String>()
   @State private var budget=100.0
   @State private var overnight=false
+  @State private var maxSteps=200
   @State private var busy=false
   @State private var error:String?
   var body:some View {
@@ -82,6 +83,7 @@ private struct FineTuneCreate:View {
         HStack{Text("Training work budget");Spacer();Text("\(Int(budget))%").monospacedDigit()}
         Slider(value:$budget,in:10...100,step:10)
         Text("Controls training duty cycle, not instantaneous GPU utilization. Inference keeps its current GPU configuration.").font(.caption).foregroundStyle(.secondary)
+        Stepper("Training steps · \(maxSteps)",value:$maxSteps,in:10...1000000,step:100)
         Toggle("Overnight · 22:00–07:00",isOn:$overnight)
         Text("Uses the workspace computer’s time zone.").font(.caption).foregroundStyle(.secondary)
       }.padding(.top,12)}
@@ -89,7 +91,7 @@ private struct FineTuneCreate:View {
       HStack{Spacer();if busy{ProgressView()};Button("Start"){Task{await start()}}.buttonStyle(.borderedProminent).disabled(busy||selected.isEmpty||topic.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty)}
     }.padding(24)}.frame(idealWidth:520,idealHeight:520).task {do{models=try JSONDecoder().decode(FineTuneCatalog.self,from:await request("/fine-tune/models")).options;selected=models.first?.id ?? "";gpus=try JSONDecoder().decode(GPUEnvelope.self,from:await request("/telemetry/gpus")).gpus;gpuIds=Set(gpus.map(\.id))}catch{self.error=error.localizedDescription}}
   }
-  private func start()async {guard let m=models.first(where:{$0.id==selected})else{return};busy=true;defer{busy=false};do{_ = try await write("/fine-tune/create",["providerId":m.providerId,"model":m.model,"topic":topic,"gpuIds":Array(gpuIds).sorted(),"budgetPercent":Int(budget),"overnight":overnight]);dismiss()}catch{self.error=error.localizedDescription}}
+  private func start()async {guard let m=models.first(where:{$0.id==selected})else{return};busy=true;defer{busy=false};do{_ = try await write("/fine-tune/create",["providerId":m.providerId,"model":m.model,"topic":topic,"gpuIds":Array(gpuIds).sorted(),"budgetPercent":Int(budget),"overnight":overnight,"maxSteps":maxSteps]);dismiss()}catch{self.error=error.localizedDescription}}
 }
 private struct FineTuneDetails:View {
   var id:String;var request:(String)async throws->Data

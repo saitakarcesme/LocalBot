@@ -22,7 +22,7 @@ export class FineTuneTrainer {
     if(rows.filter(r=>r.split==='train').length<8||rows.filter(r=>r.split==='eval').length<2)throw Error('Prepare at least 8 training and 2 independently checked evaluation examples.');
     const root=join(this.dir,'fine-tune',job.id);await fs.mkdir(root,{recursive:true,mode:0o700});
     const data=JSON.stringify(rows),hash=createHash('sha256').update(data).digest('hex');
-    const manifest={...model,gpuIds:job.gpuIds,budgetPercent:job.budgetPercent,overnight:job.overnight,maxSteps:200,datasetHash:hash};
+    const manifest={...model,gpuIds:job.gpuIds,budgetPercent:job.budgetPercent,overnight:job.overnight,maxSteps:job.maxSteps??200,datasetHash:hash};
     const path=join(root,'manifest.json');
     const previous=await fs.readFile(path,'utf8').catch(()=>null);
     if(previous&&previous!==JSON.stringify(manifest))throw Error('Training configuration or dataset changed. Create a new task to preserve checkpoint compatibility.');

@@ -32,3 +32,10 @@ test('dataset provenance rejects duplicate prompts and cross-split source leakag
 test('training never starts without a configured host and does not report success',()=>fixture(async({fine,input})=>{
  const j=fine.create(input);fine.control(j.id,'pause');fine.control(j.id,'train');await fine.tick();assert.equal(fine.get(j.id).status,'waiting');assert.match(fine.get(j.id).reason,/setup required|not configured/);
 }));
+
+test('remote clients can reach Fine Tune and create host projects but cannot configure providers',async()=>{
+ const {mobileRoute}=await import('../dist/remote/host.js');
+ for(const path of ['/fine-tune','/fine-tune/detail?id=abc','/fine-tune/models'])assert.equal(mobileRoute({operation:'api',path}).path,path);
+ for(const path of ['/fine-tune/create','/fine-tune/control','/projects'])assert.equal(mobileRoute({operation:'api',path,method:'POST'}).path,path);
+ assert.throws(()=>mobileRoute({operation:'api',path:'/providers',method:'POST'}));
+});

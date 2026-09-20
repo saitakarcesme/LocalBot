@@ -12,7 +12,7 @@ export type FineTuneJob = {
   status: 'queued'|'running'|'pausing'|'paused'|'waiting'|'completed'|'cancelled';
   gpuIds: string[]; budgetPercent: number; overnight: boolean;
   createdAt: string; updatedAt: string; taskId?: string; reason?: string;
-  checkpoint?: string; trainingStep?: number; loss?: number;
+  checkpoint?: string; trainingStep?: number; loss?: number; maxSteps?:number; stopRequested?:boolean;
 };
 export function initFineTune(s: Store) {
   if(!s.get("SELECT value FROM settings WHERE key='fine-tune-migrated'")) {
@@ -44,11 +44,13 @@ export class FineTune {
     if(!Array.isArray(gpuIds)||gpuIds.length>8||gpuIds.some(x=>typeof x!=='string'||!/^GPU-[a-zA-Z0-9-]+$/.test(x)))throw Error('Choose available GPU identifiers.');
     const budgetPercent=input.budgetPercent??100;
     if(!Number.isInteger(budgetPercent)||budgetPercent<10||budgetPercent>100)throw Error('Choose a work budget between 10% and 100%.');
+    const maxSteps=input.maxSteps??200;
+    if(!Number.isInteger(maxSteps)||maxSteps<10||maxSteps>1000000)throw Error("Choose 10–1,000,000 training steps.");
     const id=randomUUID(), now=new Date().toISOString();
     return this.store.transaction(()=>{
       const c=this.store.createConversation('Fine Tune · '+input.topic.trim().slice(0,60),['researcher']);
       this.store.exec('INSERT INTO settings VALUES(?,?)','model:'+c.id,JSON.stringify({providerId:config.id,model:input.model}));
-      const job:FineTuneJob={id,topic:input.topic.trim(),providerId:config.id,model:input.model,conversationId:c.id,stage:'sources',status:'queued',gpuIds:[...new Set(gpuIds)] as string[],budgetPercent,overnight:input.overnight===true,createdAt:now,updatedAt:now};
+      const job:FineTuneJob={id,topic:input.topic.trim(),providerId:config.id,model:input.model,conversationId:c.id,stage:'sources',status:'queued',gpuIds:[...new Set(gpuIds)] as string[],budgetPercent,maxSteps,overnight:input.overnight===true,createdAt:now,updatedAt:now};
       this.put(job);this.event(id,'created','Research requested. Model weights remain unchanged.');return job;
     });
   }
@@ -70,7 +72,7 @@ export class FineTune {
       if(!['paused','waiting'].includes(j.status))throw Error('Only a paused or waiting task can resume.');
       j.status='queued';j.reason=undefined;
     } else if(action==='cancel') {
-      if(this.preparing?.id===id)this.preparing.abort.abort();if(j.taskId)this.engine.cancel(j.taskId);if(this.trainer.active===id)void this.trainer.pause(id);j.status='cancelled';j.reason='Stopped. Existing artifacts are preserved.';
+      if(this.preparing?.id===id)this.preparing.abort.abort();if(j.taskId)this.engine.cancel(j.taskId);if(this.trainer.active===id){void this.trainer.pause(id);j.status='pausing';j.stopRequested=true;j.reason='Stopping after a safe checkpoint.';this.put(j);return j;}j.status='cancelled';j.reason='Stopped. Existing artifacts are preserved.';
     } else throw Error('Unknown Fine Tune action.');
     this.put(j);this.event(id,action,j.reason??action);return j;
   }
@@ -118,8 +120,8 @@ export class FineTune {
               if(typeof event.loss==='number')current.loss=event.loss;
               if(event.kind==='checkpoint'&&/^checkpoint-[0-9]+$/.test(event.path??''))current.checkpoint=event.path;
               if(current.status!=='cancelled') {
-                if(event.kind==='paused'){current.status='paused';current.reason='Training checkpoint saved.';}
-                if(event.kind==='failed'){current.status='waiting';current.reason=event.message;}
+                if(event.kind==='paused'){current.status=current.stopRequested?'cancelled':event.reason==='overnight'?'queued':'paused';current.reason='Training checkpoint saved.';}
+                if(event.kind==='failed'){current.status=current.stopRequested?'cancelled':'waiting';current.reason=event.message;}
                 if(event.kind==='completed'){current.status='completed';current.stage='evaluation';current.reason=event.improved?'Adapter saved. Held-out loss improved; deployment requires review.':'Adapter saved. Held-out loss did not improve; current model unchanged.';}
               }
               this.put(current);this.event(current.id,event.kind,JSON.stringify(event));
