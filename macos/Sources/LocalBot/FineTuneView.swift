@@ -10,7 +10,8 @@ private struct FineTuneModel: Decodable, Identifiable {var providerId:String;var
 private struct FineTuneCatalog: Decodable {var options:[FineTuneModel]}
 private struct FineTuneSource: Decodable, Identifiable {var id:String;var title:String;var url:String;var license:String;var evidence:String}
 private struct FineTuneExample: Decodable, Identifiable {var id:String;var prompt:String;var answer:String;var split:String;var verification:String}
-private struct FineTuneDetail: Decodable {var job:FineTuneJob;var sources:[FineTuneSource];var examples:[FineTuneExample]}
+private struct FineTuneEvent: Decodable, Identifiable {var id:String;var kind:String;var detail:String}
+private struct FineTuneDetail: Decodable {var job:FineTuneJob;var sources:[FineTuneSource];var examples:[FineTuneExample];var events:[FineTuneEvent]?}
 struct FineTuneDashboard: View {
   var request: (String) async throws -> Data
   var write: (String,[String:Any]) async throws -> Data
@@ -107,6 +108,9 @@ private struct FineTuneDetails:View {
         Text(d.job.topic).font(.headline);Text(d.job.model).font(.caption).foregroundStyle(.secondary)
         if let reason=d.job.reason {Text(reason).foregroundStyle(.secondary)}
         if let checkpoint=d.job.checkpoint {Label(checkpoint,systemImage:"externaldrive.badge.checkmark").font(.caption).textSelection(.enabled)}
+        if let events=d.events, !events.isEmpty {
+          DisclosureGroup("Activity") {ForEach(events) {event in VStack(alignment:.leading,spacing:4) {Text(event.kind.replacingOccurrences(of:"_",with:" ").capitalized).font(.caption.bold());Text(event.detail).font(.caption).foregroundStyle(.secondary).textSelection(.enabled)}.padding(.vertical,4)}}
+        }
         Text("Sources · \(d.sources.count)").font(.headline)
         ForEach(d.sources){s in VStack(alignment:.leading,spacing:6){if let url=URL(string:s.url){Link(s.title,destination:url)};Text(s.license).font(.caption);Text(s.evidence).font(.caption).foregroundStyle(.secondary)}}
         Text("Dataset preview · \(d.examples.count)").font(.headline)

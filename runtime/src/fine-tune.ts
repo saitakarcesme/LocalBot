@@ -131,10 +131,10 @@ export class FineTune {
           continue;
         }
         if(j.taskId) {
-          const task=this.store.get('SELECT status FROM tasks WHERE id=?',j.taskId);
+          const task=this.store.get('SELECT status,error FROM tasks WHERE id=?',j.taskId);
           if(task&&['queued','running','awaiting_approval','awaiting_input'].includes(task.status))continue;
           const taskId=j.taskId;delete j.taskId;
-          if(task?.status!=='completed'){j.status='waiting';j.reason='Research step interrupted. Review the output before resuming.';}
+          if(task?.status!=='completed'){j.status='waiting';j.reason=task?.error ? `Research stopped: ${task.error}` : 'Research step interrupted. Review the output before resuming.';}
           else {const paused=j.status==='pausing';j.status=paused?'paused':'queued';j.stage='dataset';j.reason=paused?'Research saved. Resume to prepare source-supported examples.':undefined;}
           this.put(j);this.event(j.id,'research_finished',`Task ${taskId}: ${task?.status??'missing'}`);continue;
         }
