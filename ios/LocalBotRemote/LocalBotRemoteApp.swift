@@ -134,12 +134,7 @@ struct MobileChat: View {
           if let run = store.snapshot?.activeRuns?.first(where: { $0.taskId == running?.id }) {
             HStack { LocalBotMascot(state: .thinking, color: palette(store.snapshot?.agents.first { $0.id == run.agentId }?.color)).frame(width: 32,height: 32); Text(run.phase?.capitalized ?? "Working…").foregroundStyle(.secondary) }
           }
-          ForEach(store.snapshot?.approvals.filter { $0.status == "pending" && $0.taskId == running?.id } ?? []) { approval in
-            VStack(alignment: .leading, spacing: 12) {
-              Text(approval.summary).font(.callout)
-              HStack { Button("Deny", role: .destructive) { Task { await store.action("/approvals", body:["id":approval.id,"allow":false]) } }; Spacer(); Button("Allow once") { Task { await store.action("/approvals", body:["id":approval.id,"allow":true]) } } }.buttonStyle(.bordered)
-            }.padding().background(.thinMaterial, in: RoundedRectangle(cornerRadius: 20))
-          }
+          ForEach(pendingApprovals) { approval in approvalCard(approval) }
           Color.clear.frame(height: 1).id("bottom").onAppear { followsOutput = true }.onDisappear { followsOutput = false }
         }.padding(16)
       }.defaultScrollAnchor(.bottom)
@@ -198,6 +193,17 @@ struct MobileChat: View {
           .disabled(store.busy || uploading || (running == nil && draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && attachments.isEmpty)).accessibilityLabel(running == nil ? "Send message" : "Stop task")
       }.padding(.horizontal, 14).padding(.vertical, 5).modifier(NativeGlass())
     }.padding(.horizontal, 14).padding(.vertical, 8)
+  }
+  private var pendingApprovals: [Approval] {store.snapshot?.approvals.filter {$0.status == "pending" && $0.taskId == running?.id} ?? []}
+  private func approvalCard(_ approval: Approval) -> some View {
+    VStack(alignment: .leading, spacing: 12) {
+      Text(approval.summary).font(.callout)
+      HStack {
+        Button("Deny", role: .destructive) {Task {await store.action("/approvals",body:["id":approval.id,"allow":false])}}
+        Spacer()
+        Button("Allow once") {Task {await store.action("/approvals",body:["id":approval.id,"allow":true])}}
+      }.buttonStyle(.bordered)
+    }.padding().background(.thinMaterial,in:RoundedRectangle(cornerRadius:20))
   }
   private func messageRow(_ message: ChatMessage) -> some View {
     let user = message.role == "user"
