@@ -30,7 +30,11 @@ struct ResearchView: View {
       }
       Toggle("Run when the workspace is idle",isOn:$enabled)
       TextField("Research topic",text:$topic,axis:.vertical).lineLimit(2...5).textFieldStyle(.plain).padding(14).background(.thinMaterial,in:RoundedRectangle(cornerRadius:16))
-      Picker("Conversation",selection:$conversation) {Text("Choose a research conversation").tag("");ForEach(conversations.filter{$0.archived != true}) {Text($0.title).tag($0.id)} }
+      Picker("Conversation",selection:$conversation) {
+        Text("Choose a research conversation").tag("")
+        if !conversation.isEmpty && !conversations.contains(where: {$0.id == conversation}) {Text("Research conversation").tag(conversation)}
+        ForEach(conversations.filter{$0.archived != true}) {Text($0.title).tag($0.id)}
+      }.pickerStyle(.menu)
       HStack {Text("Daily token target");Spacer();TextField("Tokens",text:$target).multilineTextAlignment(.trailing).frame(maxWidth:180) }
       Stepper("Up to \(passes) passes per day",value:$passes,in:1...1000)
       Text("Local models only · UTC day · Reported input + output").font(.caption).foregroundStyle(.secondary)
@@ -81,7 +85,7 @@ struct ResearchDashboard: View {
         ForEach(messages) { message in
           VStack(alignment: .leading, spacing: 10) {
             Label(message.role == "user" ? "Research brief" : (message.agentId?.capitalized ?? "Findings"),systemImage: message.role == "user" ? "text.alignleft" : "sparkles").font(.caption).foregroundStyle(.secondary)
-            Text(.init(message.content)).textSelection(.enabled).frame(maxWidth: .infinity,alignment: .leading)
+            ResearchDocument(content: message.content).frame(maxWidth: .infinity,alignment: .leading)
             HStack {
               Button { copy(message.content) } label: {Image(systemName:"doc.on.doc")}.accessibilityLabel("Copy research output")
               ShareLink(item: message.content) {Image(systemName: "square.and.arrow.up")}.accessibilityLabel("Share research output")
@@ -151,5 +155,30 @@ private struct ResearchGlass: ViewModifier {
     if reduceTransparency {content.background(.background,in:RoundedRectangle(cornerRadius:22))}
     else if #available(iOS 26,macOS 26,*) {content.glassEffect(.regular,in:RoundedRectangle(cornerRadius:22))}
     else {content.background(.regularMaterial,in:RoundedRectangle(cornerRadius:22))}
+  }
+}
+
+/// Render headings and code as document blocks while keeping output fully copyable.
+private struct ResearchDocument: View {
+  var content: String
+  var body: some View {
+    VStack(alignment: .leading, spacing: 12) {
+      ForEach(messageSections(content)) { section in
+        if section.isCode {
+          ScrollView(.horizontal) {Text(section.text).font(.system(.body, design: .monospaced)).textSelection(.enabled).padding(12)}
+            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 12))
+        } else {
+          ForEach(Array(section.text.components(separatedBy: "\n").enumerated()), id: \.offset) { _, line in
+            let level = line.prefix(while: {$0 == "#"}).count
+            if (1...6).contains(level), line.dropFirst(level).hasPrefix(" ") {
+              Text(inlineMessage(String(line.dropFirst(level + 1))))
+                .font(level <= 2 ? .title3.bold() : .headline).accessibilityAddTraits(.isHeader)
+            } else if !line.isEmpty {
+              Text(inlineMessage(line)).textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
+            }
+          }
+        }
+      }
+    }
   }
 }
