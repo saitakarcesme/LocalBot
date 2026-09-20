@@ -250,8 +250,12 @@ export class Engine {
     );
     if (!a) throw new Error("Approval is no longer pending");
     if (fullTask && allow) {
-      this.store.exec("CREATE TABLE IF NOT EXISTS task_access(taskId TEXT PRIMARY KEY)");
-      this.store.exec("INSERT OR IGNORE INTO task_access VALUES(?)", a.taskId);
+      const run = this.store.get("SELECT * FROM runs WHERE id=?", a.runId);
+      const conversation = this.store.conversation(this.store.task(a.taskId).conversationId);
+      const workspace = conversation.projectId ? this.store.project(conversation.projectId).workspace : this.store.agent(run.agentId).workspace;
+      if (!a.summary.includes(`Workspace: ${workspace}\n`)) throw new Error("Workspace changed; request a fresh approval");
+      this.store.exec("CREATE TABLE IF NOT EXISTS task_workspace_access(taskId TEXT, workspace TEXT, PRIMARY KEY(taskId,workspace))");
+      this.store.exec("INSERT OR IGNORE INTO task_workspace_access VALUES(?,?)", a.taskId, workspace);
     }
     if (always && allow) {
       const call = this.store.get("SELECT * FROM tool_calls WHERE id=?", a.toolCallId);
@@ -596,7 +600,7 @@ export class Engine {
               const actionKey = JSON.stringify([project?.workspace ?? live.workspace, name, Object.fromEntries(Object.entries(args).sort(([a], [b]) => a.localeCompare(b)))]);
               if (deniedActions.has(actionKey)) throw new Error("This action was already denied in this task. Do not retry it; wait for a new explicit user request.");
               const granted = !name.startsWith("mcp_") && this.store.get("SELECT 1 FROM action_grants WHERE agentId=? AND workspace=? AND actionKey=?", agentId, agent.workspace, actionKey);
-              const taskAccess = this.store.get("SELECT name FROM sqlite_master WHERE type='table' AND name='task_access'") && this.store.get("SELECT taskId FROM task_access WHERE taskId=?",taskId);
+              const taskAccess = this.store.get("SELECT name FROM sqlite_master WHERE type='table' AND name='task_workspace_access'") && this.store.get("SELECT taskId FROM task_workspace_access WHERE taskId=? AND workspace=?",taskId,agent.workspace);
               if (!taskAccess && ((needsApproval(live, name) && !granted) || mcpIntegration?.transport === "stdio")) {
                 const approved = await this.approve(
                   taskId, runId, callId,
