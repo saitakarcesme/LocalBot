@@ -42,3 +42,14 @@ enum ActivityLabel {
     }
   }
 }
+
+struct FullscreenNavigationControls: View {
+  @EnvironmentObject var model: AppModel
+  var body: some View {
+    HStack(spacing: 16) {
+      Button { Task { await model.newConversation() } } label: { Image(systemName: "square.and.pencil") }.help("New conversation")
+      Button { model.showProject = true } label: { Image(systemName: "folder.badge.plus") }.help("New project")
+      Button { withAnimation(.easeInOut(duration: 0.16)) { model.sidebarVisibility = model.sidebarVisibility == .detailOnly ? .all : .detailOnly } } label: { Image(systemName: "sidebar.left") }.help("Toggle sidebar")
+    }.font(.system(size: 16)).buttonStyle(.plain)
+  }
+}

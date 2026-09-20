@@ -9,3 +9,5 @@ build/
 
 # Messages reference can contain private contacts
 screenshots/messages-*
+
+.vercel/

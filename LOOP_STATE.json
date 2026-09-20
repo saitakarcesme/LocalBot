@@ -193,7 +193,7 @@
     "source_commit": "5ea321a",
     "native_tests": 6,
     "preview_100_repeats_ms_before": 4603,
-    "preview_100_repeats_ms_after": "3–5",
+    "preview_100_repeats_ms_after": "3\u20135",
     "verified": [
       "native glass normal and fullscreen",
       "compact project rows with supplied colored logo",
@@ -281,8 +281,95 @@
   },
   "localbot_remote_plan": {
     "platform": "iPhone",
-    "status": "plan_only",
-    "path": "docs/LOCALBOT-REMOTE-IPHONE-PLAN.md",
-    "next_decision": "LAN-first milestone or include internet relay in first delivery"
+    "status": "connected_preview_implemented",
+    "path": "docs/LOCALBOT-REMOTE-IPHONE-PLAN.md"
+  },
+  "connected_preview": {
+    "date": "2026-09-19",
+    "status": "development_preview_installed_and_verified",
+    "branch": "codex/center-iphone-remote",
+    "runtime_tests": 141,
+    "native_tests": 8,
+    "relay": "https://relay-five-lake.vercel.app",
+    "verified": [
+      "public encrypted Swift/Node exchange",
+      "signed simulator pairing and message round trip",
+      "phone file edit independently checked",
+      "PTY host input resize ownership and revocation",
+      "phone interactive shell pwd stty size and Ctrl-C",
+      "remote PTY process exits after workspace dismissal",
+      "installed Mac Center settings UI",
+      "real Athena browser_open/browser_snapshot in installed Mac app"
+    ],
+    "pending": [
+      "physical Windows Ollama",
+      "physical iPhone installation",
+      "full mobile attachments and background notifications",
+      "broader browser click/type/scroll live coverage"
+    ],
+    "simulators_maximum": 1,
+    "installed_mac_source": "50a6645",
+    "signed_iphone_profile_expires": "2026-09-26"
+  },
+  "last_update": "2026-09-20 PC workspace paired with physical iPhone; fullscreen glass verified",
+  "verification_profile": "141 existing + 3 new runtime tests; Mac signed build; physical iPhone install/launch; encrypted upload bytes and shared profile/usage verified",
+  "verification_team": "144 runtime tests; resumed native PTY; signed Mac and physical iPhone install; Mac splash observed",
+  "pull_request": "https://github.com/saitakarcesme/LocalBot/pull/1",
+  "qwen_center": {
+    "status": "installed_live_verified",
+    "model": "orcarouter/qwen3.8-27b-uncensored:q8_0",
+    "hardware": "2x RTX 3090",
+    "context": 16384,
+    "runtime_tests": 151,
+    "mac_source": "5ecea07",
+    "center_source": "06c11cc",
+    "physical_iphone": "installed_and_launched",
+    "verified": [
+      "encrypted pairing",
+      "native model tool call",
+      "clock/list/write/read through LocalBot",
+      "per-chat second model without changing default",
+      "per-model reported tokens",
+      "Center restart and subsequent Qwen tool call"
+    ],
+    "limits": [
+      "exhaustive live tool execution incomplete",
+      "no sustained throughput or phone frame-time benchmark",
+      "keep Center and Ollama and Mac runtime running"
+    ]
+  },
+  "personal_agent": {
+    "status": "implemented_installed_verified_with_documented_limits",
+    "runtime_tests": 159,
+    "built_in_tools": 47,
+    "mac_source": "44b8b70",
+    "physical_iphone": "signed_build_installed_and_launched",
+    "live_qwen": [
+      "personal context retrieval",
+      "PDF text and scanned OCR",
+      "phone action queued awaiting review"
+    ],
+    "guide": "docs/PERSONAL-AGENT-AUDIT.md",
+    "remaining": [
+      "physical phone Mail/Calendar/Shortcut execution verification",
+      "dedicated email connector and account setup",
+      "unattended task resume/scheduling",
+      "local image/video generation service",
+      "scored Codex-quality benchmark"
+    ]
+  },
+  "pc_workspace": {
+    "status": "paired_and_live_verified",
+    "center_source": "54fdb06",
+    "mac_source": "647cd12",
+    "iphone_pairing": "user scanned QR; PC recorded iPhone; Mac UI shows paired device",
+    "workspace": "Model PC selected on Mac; old Mac conversations preserved separately",
+    "research": "first new bounded Athena/Sokrates pass completed; second running",
+    "limits": [
+      "No actual fine-tuning performed",
+      "1B daily tokens is a target, not measured throughput",
+      "No physical phone frame-time benchmark"
+    ],
+    "iphone_build": "6de33e8 signed Release installed and launched on physical iPhone 15 Pro"
   }
 }

@@ -20,7 +20,7 @@ test('subscription search enables only its isolated web capability and records a
  assert.equal(r.actions.length,1);assert.equal(r.sources[0].url,'https://sqlite.org/wal.html');assert(f.rpc.closed);
  const start=f.calls.find(c=>c.method==='thread/start').params;assert.equal(start.config.web_search,'live');assert.equal(start.config['features.shell_tool'],false);assert.equal(start.config['features.multi_agent'],false);assert.deepEqual(start.config.mcp_servers,{});assert.equal(start.ephemeral,true);
  assert.equal(allowed({permissions:{web:false}},'web_search'),false);assert.equal(allowed({permissions:{web:true}},'web_search'),true);
- assert.equal(provider({kind:'ollama',endpoint:'http://127.0.0.1:11434'}).search,undefined);
+ assert.equal(typeof provider({kind:'ollama',endpoint:'http://127.0.0.1:11434'}).search,'function');
 });
 test('search rejects non-subscription auth, missing activity, unsafe URLs and forbidden actions',async()=>{
  for(const mode of ['api','no-search','bad-url','forbidden','many','open-only','malformed','large-events']){const f=fixture(mode);await assert.rejects(codexSearch({model:'test',timeout:1},'query',new AbortController().signal,()=>f.rpc));assert(f.rpc.closed);}

@@ -42,6 +42,9 @@ enum Keychain {
   }
 }
 @MainActor final class AppModel: ObservableObject {
+  @Published var profile = UserProfile()
+  @Published var isFullscreen = false
+  @Published var sidebarVisibility: NavigationSplitViewVisibility = .all
   let persistsSelection: Bool
   private static let openModels = NSHashTable<AppModel>.weakObjects()
   init(persistsSelection: Bool = true) {
@@ -64,6 +67,7 @@ enum Keychain {
     } catch { /* Retry unused drafts on the next launch if the runtime is unavailable. */ }
   }
   let workspace = WorkspaceState()
+  let browserAutomation = BrowserAutomation()
   var browserHandler: ((URL) -> Void)?
   @Published var rightPanel: RightPanel?
   var showActivity: Bool {
@@ -100,13 +104,17 @@ enum Keychain {
         hasEarlierMessages = false
         loadingEarlierMessages = false
         activity = []
+        let previousHost = workspaceProviderId
         Task {
-          if let oldValue { await discardUnusedConversation(oldValue) }
+          if let oldValue, previousHost == workspaceProviderId { await discardUnusedConversation(oldValue) }
           await refreshConversation()
         }
       }
     }
   }
+  @Published var workspaceProviderId: String?
+  @Published var centerConnections: [Provider] = []
+  private var restoredWorkspace = false
   @Published var connected = false
   @Published var hasLoaded = false
   @Published var error: String?
@@ -139,6 +147,7 @@ enum Keychain {
       await connect()
       while !Task.isCancelled {
         await refresh()
+        if persistsSelection && connected && workspaceProviderId == nil { await browserAutomation.poll(self) }
         try? await Task.sleep(for: .seconds(connected ? 1 : 3))
         if !connected { await connect() }
       }
@@ -204,7 +213,12 @@ enum Keychain {
     }
   }
   func request(_ path: String, body: [String: Any]? = nil) async throws -> Data {
-    guard let c = connection, let url = URL(string: c.url + path) else {
+    var destination = path
+    if let host = workspaceProviderId, path != "/health", path != "/credentials", !path.hasPrefix("/workspace-host/") {
+      var parts = URLComponents();parts.path = "/workspace-host/api";parts.queryItems = [URLQueryItem(name: "providerId", value: host), URLQueryItem(name: "path", value: path)]
+      destination = parts.string ?? path
+    }
+    guard let c = connection, let url = URL(string: c.url + destination) else {
       throw URLError(.cannotConnectToHost)
     }
     var req = URLRequest(url: url)
@@ -224,6 +238,18 @@ enum Keychain {
     }
     return data
   }
+  func selectWorkspaceHost(_ id: String?) async throws {
+    if let id {
+      var parts=URLComponents();parts.path="/workspace-host/api";parts.queryItems=[URLQueryItem(name:"providerId",value:id),URLQueryItem(name:"path",value:"/snapshot")]
+      _ = try await request(parts.string!)
+    }
+    guard !workspace.tabs.contains(where: { $0.hasUnsavedChanges }) else { throw NSError(domain: "LocalBot", code: 1, userInfo: [NSLocalizedDescriptionKey: "Save or close edited files before switching workspace hosts."]) }
+    for tab in workspace.tabs { workspace.close(tab) }
+    selectedId = nil
+    workspaceProviderId = id; restoredWorkspace = true
+    if let id { UserDefaults.standard.set(id,forKey:"workspaceProviderId") } else { UserDefaults.standard.removeObject(forKey:"workspaceProviderId") }
+    selectedId=nil;messages=[];activity=[];snapshotCursor.reset();await refresh()
+  }
   func refresh() async {
     guard connection != nil else { return }
     do {
@@ -238,6 +264,7 @@ enum Keychain {
         && ["completed", "completed_with_errors", "failed", "awaiting_approval", "awaiting_input"]
           .contains(t.status)
       { notify(t) }
+      if profile != s.profile ?? UserProfile() { profile = s.profile ?? UserProfile() }
       let first = update == .restarted
       if agents != (s.agents) { agents = s.agents }
       if providers != (s.providers) { providers = s.providers }
@@ -248,7 +275,8 @@ enum Keychain {
       if conversations != (s.conversations) { conversations = s.conversations }
       if tasks != (s.tasks) { tasks = s.tasks }
       if approvals != (s.approvals) { approvals = s.approvals }
-      if first {
+      if workspaceProviderId == nil { centerConnections = providers.filter { $0.transport == "center" } }
+      if first && workspaceProviderId == nil {
         for i in integrations {
           if let secret = Keychain.read("mcp:" + i.id + "@" + i.endpoint) {
             _ = try? await request("/integrations/credentials", body: ["id": i.id, "secret": secret])
@@ -258,6 +286,12 @@ enum Keychain {
           if let secret = Keychain.read(p.id + "@" + p.endpoint) {
             _ = try? await request("/credentials", body: ["providerId": p.id, "secret": secret])
           }
+        }
+      }
+      if !restoredWorkspace && workspaceProviderId == nil {
+        restoredWorkspace = true
+        if let saved = UserDefaults.standard.string(forKey: "workspaceProviderId"), centerConnections.contains(where: { $0.id == saved }) {
+          workspaceProviderId = saved;snapshotCursor.reset();await refresh();return
         }
       }
       if first, persistsSelection, !creatingConversation {

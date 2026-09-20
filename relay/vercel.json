@@ -1,0 +1,1 @@
+{"regions":["fra1"],"functions":{"api/*.mjs":{"maxDuration":120}},"rewrites":[{"source":"/register","destination":"/api/register"},{"source":"/rpc","destination":"/api/rpc"}]}

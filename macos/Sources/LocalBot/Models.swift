@@ -45,6 +45,7 @@ struct Provider: Codable, Identifiable, Equatable {
   var maxTokens: Int
   var requiresAuth: Bool
   var imageInput: Bool? = nil
+  var transport: String? = nil
 }
 struct Conversation: Codable, Identifiable, Equatable {
   var isDraft: Bool? = nil
@@ -122,6 +123,7 @@ struct Activity: Codable, Identifiable, Equatable {
   var createdAt: String
 }
 struct Snapshot: Codable {
+  var profile: UserProfile?
   var instanceId: String?
   var goals: [AgentGoal]?
   var integrations: [MCPConnection]?
@@ -177,3 +179,5 @@ func dateFrom(_ s: String) -> Date {
   f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
   return f.date(from: s) ?? Date()
 }
+
+struct UserProfile: Codable, Equatable { var name: String = "LocalBot User"; var photo: String? }

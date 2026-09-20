@@ -27,6 +27,7 @@ export async function codexSearch(config: ProviderConfig, query: string, signal:
   if (typeof query !== "string" || !query.trim() || query.length > 1000) throw new Error("Search query must contain 1–1000 characters");
   signal.throwIfAborted();
   const rpc = makeRPC();
+  rpc.usageIdentity = { providerId: config.id, model: config.model };
   const deadline = AbortSignal.any([signal, AbortSignal.timeout(Math.min(config.timeout,120) * 1000)]);
   try {
     await rpc.initialize(deadline);

@@ -19,8 +19,11 @@ done
 if [ -f "$APP/Contents/Resources/SwiftTerm-LICENSE" ]; then chmod u+w "$APP/Contents/Resources/SwiftTerm-LICENSE"; fi
 cp "$SWIFT_BUILD_DIR/checkouts/SwiftTerm/LICENSE" "$APP/Contents/Resources/SwiftTerm-LICENSE"
 chmod u+w "$APP/Contents/Resources/SwiftTerm-LICENSE"
+cp shared/Resources/Launch.mp4 "$APP/Contents/Resources/Launch.mp4"
 cp macos/Sources/LocalBot/Resources/LocalBotMark.png "$APP/Contents/Resources/LocalBotMark.png"
-cp runtime/dist/*.js "$APP/Contents/Resources/runtime/"
+cp -R runtime/dist/. "$APP/Contents/Resources/runtime/"
+swiftc -O native/document-reader.swift -o "$APP/Contents/Resources/document-reader"
+clang -O2 -Wall native/remote-pty.c -o "$APP/Contents/Resources/remote-pty"
 NODE_VERSION=22.22.2
 NODE_ARCH="$(uname -m)"
 if [ "$NODE_ARCH" = x86_64 ]; then NODE_ARCH=x64; fi
@@ -35,6 +38,11 @@ fi
 if [ -f "$APP/Contents/Resources/node" ]; then chmod u+w "$APP/Contents/Resources/node"; fi
 cp "build/vendor/$NODE_DIST/bin/node" "$APP/Contents/Resources/node"
 cp "build/vendor/$NODE_DIST/LICENSE" "$APP/Contents/Resources/Node-LICENSE"
+if [ "$NODE_ARCH" = arm64 ]; then
+  node scripts/fetch-tunnel.mjs darwin-arm64
+  cp build/vendor/tunnel/darwin-arm64/cloudflared "$APP/Contents/Resources/cloudflared"
+  curl --fail --location --silent --show-error https://raw.githubusercontent.com/cloudflare/cloudflared/2026.9.1/LICENSE -o "$APP/Contents/Resources/Cloudflare-LICENSE"
+fi
 printf '{"type":"module"}\n' > "$APP/Contents/Resources/runtime/package.json"
 cat > "$APP/Contents/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
