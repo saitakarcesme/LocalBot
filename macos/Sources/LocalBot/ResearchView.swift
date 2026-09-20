@@ -159,7 +159,7 @@ private struct ResearchGlass: ViewModifier {
 }
 
 /// Render headings and code as document blocks while keeping output fully copyable.
-private struct ResearchDocument: View {
+struct ResearchDocument: View {
   var content: String
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {

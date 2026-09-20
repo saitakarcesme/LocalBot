@@ -60,7 +60,7 @@ struct ProfileEditor: View {
       if let loadModels, let selectModel {
         HStack { VStack(alignment: .leading, spacing: 5) { Text("Model").font(.caption).foregroundStyle(.secondary); Text(currentModel?.model ?? "Agent defaults").font(.callout).lineLimit(2) }; Spacer(); ModelSelector(load: loadModels, select: { option in try await selectModel(option); currentModel = option }) }.padding(16).background(.thinMaterial, in: RoundedRectangle(cornerRadius: 20))
       }
-      if research != nil { Button { showResearch = true } label: { Label("Auto-research", systemImage: "sparkle.magnifyingglass").frame(maxWidth: .infinity, alignment: .leading).padding(14).background(.thinMaterial, in: RoundedRectangle(cornerRadius: 18)) }.buttonStyle(.plain) }
+      if research != nil { Button { showResearch = true } label: { Label("Fine Tune", systemImage: "sparkle.magnifyingglass").frame(maxWidth: .infinity, alignment: .leading).padding(14).background(.thinMaterial, in: RoundedRectangle(cornerRadius: 18)) }.buttonStyle(.plain) }
       if personal != nil { Button { showPersonal = true } label: { Label("Personal workspace", systemImage: "person.text.rectangle").frame(maxWidth: .infinity, alignment: .leading).padding(14).background(.thinMaterial, in: RoundedRectangle(cornerRadius: 18)) }.buttonStyle(.plain) }
       Divider()
       Text("Token usage").font(.headline)

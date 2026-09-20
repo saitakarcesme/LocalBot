@@ -94,6 +94,7 @@ struct TypingDots: View {
 }
 struct MainView: View {
   @State private var showProfile = false
+  @State private var showFineTune = false
   @EnvironmentObject var model: AppModel
   @FocusState var searchFocused: Bool
   @State private var collapsedProjects = Set(UserDefaults.standard.stringArray(forKey: "collapsedProjects") ?? [])
@@ -170,9 +171,11 @@ struct MainView: View {
             Text("No messages found").foregroundStyle(.secondary).padding()
           }
         }
+        Button {showFineTune=true} label: {Label("Fine Tune",systemImage:"brain").frame(maxWidth:.infinity,alignment:.leading).padding(12)}.buttonStyle(.plain)
+          .sheet(isPresented:$showFineTune) {FineTuneDashboard(request:{try await model.request($0)},write:{try await model.request($0,body:$1)})}
         HStack(spacing: 7) {
           Button { showProfile = true } label: { ProfileBadge(profile: model.profile) }.buttonStyle(.plain)
-            .sheet(isPresented: $showProfile) { ProfileEditor(profile: model.profile, loadUsage: { try await model.request("/usage") }, save: { profile in _ = try await model.request("/profile", body: ["name":profile.name,"photo":profile.photo ?? ""]); model.profile = profile }, loadModels: { try await model.request("/models") }, selectModel: { _ = try await model.request("/models/select", body: $0.payload) }, personal: { AnyView(PersonalContextView(load: { try await model.request("/personal/context") }, save: { try await model.request("/personal/context", body: $0) })) }, research: { AnyView(ResearchView(load: { try await model.request("/research") }, save: { try await model.request("/research", body: $0) }, conversations: model.conversations)) }) }
+            .sheet(isPresented: $showProfile) { ProfileEditor(profile: model.profile, loadUsage: { try await model.request("/usage") }, save: { profile in _ = try await model.request("/profile", body: ["name":profile.name,"photo":profile.photo ?? ""]); model.profile = profile }, loadModels: { try await model.request("/models") }, selectModel: { _ = try await model.request("/models/select", body: $0.payload) }, personal: { AnyView(PersonalContextView(load: { try await model.request("/personal/context") }, save: { try await model.request("/personal/context", body: $0) })) }, research: { AnyView(FineTuneDashboard(request: {try await model.request($0)},write:{try await model.request($0,body:$1)})) }) }
           Spacer()
           Button { model.toggleArchiveList() } label: {
             Image(systemName: model.showingArchived ? "bubble.left.and.bubble.right" : "archivebox").font(.system(size: 17))

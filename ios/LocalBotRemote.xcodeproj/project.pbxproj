@@ -22,6 +22,7 @@
 		5372A20265348B70786B7594 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23CBBA3AB008F097CC816099 /* Models.swift */; };
 		65A555988A767A02264227E5 /* MobileWorkspace.swift in Sources */ = {isa = PBXBuildFile; fileRef = 613423EDAAACC95C41B6ED5C /* MobileWorkspace.swift */; };
 		7339F69AD47C11E272AA09E4 /* SwiftTerm-LICENSE.txt in Resources */ = {isa = PBXBuildFile; fileRef = 29BC18247F4FEF3F4B606F8F /* SwiftTerm-LICENSE.txt */; };
+		86C4D7AFC4E3702B10742E00 /* FineTuneView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D47A58139B276CFCFB2AB4 /* FineTuneView.swift */; };
 		A51471E6385D27562E445A42 /* ResearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 264A5381BAAB737B018FEED7 /* ResearchView.swift */; };
 		A74C06E72D32FB806D770390 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B8F868E434ECE5F248F3EFE /* ProfileView.swift */; };
 		A9A3FEC3577F3BE4ECE295B5 /* LocalBotMascot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4457BBD412BA31B5B5619451 /* LocalBotMascot.swift */; };
@@ -48,6 +49,7 @@
 		BFACA3C0D90860CC2C2503E2 /* RemoteStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteStore.swift; sourceTree = "<group>"; };
 		C8070A747C71B4FF18979E1A /* LaunchScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchScreen.swift; sourceTree = "<group>"; };
 		E63C42BF7FE12BD10C52B27B /* RemoteClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteClient.swift; sourceTree = "<group>"; };
+		F3D47A58139B276CFCFB2AB4 /* FineTuneView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FineTuneView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -100,6 +102,7 @@
 		A4991253145547E324C4A4AE /* LocalBot */ = {
 			isa = PBXGroup;
 			children = (
+				F3D47A58139B276CFCFB2AB4 /* FineTuneView.swift */,
 				C8070A747C71B4FF18979E1A /* LaunchScreen.swift */,
 				4457BBD412BA31B5B5619451 /* LocalBotMascot.swift */,
 				6D4C16FBC1402C7FB53F72CA /* MessageFormatting.swift */,
@@ -207,6 +210,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				86C4D7AFC4E3702B10742E00 /* FineTuneView.swift in Sources */,
 				E7942508EAEF03FA0493152C /* LaunchScreen.swift in Sources */,
 				A9A3FEC3577F3BE4ECE295B5 /* LocalBotMascot.swift in Sources */,
 				52D1D1DB58DBC6F37D3737AE /* LocalBotRemoteApp.swift in Sources */,

@@ -33,6 +33,7 @@ targets:
       - ../shared/Resources/Launch.mp4
       - ../macos/Sources/LocalBot/LaunchScreen.swift
       - ../shared/RemoteClient.swift
+      - ../macos/Sources/LocalBot/FineTuneView.swift
       - ../macos/Sources/LocalBot/ResearchView.swift
       - ../macos/Sources/LocalBot/MessageFormatting.swift
       - ../macos/Sources/LocalBot/PersonalContextView.swift

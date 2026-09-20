@@ -106,11 +106,11 @@ struct ConversationsView: View {
         Section("Recents") { ForEach(conversations.filter { $0.projectId == nil }) { row($0) } }
       }.searchable(text: $search).navigationTitle("LocalBot")
         .toolbar {
-          ToolbarItem(placement: .topBarTrailing) { NavigationLink { ResearchDashboard(request: {try await store.read($0)},save:{try await store.personalWrite("/research",body:$0)},conversations:store.snapshot?.conversations ?? []) } label: {Image(systemName:"chart.xyaxis.line")}.accessibilityLabel("Research") }
+          ToolbarItem(placement: .topBarTrailing) { NavigationLink { FineTuneDashboard(request: {try await store.read($0)},write:{try await store.personalWrite($0,body:$1)}) } label: {Image(systemName:"chart.xyaxis.line")}.accessibilityLabel("Fine Tune") }
           ToolbarItem(placement: .topBarLeading) { Button { profile = true } label: { ProfileBadge(profile: store.snapshot?.profile ?? UserProfile()) }.accessibilityLabel("Profile and settings") }
           ToolbarItem(placement: .topBarTrailing) { Button { project = nil; newChat = true; store.selected = nil; store.messages = []; store.activity = [] } label: { Image(systemName: "square.and.pencil") }.accessibilityLabel("New conversation") }
         }
-        .sheet(isPresented: $profile) { ProfileEditor(profile: store.snapshot?.profile ?? UserProfile(), loadUsage: { try await store.read("/usage") }, save: { try await store.saveProfile($0) }, settings: { store.disconnect() }, loadModels: { try await store.read("/models") }, selectModel: { try await store.selectModel($0) }, personal: { AnyView(PhonePersonalView().environmentObject(store)) }, research: { AnyView(ResearchView(load: { try await store.read("/research") }, save: { try await store.personalWrite("/research", body: $0) }, conversations: store.snapshot?.conversations ?? [])) }) }
+        .sheet(isPresented: $profile) { ProfileEditor(profile: store.snapshot?.profile ?? UserProfile(), loadUsage: { try await store.read("/usage") }, save: { try await store.saveProfile($0) }, settings: { store.disconnect() }, loadModels: { try await store.read("/models") }, selectModel: { try await store.selectModel($0) }, personal: { AnyView(PhonePersonalView().environmentObject(store)) }, research: { AnyView(FineTuneDashboard(request: {try await store.read($0)},write:{try await store.personalWrite($0,body:$1)})) }) }
         .navigationDestination(isPresented: $newChat) { MobileChat(project: project) }
     }
   }
