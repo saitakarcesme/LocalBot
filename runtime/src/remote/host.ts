@@ -21,6 +21,7 @@ const reads = new Set([
   "/memory",
 ]);
 const writes = new Set([
+  "/projects",
   "/research",
   "/personal/context",
   "/phone/actions/update",

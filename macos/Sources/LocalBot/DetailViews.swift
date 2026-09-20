@@ -233,11 +233,11 @@ struct NewProjectView: View {
       Text("Conversations share this folder and project memory. Agents join according to the work you request.")
         .font(.callout).foregroundStyle(.secondary)
       HStack {
-        Text(workspace.isEmpty ? "Documents/LocalBot/" + (name.isEmpty ? "Project name" : name) : workspace).lineLimit(2)
+        Text(model.workspaceProviderId != nil ? "New folder on Model PC" : workspace.isEmpty ? "Documents/LocalBot/" + (name.isEmpty ? "Project name" : name) : workspace).lineLimit(2)
         Spacer()
-        Button("Choose…") {
+        if model.workspaceProviderId == nil { Button("Choose…") {
           choosingFolder = true
-        }
+        } }
       }
       HStack {
         Button("Cancel") { dismiss() }
@@ -246,12 +246,14 @@ struct NewProjectView: View {
           creating = true
           Task {
             defer { creating = false }
-            await model.post("/projects", ["name": name, "workspace": workspace])
-            if model.error == nil {
-              let projectId = model.projects.first?.id
+            do {
+              let data = try await model.request("/projects", body: ["name": name, "workspace": model.workspaceProviderId == nil ? workspace : ""])
+              let project = try JSONDecoder().decode(Project.self, from: data)
+              await model.refresh()
+              let projectId = project.id
               dismiss()
               await model.newConversation(projectId: projectId)
-            }
+            } catch { model.error = error.localizedDescription }
           }
         }.buttonStyle(.borderedProminent).disabled(name.trimmingCharacters(in: .whitespaces).isEmpty || creating)
       }
