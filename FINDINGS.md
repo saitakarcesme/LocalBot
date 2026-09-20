@@ -447,3 +447,11 @@ Streaming checkpoint requested by the concurrent UI task: fixed dropped trailing
 - PC telemetry endpoint verified both RTX3090s. Existing Q8 model had allocations on both devices; idle 3D charts were not evidence of single-GPU inference.
 - Backed-up append-only history transfer inserted 676 rows; PC snapshot now contains 6 projects and 39 conversations. Project files and attachments remain on Mac.
 - User explicitly approved pinned 0xSero SGLang image first launch. Container localbot-qwen38 started with TP2, localhost-only8000 and isolated model volume; weights are downloading. Default model has not changed; local benchmark pending. Mia's primary X posts and 0xSero recipe recorded in docs/QWEN-3090-SELECTION.md.
+
+## 2026-09-20 — Dual-GPU model deployed and verified
+- Resolved the SGLang WSL SIGFPE in Triton symmetric-memory rendezvous by selecting the existing NCCL fallback. Preserved the pinned base image, model volume and original Ollama weights. Enabled bounded decode CUDA graphs; DSpark remains disabled.
+- Two short 256-token samples measured 45.30 and 46.68 tokens/s, with both RTX3090s active (75%/77%, 66/47°C). These are warmed samples, not sustained throughput or fine-tuning measurements.
+- Registered localhost-only SGLang as qwen38-sglang and selected qwen3.8-27b-awq as the PC workspace default. LocalBot verification completed with task-specific progress, a successful current_time call, and the observed UTC value in the final response. Container restart policy is unless-stopped. Explicit conversation overrides remain respected.
+- Installed Mac source719dd1d and physical iPhone source9183056. Mac startup Keychain reads now run off the main thread. iPhone launch is blocked by device lock; Mac PC credentials await Keychain access. Pairing was preserved.
+- Research UI checked in iPhone simulator portrait and landscape; native glass and document formatting built for both apps. Simulator shut down. 168 runtime tests pass, inventory audit passes (50 built-ins). Live macOS Accessibility execution and physical iPhone UI/performance remain unverified.
+- Auto-research remains paused following its previous completed_with_errors pass. No training was launched. Existing target requires 11,574 tokens/s, far beyond the measured single-stream throughput; no billion-token/day claim is made.

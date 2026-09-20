@@ -38,3 +38,6 @@ With TP=2, `NCCL_P2P_DISABLE=1`, custom all-reduce disabled, 32K context, 0.80 s
 These are short local samples including request overhead, not sustained throughput or quality certification. First use compiles kernels and can take over a minute. DSpark remains disabled. Both parsers must be supplied: `--reasoning-parser qwen3 --tool-call-parser qwen3_coder` ([SGLang recipe](https://docs.sglang.io/cookbook/autoregressive/Qwen/Qwen3.8-27B)). The patched local image is `localbot/qwen38-wsl:20260920`; the active container is `localbot-qwen38-wsl`, bound only to `127.0.0.1:8000`.
 
 Additional primary context: [0xSero's two-3090 post](https://x.com/0xSero/status/2100945451352457629). The recommendation was tested locally rather than assuming its published performance applies to Windows.
+
+### LocalBot integration check
+The PC workspace default is now `qwen38-sglang` / `qwen3.8-27b-awq`. A real LocalBot task produced a task-specific progress message, executed `current_time`, and returned the observed value; task status was `completed`. The serving container uses `unless-stopped`. Existing explicit conversation selections remain unchanged. The Mac-local workspace is separate and its pending Keychain restoration is not evidence of a completed model migration.
