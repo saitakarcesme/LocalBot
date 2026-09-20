@@ -66,7 +66,7 @@ struct ConversationsView: View {
   var body: some View {
     NavigationStack {
       List {
-        if !store.connected { Section { Label(store.error ?? "Connecting to your Mac…", systemImage: "wifi.exclamationmark").font(.callout).foregroundStyle(.secondary) } }
+        if !store.connected { Section { Label(store.error ?? "Connecting to your workspace…", systemImage: "wifi.exclamationmark").font(.callout).foregroundStyle(.secondary) } }
         ForEach(store.snapshot?.projects ?? []) { project in
           Section {
             if !collapsed.contains(project.id) || !search.isEmpty {
