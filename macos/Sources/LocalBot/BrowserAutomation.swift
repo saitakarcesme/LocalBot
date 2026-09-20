@@ -8,10 +8,13 @@ import Foundation
   func poll(_ model: AppModel) async {
     guard !busy else { return }; busy = true; defer { busy = false }
     do {
+      let host = model.workspaceProviderId
       let data = try await model.request("/browser/poll")
+      guard model.workspaceProviderId == host else { return }
       guard let response = try JSONSerialization.jsonObject(with: data) as? [String:Any], let action = response["action"] as? [String:Any], let id = action["id"] as? String, let task = action["taskId"] as? String, let name = action["name"] as? String, let args = action["args"] as? [String:Any] else { return }
       do {
         let result = try await perform(model, task: task, name: name, args: args)
+        guard model.workspaceProviderId == host else { return }
         _ = try await model.request("/browser/result", body:["id":id,"result":result])
       } catch { _ = try? await model.request("/browser/result", body:["id":id,"error":error.localizedDescription]) }
     } catch { /* The next foreground poll reconnects to the runtime. */ }

@@ -150,7 +150,7 @@ enum Keychain {
       await connect()
       while !Task.isCancelled {
         await refresh()
-        if persistsSelection && connected && workspaceProviderId == nil { await browserAutomation.poll(self) }
+        if persistsSelection && connected { await browserAutomation.poll(self) }
         try? await Task.sleep(for: .seconds(connected ? 1 : 3))
         if !connected { await connect() }
       }
