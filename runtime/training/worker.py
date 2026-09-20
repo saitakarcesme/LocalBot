@@ -6,6 +6,30 @@ from datetime import datetime
 def emit(kind, **values):
     print(json.dumps(dict(kind=kind, **values), allow_nan=False), flush=True)
 
+def parent_is_alive():
+    try:
+        pid=int(os.environ['LOCALBOT_PARENT_PID'])
+        if pid<=0: return False
+        if os.name=='nt':
+            # os.kill(pid, 0) is not a read-only liveness probe on Windows.
+            import ctypes
+            from ctypes import wintypes
+            kernel=ctypes.WinDLL('kernel32', use_last_error=True)
+            kernel.OpenProcess.argtypes=[wintypes.DWORD,wintypes.BOOL,wintypes.DWORD]
+            kernel.OpenProcess.restype=wintypes.HANDLE
+            kernel.GetExitCodeProcess.argtypes=[wintypes.HANDLE,ctypes.POINTER(wintypes.DWORD)]
+            kernel.CloseHandle.argtypes=[wintypes.HANDLE]
+            handle=kernel.OpenProcess(0x1000,False,pid)
+            if not handle: return False
+            try:
+                code=wintypes.DWORD()
+                return bool(kernel.GetExitCodeProcess(handle,ctypes.byref(code))) and code.value==259
+            finally: kernel.CloseHandle(handle)
+        os.kill(pid,0)
+        return True
+    except (ProcessLookupError,KeyError,ValueError): return False
+    except PermissionError: return True
+
 def main():
     import torch
     from datasets import Dataset
@@ -49,10 +73,7 @@ def main():
         def on_step_end(self,args,state,control,**kw):
             elapsed=time.monotonic()-self.started
             hour=datetime.now().hour
-            parent_alive=True
-            try: os.kill(int(os.environ['LOCALBOT_PARENT_PID']),0)
-            except (ProcessLookupError,KeyError): parent_alive=False
-            if not parent_alive or (root/'pause').exists() or (cfg['overnight'] and 7<=hour<22):
+            if not parent_is_alive() or (root/'pause').exists() or (cfg['overnight'] and 7<=hour<22):
                 control.should_save=True;control.should_training_stop=True
             else:
                 deadline=time.monotonic()+elapsed*(100/cfg['budgetPercent']-1)
