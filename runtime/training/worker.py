@@ -77,7 +77,12 @@ def main():
     emit('loading',model=cfg['baseModel'])
     model=loader.from_pretrained(cfg['baseModel'],**options)
     model.config.use_cache=False
-    model=prepare_model_for_kbit_training(model)
+    # Preserve frozen BF16 embeddings/head: promoting the 248K-token head to
+    # FP32 needs another 4.7 GiB and exhausts a 24 GiB device during preparation.
+    # LoRA owns the trainable parameters; checkpointing needs input gradients.
+    for parameter in model.parameters(): parameter.requires_grad_(False)
+    model.enable_input_require_grads()
+    model.gradient_checkpointing_enable()
     targets=r'.*language_model.*\.(q_proj|k_proj|v_proj|o_proj|gate_proj|up_proj|down_proj)' if config.model_type=='qwen3_5' else ['q_proj','k_proj','v_proj','o_proj','gate_proj','up_proj','down_proj']
     model=get_peft_model(model,LoraConfig(r=8,lora_alpha=16,lora_dropout=0.05,target_modules=targets,task_type='CAUSAL_LM'))
     emit('loaded',trainableParameters=sum(p.numel() for p in model.parameters() if p.requires_grad))
