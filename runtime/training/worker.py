@@ -8,6 +8,8 @@ def emit(kind, **values):
 
 def parent_is_alive():
     try:
+        if os.environ.get('LOCALBOT_LEASE_FILE'):
+            return time.time()-Path(os.environ['LOCALBOT_LEASE_FILE']).stat().st_mtime<90
         pid=int(os.environ['LOCALBOT_PARENT_PID'])
         if pid<=0: return False
         if os.name=='nt':
@@ -27,16 +29,15 @@ def parent_is_alive():
             finally: kernel.CloseHandle(handle)
         os.kill(pid,0)
         return True
-    except (ProcessLookupError,KeyError,ValueError): return False
+    except (ProcessLookupError,FileNotFoundError,KeyError,ValueError): return False
     except PermissionError: return True
 
 def main():
     import torch
     from datasets import Dataset
-    from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, TrainerCallback
+    from transformers import AutoConfig, AutoModelForCausalLM, AutoModelForImageTextToText, AutoTokenizer, BitsAndBytesConfig, TrainerCallback, Trainer, TrainingArguments, DataCollatorForLanguageModeling
     from transformers.trainer_utils import get_last_checkpoint
-    from trl import SFTConfig, SFTTrainer
-    from peft import LoraConfig
+    from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
     if sys.argv[1] == '--probe':
         emit('ready', cuda=torch.cuda.is_available(), devices=torch.cuda.device_count())
         return
@@ -62,12 +63,26 @@ def main():
             raise RuntimeError('Selected GPU has less than 8 GB free. Unload inference before training.')
     tokenizer=AutoTokenizer.from_pretrained(cfg['baseModel'], revision=cfg['revision'], trust_remote_code=False)
     if tokenizer.pad_token is None: tokenizer.pad_token=tokenizer.eos_token
-    model=AutoModelForCausalLM.from_pretrained(cfg['baseModel'], revision=cfg['revision'], trust_remote_code=False,
-        quantization_config=BitsAndBytesConfig(load_in_4bit=True,bnb_4bit_quant_type='nf4',bnb_4bit_compute_dtype=torch.bfloat16),
-        torch_dtype=torch.bfloat16,device_map='auto')
+    config=AutoConfig.from_pretrained(cfg['baseModel'], revision=cfg['revision'], trust_remote_code=False)
+    loader=AutoModelForImageTextToText if config.model_type=='qwen3_5' else AutoModelForCausalLM
+    options=dict(revision=cfg['revision'],trust_remote_code=False,dtype=torch.bfloat16,device_map='balanced')
+    if not getattr(config,'quantization_config',None):
+        options['quantization_config']=BitsAndBytesConfig(load_in_4bit=True,bnb_4bit_quant_type='nf4',bnb_4bit_compute_dtype=torch.bfloat16)
+    emit('loading',model=cfg['baseModel'])
+    model=loader.from_pretrained(cfg['baseModel'],**options)
+    model.config.use_cache=False
+    model=prepare_model_for_kbit_training(model)
+    targets=r'.*language_model.*\.(q_proj|k_proj|v_proj|o_proj|gate_proj|up_proj|down_proj)' if config.model_type=='qwen3_5' else ['q_proj','k_proj','v_proj','o_proj','gate_proj','up_proj','down_proj']
+    model=get_peft_model(model,LoraConfig(r=8,lora_alpha=16,lora_dropout=0.05,target_modules=targets,task_type='CAUSAL_LM'))
+    emit('loaded',trainableParameters=sum(p.numel() for p in model.parameters() if p.requires_grad))
     rows=json.loads((root/'dataset.json').read_text())
     def dataset(split):
-        return Dataset.from_list([{'messages':[{'role':'user','content':r['prompt']},{'role':'assistant','content':r['answer']}]} for r in rows if r['split']==split])
+        values=[]
+        for r in rows:
+            if r['split']!=split:continue
+            text=tokenizer.apply_chat_template([{'role':'user','content':r['prompt']},{'role':'assistant','content':r['answer']}],tokenize=False,enable_thinking=False)
+            values.append(tokenizer(text,truncation=True,max_length=cfg.get('maxLength',256)))
+        return Dataset.from_list(values)
     class Progress(TrainerCallback):
         def on_step_begin(self,args,state,control,**kw): self.started=time.monotonic()
         def on_step_end(self,args,state,control,**kw):
@@ -85,18 +100,19 @@ def main():
             emit('metrics',step=state.global_step,**values)
         def on_save(self,args,state,control,**kw):
             emit('checkpoint',step=state.global_step,path=f'checkpoint-{state.global_step}')
-    args=SFTConfig(output_dir=str(root/'checkpoints'),per_device_train_batch_size=1,per_device_eval_batch_size=1,
-        gradient_accumulation_steps=8,gradient_checkpointing=True,max_length=1024,max_steps=cfg['maxSteps'],
+    args=TrainingArguments(output_dir=str(root/'checkpoints'),per_device_train_batch_size=1,per_device_eval_batch_size=1,
+        gradient_accumulation_steps=cfg.get('gradientAccumulation',1),gradient_checkpointing=True,max_steps=cfg['maxSteps'],
         learning_rate=2e-4,logging_steps=1,save_steps=10,save_total_limit=3,eval_strategy='steps',eval_steps=10,
         bf16=True,report_to='none',push_to_hub=False,seed=42)
-    trainer=SFTTrainer(model=model,args=args,processing_class=tokenizer,train_dataset=dataset('train'),eval_dataset=dataset('eval'),
-        peft_config=LoraConfig(r=16,lora_alpha=32,lora_dropout=0.05,target_modules='all-linear',task_type='CAUSAL_LM'),callbacks=[Progress()])
+    trainer=Trainer(model=model,args=args,processing_class=tokenizer,train_dataset=dataset('train'),eval_dataset=dataset('eval'),
+        data_collator=DataCollatorForLanguageModeling(tokenizer=tokenizer,mlm=False),callbacks=[Progress()])
     checkpoint=get_last_checkpoint(str(root/'checkpoints')) if (root/'checkpoints').exists() else None
     baseline_path=root/'baseline.json'
     if not baseline_path.exists():
         if checkpoint: raise RuntimeError('Checkpoint is missing its baseline evaluation.')
         baseline=trainer.evaluate()['eval_loss'];baseline_path.write_text(json.dumps({'loss':baseline}))
     else: baseline=json.loads(baseline_path.read_text())['loss']
+    emit('training',resumedFrom=checkpoint,baselineLoss=baseline)
     trainer.train(resume_from_checkpoint=checkpoint)
     if trainer.state.global_step<cfg['maxSteps']:
         emit('paused',step=trainer.state.global_step,reason='overnight' if cfg['overnight'] and 7<=datetime.now().hour<22 and not (root/'pause').exists() else 'requested')
