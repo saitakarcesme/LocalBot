@@ -327,6 +327,7 @@ struct AgentEditor: View {
           Toggle("Terminal & tests", isOn: $agent.permissions.terminal)
           Toggle("Git inspection", isOn: $agent.permissions.git)
           Toggle("Public web", isOn: $agent.permissions.web)
+          Toggle("Mac computer use",isOn:Binding(get:{agent.permissions.computer == true},set:{agent.permissions.computer=$0}))
           Picker("Autonomy", selection: $agent.autonomy) {
             Text("Ask before changes").tag("ask")
             Text("Allow workspace edits").tag("trusted")

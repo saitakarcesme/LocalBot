@@ -2,6 +2,7 @@ import Foundation
 import SwiftUI
 
 struct Permissions: Codable, Equatable {
+  var computer: Bool? = nil
   var filesystem: String
   var terminal: Bool
   var git: Bool

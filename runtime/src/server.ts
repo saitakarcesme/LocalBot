@@ -143,6 +143,7 @@ function cleanAgent(a: any): Agent {
       terminal: p.terminal === true,
       git: p.git === true,
       web: p.web === true,
+      computer: p.computer === true,
     },
     autonomy: a.autonomy,
     maxSteps: agentStepLimit(a.maxSteps),

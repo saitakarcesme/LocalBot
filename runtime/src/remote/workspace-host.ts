@@ -107,8 +107,8 @@ export class WorkspaceHost {
   async api(request: RPCRequest, device: string, signal: AbortSignal) {
     if (!this.connection)
       throw Error("Enable Workspace host in LocalBot Center first.");
-    const adminRead = request.method === "GET" && request.path === "/remote/status";
-    const adminWrite = request.method === "POST" && ["/history/import", "/remote/start", "/remote/stop", "/remote/pair", "/remote/revoke"].includes(request.path ?? "");
+    const adminRead = request.method === "GET" && ["/remote/status","/browser/poll"].includes(request.path ?? "");
+    const adminWrite = request.method === "POST" && ["/browser/result", "/history/import", "/remote/start", "/remote/stop", "/remote/pair", "/remote/revoke"].includes(request.path ?? "");
     const route = adminRead || adminWrite ? {path:request.path!,method:request.method!} : mobileRoute({ ...request, operation: "api" });
     if (route.path === "/terminal")
       throw Error(

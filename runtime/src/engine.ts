@@ -46,7 +46,7 @@ export class Engine {
     return definitions.filter(t => allowed(agent, t.function.name)
       && (process.platform === "darwin" || !["terminal","run_tests","git","process_start","process_input","process_poll","process_stop","read_document"].includes(t.function.name))
       && (t.function.name !== "read_personal_context" || localPersonalProvider(config))
-      && (!t.function.name.startsWith("browser_") || browserBridge.available)
+      && (!(t.function.name.startsWith("browser_") || t.function.name.startsWith("computer_")) || browserBridge.available)
       && (t.function.name !== "get_usage_limits" || !!model.usage)
       && (t.function.name !== "web_search" || !!model.search)
       && (t.function.name !== "view_image" || model.capabilities().images));

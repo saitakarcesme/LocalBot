@@ -1,4 +1,5 @@
 export type Permissions = {
+  computer?: boolean;
   filesystem: "off" | "read" | "write";
   terminal: boolean;
   git: boolean;

@@ -4,6 +4,7 @@ import Foundation
 @MainActor final class BrowserAutomation {
   private var tabs: [String: UUID] = [:]
   private var busy = false
+  private let desktop = DesktopAutomation()
   func poll(_ model: AppModel) async {
     guard !busy else { return }; busy = true; defer { busy = false }
     do {
@@ -16,6 +17,7 @@ import Foundation
     } catch { /* The next foreground poll reconnects to the runtime. */ }
   }
   private func perform(_ model: AppModel, task: String, name: String, args: [String:Any]) async throws -> Any {
+    if name.hasPrefix("computer_") {return try desktop.perform(name,args:args)}
     tabs = tabs.filter { _, id in model.workspace.tabs.contains { $0.id == id } }
     var tab = tabs[task].flatMap { id in model.workspace.tabs.first { $0.id == id } }
     if name == "browser_open", tab == nil {
