@@ -55,7 +55,9 @@ def main():
             if not parent_alive or (root/'pause').exists() or (cfg['overnight'] and 7<=hour<22):
                 control.should_save=True;control.should_training_stop=True
             else:
-                time.sleep(min(60,elapsed*(100/cfg['budgetPercent']-1)))
+                deadline=time.monotonic()+elapsed*(100/cfg['budgetPercent']-1)
+                while time.monotonic()<deadline and not (root/'pause').exists():
+                    time.sleep(min(1,max(0,deadline-time.monotonic())))
             return control
         def on_log(self,args,state,control,logs=None,**kw):
             values={k:v for k,v in (logs or {}).items() if isinstance(v,(int,float)) and math.isfinite(v)}

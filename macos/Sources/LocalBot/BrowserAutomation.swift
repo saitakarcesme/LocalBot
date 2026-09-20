@@ -16,7 +16,7 @@ import Foundation
         let result = try await perform(model, task: task, name: name, args: args)
         guard model.workspaceProviderId == host else { return }
         _ = try await model.request("/browser/result", body:["id":id,"result":result])
-      } catch { _ = try? await model.request("/browser/result", body:["id":id,"error":error.localizedDescription]) }
+      } catch { guard model.workspaceProviderId == host else { return }; _ = try? await model.request("/browser/result", body:["id":id,"error":error.localizedDescription]) }
     } catch { /* The next foreground poll reconnects to the runtime. */ }
   }
   private func perform(_ model: AppModel, task: String, name: String, args: [String:Any]) async throws -> Any {

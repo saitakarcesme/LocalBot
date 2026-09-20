@@ -15,6 +15,11 @@ export type FineTuneJob = {
   checkpoint?: string; trainingStep?: number; loss?: number;
 };
 export function initFineTune(s: Store) {
+  if(!s.get("SELECT value FROM settings WHERE key='fine-tune-migrated'")) {
+    const old=s.get("SELECT value FROM settings WHERE key='auto-research'");
+    if(old){const settings=JSON.parse(old.value);settings.enabled=false;settings.pauseReason='Replaced by Fine Tune. Previous reports remain in conversation history.';s.exec("UPDATE settings SET value=? WHERE key='auto-research'",JSON.stringify(settings));}
+    s.exec("INSERT INTO settings VALUES('fine-tune-migrated','true')");
+  }
   s.exec('CREATE TABLE IF NOT EXISTS fine_tune_jobs(id TEXT PRIMARY KEY,data TEXT NOT NULL)');
   s.exec('CREATE TABLE IF NOT EXISTS fine_tune_events(id TEXT PRIMARY KEY,jobId TEXT NOT NULL,createdAt TEXT NOT NULL,kind TEXT NOT NULL,detail TEXT NOT NULL)');
   s.exec('CREATE TABLE IF NOT EXISTS fine_tune_sources(id TEXT PRIMARY KEY,jobId TEXT NOT NULL,url TEXT NOT NULL,title TEXT NOT NULL,license TEXT NOT NULL,evidence TEXT NOT NULL,UNIQUE(jobId,url))');

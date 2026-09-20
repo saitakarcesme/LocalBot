@@ -28,3 +28,7 @@ test('dataset provenance rejects duplicate prompts and cross-split source leakag
  assert.throws(()=>fine.example(j.id,{sourceId,prompt:'New',answer:'B',split:'train',verification:''}),/verification/);
  assert.equal(fine.detail(j.id).counts.total,1);
 }));
+
+test('training never starts without a configured host and does not report success',()=>fixture(async({fine,input})=>{
+ const j=fine.create(input);fine.control(j.id,'pause');fine.control(j.id,'train');await fine.tick();assert.equal(fine.get(j.id).status,'waiting');assert.match(fine.get(j.id).reason,/setup required|not configured/);
+}));
