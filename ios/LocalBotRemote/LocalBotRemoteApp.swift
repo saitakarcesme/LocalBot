@@ -6,7 +6,25 @@ import UniformTypeIdentifiers
 @main struct LocalBotRemoteApp: App {
   @StateObject private var store = RemoteStore()
   @State private var launching = true
-  var body: some Scene { WindowGroup { RemoteRoot().environmentObject(store).overlay { if launching { LaunchScreen { launching = false } } } } }
+  var body: some Scene { WindowGroup {
+    #if DEBUG
+    if ProcessInfo.processInfo.arguments.contains("--research-preview") {
+      NavigationStack {ResearchDashboard(request:researchFixture,save:{_ in try researchFixture("/research")},conversations:[])}
+    } else {root}
+    #else
+    root
+    #endif
+  } }
+  private var root:some View {RemoteRoot().environmentObject(store).overlay {if launching {LaunchScreen {launching=false}}}}
+  #if DEBUG
+  private func researchFixture(_ path:String)throws->Data {
+    let object:Any
+    if path == "/research" {object=["enabled":false,"topic":"Qwen fine-tuning research","conversationId":"preview","dailyTarget":1000000000,"maxPasses":24,"passes":3,"tokens":379880] as [String:Any]}
+    else if path == "/telemetry/gpus" {object=["sampledAt":ISO8601DateFormatter().string(from:Date()),"available":true,"gpus":(0..<2).map {i in ["id":"gpu-\(i)","name":"NVIDIA GeForce RTX 3090","utilization":Double(65+i*7),"temperature":Double(61+i),"memoryUsedMB":16384.0,"memoryTotalMB":24576.0,"powerWatts":275.0] as [String:Any]}]}
+    else {object=[["id":"preview","conversationId":"preview","agentId":"Athena","role":"assistant","content":"## Verification findings\nCompare the base model and adapter on held-out examples. Keep provenance and independent validation separate from generated proposals.","createdAt":"2026-09-20T00:00:00Z","reactions":[],"attachments":[]] as [String:Any]]}
+    return try JSONSerialization.data(withJSONObject:object)
+  }
+  #endif
 }
 struct RemoteRoot: View {
   @EnvironmentObject private var store: RemoteStore
