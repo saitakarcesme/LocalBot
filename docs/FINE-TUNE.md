@@ -14,10 +14,10 @@ Fine Tune replaces the automatic Research scheduler. Previous research conversat
 
 - Jobs live in the selected workspace. The Windows PC can retain their state while the phone disconnects.
 - Browser research currently uses the Mac app's browser bridge, including for a selected PC workspace. **ChatGPT web research still requires the Mac app.** A Windows-native unattended browser host is not implemented.
-- The training worker is implemented but **not yet GPU-validated on the dual-3090 machine**. Its Python environment and pinned, training-compatible base weights must be configured before training can start. Missing setup appears as a waiting reason.
+- The dual-3090 host now has an isolated training container, a CUDA-verified Python environment, and downloaded pinned training weights. A successful environment probe alone does not establish that an optimizer run succeeds; see the recorded validation results below.
 - This is a bounded dataset preview, not yet a continuous library-scale acquisition and verification system. PDF books, broad license coverage, semantic deduplication, automatic source expansion, and expert benchmark suites remain future work.
 - GPU percentage means **training duty cycle**: the worker inserts idle time between optimizer steps. It is not a hard instantaneous GPU-utilization or VRAM cap. Research/inference retain the serving engine's GPU configuration.
-- GPU selection controls visible training devices. Memory capacity, model architecture, and library compatibility still determine whether a run can start. An inference server occupying the selected GPUs must be unloaded before training; this preview does not silently stop that server.
+- GPU selection controls visible training devices. Memory capacity, model architecture, and library compatibility still determine whether a run can start. A host-local configuration can name LocalBot inference containers to stop temporarily while training. Training waits for existing chat tasks, then restores those containers when the worker exits.
 - Overnight is 22:00–07:00 in the workspace host's timezone. A running training job checkpoints at an optimizer-step boundary. A research task finishes its current bounded run before pausing.
 - Resume uses the same dataset/configuration and latest checkpoint, including trainer state. Changed data/configuration requires a new task. After a crash, a stale worker lock requires host inspection before recovery; long unattended recovery is not yet verified.
 
@@ -37,7 +37,7 @@ Create `fine-tune-models.json` in the workspace data directory:
 ]
 ```
 
-The revision must be an actual 40-character hexadecimal Hub commit. Model loading disables remote custom code. The current worker uses `AutoModelForCausalLM`; architectures requiring a different loader need validation and an explicit implementation first.
+The revision must be an actual 40-character hexadecimal Hub commit. Model loading disables remote custom code. The worker uses `AutoModelForImageTextToText` for Qwen3.5-family conditional-generation configs and `AutoModelForCausalLM` otherwise. Existing bitsandbytes quantization metadata is preserved.
 
 The worker supports `--probe` to report CUDA availability. Job artifacts are under `fine-tune/<job-id>/`: immutable manifest, dataset, baseline, checkpoints, and output adapter. At least eight training and two evaluation examples are required to exercise the pipeline; these minimums are not enough to establish a useful production dataset.
 
@@ -45,8 +45,21 @@ The worker supports `--probe` to report CUDA availability. Job artifacts are und
 
 Runtime tests cover job persistence, pause/resume state, overnight scheduling, route access, source split isolation, duplicate rejection, and missing trainer configuration. Native Mac and iPhone builds pass. Actual ChatGPT web-to-dataset execution and GPU training must still be verified before this preview is described as an end-to-end training system.
 
-## Current dual-3090 host readiness
+## Container training host
 
-The Windows host reported approximately 50 GiB free on C:. The official [Qwen3.8-27B repository](https://huggingface.co/Qwen/Qwen3.8-27B/tree/main) is 55.6 GB before the training environment, datasets, and checkpoints. A fresh full-base download does not fit with working headroom; no existing models were deleted.
+An optional `training-host.json` in the workspace data directory selects a dedicated local Docker container:
 
-The running inference container has Transformers 5.12.1 and PyTorch 2.13.0+cu130, but no TRL, PEFT, or bitsandbytes. It was inspected without changing its environment. Qwen's [pinned configuration](https://huggingface.co/Qwen/Qwen3.8-27B/blob/1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0/config.json) uses a conditional-generation architecture; the preview's causal-model loader needs a validated Qwen-specific training path. Installing dependencies alone is not enough to certify support.
+```json
+{
+  "container": "localbot-trainer",
+  "root": "C:/absolute/path/to/training",
+  "python": "/opt/training/bin/python",
+  "inferenceContainers": ["localbot-qwen38-wsl"]
+}
+```
+
+Mount that root at `/training`; no network ports or personal folders are required. A worker heartbeat checkpoints and stops at the next optimizer boundary if the runtime disappears. A crash can still require host recovery before restarting inference or clearing an abandoned worker lock.
+
+The dual-3090 setup uses `unsloth/Qwen3.8-27B-unsloth-bnb-4bit`, revision `8aa5f05d26b7205477066e1449e0af13f762a299` (22.4 GB), in a separate environment. Existing inference weights are retained. The training base is explicit; selecting a serving model does not imply its exact quantized weights are trained.
+
+`runtime/training/verify.mjs <workspace-data-directory>` runs a bounded arithmetic fixture through the real API, tests pause/checkpoint/resume, and writes `fine-tune-verification.json` only after all three succeed. It never uses personal conversations as training data.
