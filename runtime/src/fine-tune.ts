@@ -99,3 +99,5 @@ export class FineTune {
     } finally {this.ticking=false}
   }
 }
+
+export const fineTuneResearchTools = new Set(["browser_open","browser_snapshot","browser_click","browser_type","browser_scroll","web_search","web_fetch","current_time"]);

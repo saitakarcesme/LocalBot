@@ -1,3 +1,4 @@
+import { FineTune } from "./fine-tune.js";
 import { exportHistory, importHistory } from "./workspace-history.js";
 import { gpuTelemetry } from "./gpu-telemetry.js";
 import { AutoResearch, initResearch, researchStatus, saveResearch } from "./research.js";
@@ -88,6 +89,8 @@ const change = () => {
     s.write(`id: ${revision}\ndata: ${JSON.stringify({ revision })}\n\n`);
 };
 const engine = new Engine(store, change);
+const fineTune = new FineTune(store,engine,change);
+const fineTuneTimer=setInterval(()=>void fineTune.tick().catch(console.error),10000);fineTuneTimer.unref();
 const research = new AutoResearch(store,engine,change);
 const researchTimer=setInterval(()=>void research.tick(),60000);researchTimer.unref();
 async function body(req: IncomingMessage) {
@@ -217,6 +220,12 @@ const server = createServer(async (req, res) => {
     if (m === "GET" && p === "/history/export") {json(res,200,exportHistory(store));return;}
     if (m === "POST" && p === "/history/import") {const result=importHistory(store,await body(req));change();json(res,200,result);return;}
     if (m === "GET" && p === "/telemetry/gpus") {json(res,200,await gpuTelemetry());return;}
+    if (m === "GET" && p === "/fine-tune") {json(res,200,{jobs:fineTune.list()});return;}
+    if (m === "GET" && p === "/fine-tune/detail") {json(res,200,fineTune.detail(u.searchParams.get("id")??""));return;}
+    if (m === "POST" && p === "/fine-tune/create") {const job=fineTune.create(await body(req));json(res,201,job);void fineTune.tick().catch(console.error);return;}
+    if (m === "POST" && p === "/fine-tune/control") {const b=await body(req);json(res,200,fineTune.control(b.id,b.action));void fineTune.tick().catch(console.error);return;}
+    if (m === "POST" && p === "/fine-tune/source") {const b=await body(req);json(res,201,{id:fineTune.source(b.id,b)});return;}
+    if (m === "POST" && p === "/fine-tune/example") {const b=await body(req);json(res,201,{id:fineTune.example(b.id,b)});return;}
     if (m === "GET" && p === "/research") {json(res,200,researchStatus(store));return;}
     if (m === "POST" && p === "/research") {const settings=saveResearch(store,await body(req));
       if (!settings.enabled) { const latest=researchStatus(store).latest; if(latest && ["queued","running","awaiting_approval","awaiting_input"].includes(latest.status)) engine.cancel(latest.id); }
@@ -666,6 +675,7 @@ for (const sig of ["SIGTERM", "SIGINT"] as const)
   process.on(sig, () => {
     void remoteHost.stop();
     clearInterval(researchTimer);
+    clearInterval(fineTuneTimer);
     engine.shutdown();
     server.close();
     void MCPStdioTransport.shutdown().finally(() => setTimeout(() => process.exit(0), 50).unref());

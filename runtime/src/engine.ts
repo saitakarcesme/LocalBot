@@ -1,3 +1,4 @@
+import { fineTuneResearchTools } from "./fine-tune.js";
 import { researchTools } from "./research.js";
 import { taskUsage } from "./token-usage.js";
 import { stepBudgetNotice } from "./task-progress.js";
@@ -496,9 +497,10 @@ export class Engine {
             now(),
             runId,
           );
+          const fineTuneTask=!!(this.store.get("SELECT name FROM sqlite_master WHERE type='table' AND name='fine_tune_jobs'") && this.store.get("SELECT id FROM fine_tune_jobs WHERE json_extract(data,'$.taskId')=?",taskId));
           const wrappingUp = step === maxSteps - 1;
           if (wrappingUp) messages.push({role: "user", content: "This is the final synthesis round. No more tools are available. Summarize only observed findings, cite sources already read, identify unresolved questions explicitly, and hand off to the next teammate. Do not claim unverified work is complete."});
-          const available = wrappingUp ? [] : this.availableTools(this.store.agent(agentId), config).filter(t => !backgroundResearch || researchTools.has(t.function.name));
+          const available = wrappingUp ? [] : this.availableTools(this.store.agent(agentId), config).filter(t => (!backgroundResearch || researchTools.has(t.function.name)) && (!fineTuneTask || fineTuneResearchTools.has(t.function.name)));
           const thinkingId = randomUUID();
           this.store.exec("INSERT INTO run_events VALUES(?,?,?,?,?,?,?,?)", thinkingId, runId, "thinking", "{}", "running", "Preparing the next step…", now(), now());
           let lastProgress = 0;
