@@ -371,5 +371,21 @@
       "No physical phone frame-time benchmark"
     ],
     "iphone_build": "6de33e8 signed Release installed and launched on physical iPhone 15 Pro"
+  },
+  "research_device_workspace": {
+    "branch": "codex/research-device-workspace",
+    "status": "implementation_and_device_validation_in_progress",
+    "tests_passed": 168,
+    "mac_installed": "4ee4082",
+    "windows_installed": "research4ee4082",
+    "iphone_installed": true,
+    "history_rows_imported": 676,
+    "pending": [
+      "model weights and dual-GPU benchmark",
+      "native glass follow-up install",
+      "responsive visual validation",
+      "computer use OS permission/live test",
+      "push and pull request"
+    ]
   }
 }
