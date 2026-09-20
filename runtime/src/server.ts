@@ -174,6 +174,22 @@ const server = createServer(async (req, res) => {
     const u = new URL(req.url ?? "/", "http://localhost"),
       p = u.pathname,
       m = req.method;
+    if (m === "POST" && p === "/workspace-host/sync-history") {
+      const b=await body(req), config=store.provider(b.providerId), credential=engine.secrets.get(config.id);
+      if(config.transport!=="center"||!credential)throw Error("Unlock the model PC connection first.");
+      const link=parseLink(credential);
+      if(link.kind!=="center"||link.url!==new URL(config.endpoint).origin)throw Error("Workspace connection does not match this PC.");
+      const archive=exportHistory(store);
+      let inserted=0;
+      for(const [table,rows] of Object.entries(archive.tables)) {
+        for(let offset=0;offset<rows.length;offset+=100) {
+          const batch={version:1,tables:Object.fromEntries(Object.keys(archive.tables).map(t=>[t,t===table?rows.slice(offset,offset+100):[]]))};
+          const result:any=await invoke(link,{operation:"workspace_api",path:"/history/import",method:"POST",body:batch},AbortSignal.timeout(180000));
+          inserted+=result.inserted;
+        }
+      }
+      json(res,200,{inserted,note:"Conversation history synced. Project files and attachments remain on this Mac."});return;
+    }
     if (p === "/workspace-host/api") {
       if(req.headers["x-localbot-remote"] === "true") throw Error("Use a direct workspace pairing on your phone.");
       const config=store.provider(String(u.searchParams.get("providerId")));const credential=engine.secrets.get(config.id);

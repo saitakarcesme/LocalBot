@@ -82,7 +82,7 @@ struct ProfileEditor: View {
       if let error { Text(error).font(.caption).foregroundStyle(.red) }
       HStack { Button("Refresh usage") { Task { await refresh() } }; Spacer(); Button("Save profile") { Task { busy = true; defer { busy = false }; do { try await save(profile); dismiss() } catch { self.error = error.localizedDescription } } }.buttonStyle(.borderedProminent).disabled(busy || profile.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty) }
     }.padding(24) }
-      .frame(minWidth: 300, idealWidth: 420)
+      .frame(idealWidth: 420)
       .task { await refresh(); if let loadModels { currentModel = try? JSONDecoder().decode(ModelCatalog.self, from: await loadModels()).selected } }
       .sheet(isPresented: $showResearch) { if let research { research() } }
       .sheet(isPresented: $showPersonal) { if let personal { personal() } }
@@ -162,7 +162,7 @@ struct ModelSelector: View {
             if catalog.options.isEmpty { Text("No models available").foregroundStyle(.secondary) }
           } else { ProgressView() }
           if let error { Text(error).font(.caption).foregroundStyle(.red) }
-        }.padding(24).frame(minWidth: 300, idealWidth: 440, minHeight: 260, idealHeight: 440)
+        }.padding(24).frame(idealWidth: 440, minHeight: 260, idealHeight: 440)
           .task { do { catalog = try JSONDecoder().decode(ModelCatalog.self, from: await load()) } catch { self.error = error.localizedDescription } }
       }
   }
