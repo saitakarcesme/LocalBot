@@ -74,7 +74,7 @@ export class FineTune {
     const hash=createHash('sha256').update(normalize(input.prompt)).digest('hex');
     // Keep every source entirely within one split to prevent source-level leakage.
     if(this.store.get('SELECT id FROM fine_tune_examples WHERE jobId=? AND sourceId=? AND split<>?',id,input.sourceId,input.split))throw Error('This source is already assigned to the other split.');
-    const key=randomUUID();this.store.exec('INSERT INTO fine_tune_examples VALUES(?,?,?,?,?,?,?,?,?)',key,id,input.sourceId,input.prompt.trim(),input.answer.trim(),input.split,input.verification.trim(),hash);this.changed();return key;
+    const key=randomUUID();this.store.exec('INSERT INTO fine_tune_examples VALUES(?,?,?,?,?,?,?,?)',key,id,input.sourceId,input.prompt.trim(),input.answer.trim(),input.split,input.verification.trim(),hash);this.changed();return key;
   }
   async tick(date=new Date()) {
     if(this.ticking)return;this.ticking=true;
