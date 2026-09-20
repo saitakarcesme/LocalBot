@@ -89,6 +89,7 @@ Remote access includes powerful capabilities such as file editing and an interac
 | Encrypted connection relay | [`relay/`](relay/) |
 | Setup and verification | [`docs/remote/`](docs/remote/) |
 | Detailed runtime reference | [Runtime reference](docs/RUNTIME-REFERENCE.md) |
+| Fine Tune preview and host requirements | [Fine Tune](docs/FINE-TUNE.md) |
 
 ## Contributing
 
