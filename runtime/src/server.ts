@@ -1,3 +1,4 @@
+import { gpuTelemetry } from "./gpu-telemetry.js";
 import { AutoResearch, initResearch, researchStatus, saveResearch } from "./research.js";
 import { personalContext, savePersonalContext, phoneActions, updatePhoneAction } from "./personal.js";
 import { setTokenUsageSink } from "./token-usage.js";
@@ -195,6 +196,7 @@ const server = createServer(async (req, res) => {
       const device = req.headers["x-localbot-remote"] === "true" ? String(req.headers["x-localbot-device"] ?? "") : "";
       const value=updatePhoneAction(store,device,await body(req));change();json(res,200,value);return;
     }
+    if (m === "GET" && p === "/telemetry/gpus") {json(res,200,await gpuTelemetry());return;}
     if (m === "GET" && p === "/research") {json(res,200,researchStatus(store));return;}
     if (m === "POST" && p === "/research") {const settings=saveResearch(store,await body(req));
       if (!settings.enabled) { const latest=researchStatus(store).latest; if(latest && ["queued","running","awaiting_approval","awaiting_input"].includes(latest.status)) engine.cancel(latest.id); }
