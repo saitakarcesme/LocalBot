@@ -43,7 +43,7 @@ def main():
     from datasets import Dataset
     from transformers import AutoConfig, AutoModelForCausalLM, AutoModelForImageTextToText, AutoTokenizer, BitsAndBytesConfig, TrainerCallback, Trainer, TrainingArguments, DataCollatorForLanguageModeling
     from transformers.trainer_utils import get_last_checkpoint
-    from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
+    from peft import LoraConfig, get_peft_model
     if sys.argv[1] == '--probe':
         emit('ready', cuda=torch.cuda.is_available(), devices=torch.cuda.device_count())
         return
