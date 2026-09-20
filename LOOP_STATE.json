@@ -369,6 +369,7 @@
       "No actual fine-tuning performed",
       "1B daily tokens is a target, not measured throughput",
       "No physical phone frame-time benchmark"
-    ]
+    ],
+    "iphone_build": "6de33e8 signed Release installed and launched on physical iPhone 15 Pro"
   }
 }
