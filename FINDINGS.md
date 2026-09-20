@@ -466,3 +466,10 @@ Streaming checkpoint requested by the concurrent UI task: fixed dropped trailing
 - Details and host requirements: docs/FINE-TUNE.md. Branch codex/fine-tune-workflows.
 - Additional host preflight: C: has approximately 50 GiB free, below the official 55.6 GB base repository plus environment/checkpoint headroom. Existing inference container: Transformers5.12.1, PyTorch2.13.0+cu130; TRL/PEFT/bitsandbytes absent. Qwen conditional-generation architecture requires a validated loader beyond the preview causal-model worker. No destructive cleanup or training install performed.
 - GitHub draft PR: https://github.com/saitakarcesme/LocalBot/pull/3, stacked on prior workspace branch.
+
+## 2026-09-21 Fine Tune repair
+- Live failed job stopped during source research; its report says browser snapshot was unavailable. Browser lease expired after 5 seconds while native navigation can take over 10 seconds. Keep in-flight actions available and renew a 30-second lease on completion. Regression test reproduced failure before fix.
+- Surface task errors and source/dataset events in Fine Tune details. Add training configuration readiness; label unconfigured hosts Research only. This is configuration detection, not a GPU execution certification.
+- 177 runtime tests passed. Signed physical iPhone Release installed; launch rejected because device is locked.
+- Windows runtime 3f38612 installed with backup; new readiness endpoint confirmed missing training environment; both existing jobs preserved. No existing research job resumed.
+- Actual training remains incomplete: no training environment/pinned compatible base; previous disk check only 50 GiB free. No GPU training, checkpoint resume, or live ChatGPT end-to-end success claimed.

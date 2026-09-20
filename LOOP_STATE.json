@@ -436,5 +436,28 @@
     "guide": "docs/FINE-TUNE.md",
     "pull_request": "https://github.com/saitakarcesme/LocalBot/pull/3",
     "host_free_GiB": 50
+  },
+  "fine_tune_repair": {
+    "date": "2026-09-21",
+    "status": "partial_repair_installed_training_blocked",
+    "runtime_tests_passed": 177,
+    "runtime_tests_failed": 0,
+    "windows_runtime_source": "3f38612",
+    "iphone_source": "3f38612",
+    "iphone_install": "successful",
+    "iphone_launch": "blocked_device_locked",
+    "verified": [
+      "browser lease regression fails before fix and passes after",
+      "training readiness endpoint live on Windows",
+      "two existing Fine Tune jobs preserved after Center restart",
+      "signed iPhone Release build and physical install"
+    ],
+    "pending": [
+      "physical iPhone UI confirmation",
+      "live ChatGPT source research end to end",
+      "training environment and compatible pinned base setup",
+      "actual GPU training and pause/resume evaluation"
+    ],
+    "training_claim": "No actual model training completed"
   }
 }
