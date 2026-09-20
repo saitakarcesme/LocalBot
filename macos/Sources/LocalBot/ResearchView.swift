@@ -109,7 +109,7 @@ struct ResearchDashboard: View {
         LineMark(x:.value("Time",point.time),y:.value("Value",point.value)).foregroundStyle(by:.value("Metric",point.metric)).interpolationMethod(.linear)
       }.chartYScale(domain:0...110).chartForegroundStyleScale(["Utilization %":Color.accentColor,"Temperature °C":Color.orange]).frame(height:150)
         .accessibilityLabel("GPU utilization and temperature over the last five minutes")
-    }.padding(16).background(.thinMaterial,in:RoundedRectangle(cornerRadius:22))
+    }.padding(16).modifier(ResearchGlass())
   }
   @ViewBuilder private func stats(_ gpu: GPUReading)->some View {
     Text(gpu.utilization.map{String(format:"%.0f%%",$0)} ?? "—")
@@ -142,5 +142,14 @@ struct ResearchDashboard: View {
       if !next.conversationId.isEmpty {messages=try JSONDecoder().decode([ChatMessage].self,from:await request("/messages?conversationId=\(next.conversationId)"))}
       error=nil
     } catch {self.error=error.localizedDescription}
+  }
+}
+
+private struct ResearchGlass: ViewModifier {
+  @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+  @ViewBuilder func body(content:Content)->some View {
+    if reduceTransparency {content.background(.background,in:RoundedRectangle(cornerRadius:22))}
+    else if #available(iOS 26,macOS 26,*) {content.glassEffect(.regular,in:RoundedRectangle(cornerRadius:22))}
+    else {content.background(.regularMaterial,in:RoundedRectangle(cornerRadius:22))}
   }
 }
