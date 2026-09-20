@@ -6,8 +6,8 @@ import EventKitUI
 struct PhoneAction: Decodable, Identifiable {
   var id: String; var conversationId: String; var kind: String; var payload: [String:String]; var status: String; var result: String?
   static func date(_ value: String?) -> Date? { let f=ISO8601DateFormatter(); if let d=f.date(from:value ?? "") { return d }; f.formatOptions=[.withInternetDateTime,.withFractionalSeconds];return f.date(from:value ?? "") }
-  var title: String { switch kind { case "compose_mail": return "Email"; case "create_event": return "Calendar event"; case "run_shortcut": return "Shortcut"; default: return "Open link" } }
-  var symbol: String { switch kind { case "compose_mail": return "envelope"; case "create_event": return "calendar"; case "run_shortcut": return "square.stack.3d.up"; default: return "safari" } }
+  var title: String { switch kind { case "compose_sms": return "Message"; case "create_reminder": return "Reminder"; case "compose_mail": return "Email"; case "create_event": return "Calendar event"; case "run_shortcut": return "Shortcut"; default: return "Open link" } }
+  var symbol: String { switch kind { case "compose_sms": return "message"; case "create_reminder": return "checklist"; case "compose_mail": return "envelope"; case "create_event": return "calendar"; case "run_shortcut": return "square.stack.3d.up"; default: return "safari" } }
   var detail: String { payload["subject"] ?? payload["title"] ?? payload["name"] ?? payload["url"] ?? title }
 }
 struct PhonePersonalView: View {
@@ -18,6 +18,7 @@ struct PhonePersonalView: View {
   @State private var context = false
   @State private var selected: PhoneAction?
   @State private var pendingEditor: PhoneAction?
+  @State private var sms: PhoneAction?
   @State private var mail: PhoneAction?
   @State private var calendar: PhoneAction?
   @State private var busy = false
@@ -51,6 +52,7 @@ struct PhonePersonalView: View {
             HStack { Button("Decline", role: .destructive) { Task { await decline(action) } }; Spacer(); Button("Continue") { Task { await execute(action) } }.buttonStyle(.borderedProminent) }.disabled(busy)
           }.padding(24) }.toolbar { ToolbarItem(placement: .cancellationAction) { Button("Close") { selected = nil } } } }
         }
+        .sheet(item: $sms) { action in SMSActionComposer(action: action) {status,result in sms=nil;Task {await finish(action,status,result)}} }.interactiveDismissDisabled()
         .sheet(item: $mail) { action in MailActionComposer(action: action) { status, result in mail = nil; Task { await finish(action, status, result) } }.interactiveDismissDisabled() }
         .sheet(item: $calendar) { action in CalendarActionComposer(action: action) { status, result in calendar = nil; Task { await finish(action, status, result) } }.interactiveDismissDisabled() }
         .task { while !Task.isCancelled { await refresh(); do { try await Task.sleep(for: .seconds(5)) } catch { return } } }
@@ -58,7 +60,7 @@ struct PhonePersonalView: View {
   }
   private func presentEditor() {
     guard let action = pendingEditor else { return }; pendingEditor = nil
-    if action.kind == "compose_mail" { mail = action } else { calendar = action }
+    if action.kind == "compose_sms" {sms=action} else if action.kind == "compose_mail" { mail = action } else { calendar = action }
   }
   private func statusLabel(_ status: String) -> String { switch status { case "pending": return "Needs review"; case "claimed": return "In progress"; case "handed_off": return "Opened"; default: return status.capitalized } }
   private func refresh() async {
@@ -80,8 +82,23 @@ struct PhonePersonalView: View {
     do {
       if action.kind == "compose_mail" && !MFMailComposeViewController.canSendMail() { throw RemoteError("Set up an account in Apple Mail first, or ask LocalBot to use its Mac browser.") }
       if action.kind == "create_event", (PhoneAction.date(action.payload["start"]) == nil || PhoneAction.date(action.payload["end"]) == nil) { throw RemoteError("Calendar dates could not be read.") }
+      if action.kind == "compose_sms" && !MFMessageComposeViewController.canSendText() {throw RemoteError("Messaging is unavailable on this phone.")}
+      var reminderStore: EKEventStore?
+      if action.kind == "create_reminder" {
+        let events=EKEventStore()
+        guard try await events.requestFullAccessToReminders() else {throw RemoteError("Reminders access was not granted.")}
+        reminderStore=events
+      }
       try await claim(action)
-      if action.kind == "compose_mail" || action.kind == "create_event" { pendingEditor = action; selected = nil; return }
+      if let events=reminderStore {
+        do {
+          let reminder=EKReminder(eventStore:events);reminder.title=action.payload["title"];reminder.notes=action.payload["notes"]
+          guard let calendar=events.defaultCalendarForNewReminders() else {throw RemoteError("No reminders list is available.")};reminder.calendar=calendar
+          try events.save(reminder,commit:true);selected=nil;await finish(action,"completed","Reminder saved on this phone.")
+        }catch{await finish(action,"failed",error.localizedDescription)}
+        return
+      }
+      if action.kind == "compose_sms" || action.kind == "compose_mail" || action.kind == "create_event" { pendingEditor = action; selected = nil; return }
       selected = nil
       var url: URL?
       if action.kind == "run_shortcut" { var parts = URLComponents(); parts.scheme="shortcuts"; parts.host="run-shortcut"; parts.queryItems=[URLQueryItem(name:"name",value:action.payload["name"]),URLQueryItem(name:"input",value:"text"),URLQueryItem(name:"text",value:action.payload["input"] ?? "")]; url=parts.url }
@@ -104,4 +121,15 @@ struct CalendarActionComposer:UIViewControllerRepresentable {
   func makeUIViewController(context:Context)->EKEventEditViewController {let view=EKEventEditViewController();let store=EKEventStore();view.eventStore=store;let event=EKEvent(eventStore:store);event.title=action.payload["title"];event.startDate=PhoneAction.date(action.payload["start"]);event.endDate=PhoneAction.date(action.payload["end"]);event.notes=action.payload["notes"];view.event=event;view.editViewDelegate=context.coordinator;return view}
   func updateUIViewController(_ controller:EKEventEditViewController,context:Context){}
   class Coordinator:NSObject,EKEventEditViewDelegate {let done:(String,String)->Void;init(_ done:@escaping(String,String)->Void){self.done=done};func eventEditViewController(_ controller:EKEventEditViewController,didCompleteWith action:EKEventEditViewAction){done(action == .saved ? "completed":"cancelled",action == .saved ? "Event saved through the Calendar editor.":"Calendar action cancelled.")} }
+}
+
+struct SMSActionComposer: UIViewControllerRepresentable {
+  var action: PhoneAction; var done: (String,String)->Void
+  func makeCoordinator()->Coordinator {Coordinator(done)}
+  func makeUIViewController(context:Context)->MFMessageComposeViewController {let view=MFMessageComposeViewController();view.messageComposeDelegate=context.coordinator;view.recipients=(action.payload["to"] ?? "").split(separator:",").map{String($0).trimmingCharacters(in:.whitespaces)};view.body=action.payload["body"];return view}
+  func updateUIViewController(_ controller:MFMessageComposeViewController,context:Context){}
+  class Coordinator:NSObject,MFMessageComposeViewControllerDelegate {
+    let done:(String,String)->Void;init(_ done:@escaping(String,String)->Void){self.done=done}
+    func messageComposeViewController(_ controller:MFMessageComposeViewController,didFinishWith result:MessageComposeResult){switch result{case .sent:done("completed","Messages accepted the message. Delivery is not verified.");case .cancelled:done("cancelled","Message cancelled.");default:done("failed","Messages could not send.")}}
+  }
 }

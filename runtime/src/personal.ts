@@ -47,6 +47,8 @@ export function initPhoneActions(store: Store) {
   );
 }
 const limits: Record<string, Record<string, number>> = {
+  compose_sms: { to: 1000, body: 20000 },
+  create_reminder: { title: 300, notes: 5000 },
   compose_mail: { to: 1000, subject: 500, body: 20000 },
   create_event: { title: 300, start: 40, end: 40, notes: 5000 },
   run_shortcut: { name: 200, input: 10000 },
@@ -69,6 +71,8 @@ export function validatePhoneAction(kind: string, payload: any) {
     )
       throw Error("Invalid phone action field: " + key);
   const required: Record<string, string[]> = {
+    compose_sms: ["to", "body"],
+    create_reminder: ["title"],
     compose_mail: ["to", "subject", "body"],
     create_event: ["title", "start", "end"],
     run_shortcut: ["name"],
