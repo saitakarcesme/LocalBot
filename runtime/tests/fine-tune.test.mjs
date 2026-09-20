@@ -39,3 +39,16 @@ test('remote clients can reach Fine Tune and create host projects but cannot con
  for(const path of ['/fine-tune/create','/fine-tune/control','/projects'])assert.equal(mobileRoute({operation:'api',path,method:'POST'}).path,path);
  assert.throws(()=>mobileRoute({operation:'api',path:'/providers',method:'POST'}));
 });
+
+test('failed research preserves the actual error for both clients',()=>fixture(async({fine,store,input})=>{
+ browserBridge.poll();const j=fine.create(input);await fine.tick();const taskId=fine.get(j.id).taskId;
+ assert.ok(taskId);store.status(taskId,'failed','Browser disconnected while loading the page');
+ await fine.tick();assert.equal(fine.get(j.id).status,'waiting');
+ assert.match(fine.detail(j.id).job.reason,/Browser disconnected/);
+ assert.equal(fine.get(j.id).stage,'sources');
+}));
+test('missing training environment is reported before research',()=>fixture(async({fine,input})=>{
+ const old=process.env.LOCALBOT_TRAINER_PYTHON;delete process.env.LOCALBOT_TRAINER_PYTHON;
+ try {const state=await fine.readiness(input.model);assert.equal(state.ready,false);assert.match(state.reason,/not installed/)}
+ finally {if(old!==undefined)process.env.LOCALBOT_TRAINER_PYTHON=old}
+}));
