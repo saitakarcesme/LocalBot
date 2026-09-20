@@ -1,5 +1,10 @@
 import SwiftUI
 import Charts
+#if os(iOS)
+import UIKit
+#else
+import AppKit
+#endif
 struct ResearchState: Decodable {
   var enabled: Bool; var topic: String; var conversationId: String; var dailyTarget: Int; var maxPasses: Int
   var passes: Int; var tokens: Int; var pauseReason: String?
@@ -75,9 +80,12 @@ struct ResearchDashboard: View {
         if let error {Text(error).font(.callout).foregroundStyle(.secondary)}
         ForEach(messages) { message in
           VStack(alignment: .leading, spacing: 10) {
-            Label(message.role == "user" ? "Research brief" : "Findings",systemImage: message.role == "user" ? "text.alignleft" : "sparkles").font(.caption).foregroundStyle(.secondary)
+            Label(message.role == "user" ? "Research brief" : (message.agentId?.capitalized ?? "Findings"),systemImage: message.role == "user" ? "text.alignleft" : "sparkles").font(.caption).foregroundStyle(.secondary)
             Text(.init(message.content)).textSelection(.enabled).frame(maxWidth: .infinity,alignment: .leading)
-            ShareLink(item: message.content) {Image(systemName: "square.and.arrow.up")}.accessibilityLabel("Share research output")
+            HStack {
+              Button { copy(message.content) } label: {Image(systemName:"doc.on.doc")}.accessibilityLabel("Copy research output")
+              ShareLink(item: message.content) {Image(systemName: "square.and.arrow.up")}.accessibilityLabel("Share research output")
+            }.buttonStyle(.borderless).foregroundStyle(.secondary)
             Divider()
           }
         }
@@ -92,7 +100,7 @@ struct ResearchDashboard: View {
   }
   private func gpuCard(_ gpu: GPUReading) -> some View {
     VStack(alignment:.leading,spacing:12) {
-      Text(gpu.name).font(.headline)
+      Text("GPU \(telemetry?.gpus.firstIndex(where: {$0.id == gpu.id}) ?? 0) · \(gpu.name)").font(.headline)
       ViewThatFits(in:.horizontal) {
         HStack {stats(gpu)}
         VStack(alignment:.leading) {stats(gpu)}
@@ -109,13 +117,21 @@ struct ResearchDashboard: View {
     Text(gpu.memoryUsedMB.map{String(format:"%.1f GB VRAM",$0/1024)} ?? "—")
     Text(gpu.powerWatts.map{String(format:"%.0f W",$0)} ?? "—")
   }
+  private func copy(_ text:String) {
+    #if os(iOS)
+    UIPasteboard.general.string=text
+    #else
+    NSPasteboard.general.clearContents();NSPasteboard.general.setString(text,forType:.string)
+    #endif
+  }
   private func refresh() async {
     do {
       let next = try JSONDecoder().decode(ResearchState.self,from:await request("/research"));state=next
       let sample = try JSONDecoder().decode(GPUEnvelope.self,from:await request("/telemetry/gpus"));telemetry=sample
       if sample.sampledAt != lastSample {
         lastSample=sample.sampledAt
-        let time=ISO8601DateFormatter().date(from:sample.sampledAt) ?? Date()
+        let formatter=ISO8601DateFormatter();formatter.formatOptions=[.withInternetDateTime,.withFractionalSeconds]
+        let time=formatter.date(from:sample.sampledAt) ?? Date()
         for gpu in sample.gpus {
           var history=points[gpu.id] ?? []
           if let v=gpu.utilization {history.append(GPUPoint(time:time,value:v,metric:"Utilization %"))}
