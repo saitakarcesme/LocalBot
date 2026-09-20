@@ -1,0 +1,9 @@
+# Verified on the dual RTX 3090 WSL container, 2026-09-21.
+# PyTorch build: 2.14.0+cu130. Select the matching official CUDA wheel index.
+torch==2.14.0
+transformers==5.17.0
+peft==0.21.0
+bitsandbytes==0.50.2
+accelerate==1.15.0
+datasets==5.0.1
+safetensors==0.8.0
