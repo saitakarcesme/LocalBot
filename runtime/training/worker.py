@@ -33,6 +33,12 @@ def parent_is_alive():
     except PermissionError: return True
 
 def main():
+    # WSL's CUDA VMM can fail to map expandable segments during large loads.
+    # Do not inherit an inference image's allocator setting for training.
+    import platform
+    if 'microsoft' in platform.release().lower():
+        os.environ['PYTORCH_ALLOC_CONF']='expandable_segments:False'
+        os.environ['PYTORCH_CUDA_ALLOC_CONF']='expandable_segments:False'
     import torch
     from datasets import Dataset
     from transformers import AutoConfig, AutoModelForCausalLM, AutoModelForImageTextToText, AutoTokenizer, BitsAndBytesConfig, TrainerCallback, Trainer, TrainingArguments, DataCollatorForLanguageModeling
