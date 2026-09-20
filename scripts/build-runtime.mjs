@@ -1,4 +1,4 @@
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, cp } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { homedir } from 'node:os';
@@ -17,3 +17,5 @@ if(await readFile(join(cache,'lock.hash'),'utf8').catch(()=>'')!==key){
  await writeFile(join(cache,'lock.hash'),key);
 }
 run(process.execPath,[join(cache,'node_modules/typescript/bin/tsc'),'-p',join(root,'runtime/tsconfig.json'),'--typeRoots',join(cache,'node_modules/@types')],root);
+
+await cp(join(root,"runtime/training"),join(root,"runtime/dist/training"),{recursive:true});
