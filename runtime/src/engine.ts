@@ -243,12 +243,16 @@ export class Engine {
       this.decide(a.id, false);
     this.changed();
   }
-  decide(id: string, allow: boolean, always = false) {
+  decide(id: string, allow: boolean, always = false, fullTask = false) {
     const a = this.store.get(
       "SELECT * FROM approvals WHERE id=? AND status='pending'",
       id,
     );
     if (!a) throw new Error("Approval is no longer pending");
+    if (fullTask && allow) {
+      this.store.exec("CREATE TABLE IF NOT EXISTS task_access(taskId TEXT PRIMARY KEY)");
+      this.store.exec("INSERT OR IGNORE INTO task_access VALUES(?)", a.taskId);
+    }
     if (always && allow) {
       const call = this.store.get("SELECT * FROM tool_calls WHERE id=?", a.toolCallId);
       if (call.name.startsWith("mcp_")) throw new Error("Integration actions require individual approval");
@@ -592,7 +596,8 @@ export class Engine {
               const actionKey = JSON.stringify([project?.workspace ?? live.workspace, name, Object.fromEntries(Object.entries(args).sort(([a], [b]) => a.localeCompare(b)))]);
               if (deniedActions.has(actionKey)) throw new Error("This action was already denied in this task. Do not retry it; wait for a new explicit user request.");
               const granted = !name.startsWith("mcp_") && this.store.get("SELECT 1 FROM action_grants WHERE agentId=? AND workspace=? AND actionKey=?", agentId, agent.workspace, actionKey);
-              if ((needsApproval(live, name) && !granted) || mcpIntegration?.transport === "stdio") {
+              const taskAccess = this.store.get("SELECT name FROM sqlite_master WHERE type='table' AND name='task_access'") && this.store.get("SELECT taskId FROM task_access WHERE taskId=?",taskId);
+              if (!taskAccess && ((needsApproval(live, name) && !granted) || mcpIntegration?.transport === "stdio")) {
                 const approved = await this.approve(
                   taskId, runId, callId,
                   `${agent.name} · ${name}\nWorkspace: ${agent.workspace}\n${JSON.stringify(args, null, 2)}${mcpIntegration?.transport === "stdio" ? "\nLaunch local MCP server (user account access):\n" + JSON.stringify(mcpIntegration.process, null, 2) : ""}`,

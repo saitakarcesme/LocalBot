@@ -26,10 +26,11 @@ struct ApprovalCard: View {
           .textSelection(.enabled)
       }
       HStack {
-        Text("Always allow remembers this exact action for this agent and workspace.").font(.caption).foregroundStyle(.secondary)
+        Text("Full access covers enabled tools for this task, including integrations. System permissions still apply.").font(.caption).foregroundStyle(.secondary)
         Spacer()
         Button("Deny") { decide(false) }
-        Button("Always allow") { Task { await model.post("/approvals", ["id": approval.id, "allow": true, "always": true]) } }
+        Button("Remember this action") { Task { await model.post("/approvals", ["id": approval.id, "allow": true, "always": true]) } }
+        Button("Full access for task") { Task {await model.post("/approvals",["id":approval.id,"allow":true,"fullTask":true])} }
         Button("Allow once") { decide(true) }.buttonStyle(.borderedProminent)
       }
     }.padding(14).background(.orange.opacity(0.08), in: RoundedRectangle(cornerRadius: 12)).overlay(

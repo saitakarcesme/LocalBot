@@ -328,7 +328,8 @@ const server = createServer(async (req, res) => {
       if (typeof b.allow !== "boolean")
         throw new Error("allow must be boolean");
       if (b.always !== undefined && typeof b.always !== "boolean") throw new Error("always must be boolean");
-      engine.decide(b.id, b.allow, b.always === true);
+      if (b.fullTask !== undefined && typeof b.fullTask !== "boolean") throw Error("fullTask must be boolean");
+      engine.decide(b.id, b.allow, b.always === true, b.fullTask === true);
       json(res, 200, { ok: true });
       return;
     }

@@ -203,6 +203,8 @@ struct MobileChat: View {
         Spacer()
         Button("Allow once") {Task {await store.action("/approvals",body:["id":approval.id,"allow":true])}}
       }.buttonStyle(.bordered)
+      Button("Full access for task") {Task {await store.action("/approvals",body:["id":approval.id,"allow":true,"fullTask":true])}}
+      Text("Enabled tools and integrations for this task. System permissions still apply.").font(.caption).foregroundStyle(.secondary)
     }.padding().background(.thinMaterial,in:RoundedRectangle(cornerRadius:20))
   }
   private func messageRow(_ message: ChatMessage) -> some View {
