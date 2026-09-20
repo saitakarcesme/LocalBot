@@ -43,15 +43,16 @@ export class FineTuneTrainer {
     await fs.writeFile(path,JSON.stringify(manifest),{mode:0o600});await fs.writeFile(join(root,'dataset.json'),data,{mode:0o600});
     await fs.rm(join(root,'pause'),{force:true});
     const worker=join(dirname(fileURLToPath(import.meta.url)),'training','worker.py');
-    const reserved=host?await reserveTrainingGPUs(host):[];
     let lease:ReturnType<typeof setInterval>|undefined;
     if(host){
       await fs.copyFile(worker,join(host.root,'worker.py'));
       await fs.writeFile(join(root,'lease'),'active');
-      lease=setInterval(()=>void fs.utimes(join(root,'lease'),new Date(),new Date()).catch(()=>{}),10000);
+
     }
     const command=host?'docker':python!;
     const args=host?['exec','-e',`CUDA_VISIBLE_DEVICES=${job.gpuIds.join(',')}`,'-e',`LOCALBOT_LEASE_FILE=/training/jobs/${job.id}/lease`,'-e','HF_HOME=/training/hf',host.container,host.python,'/training/worker.py',`/training/jobs/${job.id}/manifest.json`]:[worker,path];
+    const reserved=host?await reserveTrainingGPUs(host):[];
+    if(host)lease=setInterval(()=>void fs.utimes(join(root,'lease'),new Date(),new Date()).catch(()=>{}),10000);
     const child=spawn(command,args,{env:{...process.env,CUDA_VISIBLE_DEVICES:job.gpuIds.join(','),LOCALBOT_PARENT_PID:String(process.pid),TOKENIZERS_PARALLELISM:'false'},stdio:['ignore','pipe','pipe'],windowsHide:true});
     this.running={id:job.id,child,root};
     let buffer='',tail='',terminal=false;
