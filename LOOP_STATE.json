@@ -311,7 +311,7 @@
     "installed_mac_source": "50a6645",
     "signed_iphone_profile_expires": "2026-09-26"
   },
-  "last_update": "2026-09-20 PC workspace paired with physical iPhone; fullscreen glass verified",
+  "last_update": "2026-09-20 Fine Tune preview installed; real training remains pending",
   "verification_profile": "141 existing + 3 new runtime tests; Mac signed build; physical iPhone install/launch; encrypted upload bytes and shared profile/usage verified",
   "verification_team": "144 runtime tests; resumed native PTY; signed Mac and physical iPhone install; Mac splash observed",
   "pull_request": "https://github.com/saitakarcesme/LocalBot/pull/1",
@@ -406,5 +406,32 @@
       "DSpark speculative decoding disabled; no sustained throughput benchmark"
     ],
     "goal_started": false
+  },
+  "fine_tune": {
+    "status": "preview_installed_end_to_end_training_pending",
+    "date": "2026-09-20",
+    "branch": "codex/fine-tune-workflows",
+    "runtime_tests_passed": 174,
+    "mac_installed_source": "5b9ca54",
+    "windows_runtime_source": "761fe52",
+    "iphone_installed_source": "c53dc56",
+    "verified": [
+      "native builds",
+      "Mac Fine Tune navigation",
+      "PC Fine Tune/model endpoints",
+      "PC project creation",
+      "dual GPU telemetry",
+      "iPhone simulator portrait and landscape fixture"
+    ],
+    "pending": [
+      "Mac Keychain unlock and selected-PC native UI verification",
+      "physical iPhone launch: locked",
+      "ChatGPT live source research: Mac browser required",
+      "training Python environment and pinned compatible base weights",
+      "actual dual-GPU QLoRA run and checkpoint resume",
+      "continuous large-scale dataset acquisition and benchmark validation"
+    ],
+    "models_changed": false,
+    "guide": "docs/FINE-TUNE.md"
   }
 }
