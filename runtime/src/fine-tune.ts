@@ -30,6 +30,7 @@ export class FineTune {
   private preparing?:{id:string;abort:AbortController};
   private trainer:FineTuneTrainer;
   constructor(private store:Store,private engine:Engine,private changed:()=>void) {initFineTune(store);this.trainer=new FineTuneTrainer(store.dir)}
+  readiness(model:string){return this.trainer.readiness(model)}
   list():FineTuneJob[] {return this.store.all('SELECT data FROM fine_tune_jobs ORDER BY rowid DESC').map(r=>JSON.parse(r.data))}
   get(id:string):FineTuneJob {const row=this.store.get('SELECT data FROM fine_tune_jobs WHERE id=?',id);if(!row)throw Error('Fine Tune task not found');return JSON.parse(row.data)}
   private put(j:FineTuneJob){j.updatedAt=new Date().toISOString();this.store.exec('INSERT INTO fine_tune_jobs VALUES(?,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data',j.id,JSON.stringify(j));this.changed()}

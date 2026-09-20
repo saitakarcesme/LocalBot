@@ -220,6 +220,7 @@ const server = createServer(async (req, res) => {
     if (m === "GET" && p === "/history/export") {json(res,200,exportHistory(store));return;}
     if (m === "POST" && p === "/history/import") {const result=importHistory(store,await body(req));change();json(res,200,result);return;}
     if (m === "GET" && p === "/telemetry/gpus") {json(res,200,await gpuTelemetry());return;}
+    if (m === "GET" && p === "/fine-tune/readiness") {json(res,200,await fineTune.readiness(u.searchParams.get("model")??""));return;}
     if (m === "GET" && p === "/fine-tune/models") {const options=(await Promise.all(store.providers().filter(localPersonalProvider).map(async c=>{try{const h=await provider(c,engine.secrets.get(c.id)).health(AbortSignal.timeout(5000));return h.models.map(model=>({providerId:c.id,provider:c.name,model}));}catch{return []}}))).flat();json(res,200,{options});return;}
     if (m === "GET" && p === "/fine-tune") {json(res,200,{jobs:fineTune.list()});return;}
     if (m === "GET" && p === "/fine-tune/detail") {json(res,200,fineTune.detail(u.searchParams.get("id")??""));return;}

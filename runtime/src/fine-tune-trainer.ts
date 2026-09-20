@@ -11,6 +11,16 @@ export class FineTuneTrainer {
   constructor(private dir:string){}
   get active(){return this.running?.id}
   async pause(id:string){if(this.running?.id===id)await fs.writeFile(join(this.running.root,'pause'),'pause')}
+  async readiness(model:string) {
+    const python=process.env.LOCALBOT_TRAINER_PYTHON;
+    if(!python||!isAbsolute(python))return {ready:false,reason:'Training environment is not installed on this workspace host.'};
+    try {await fs.access(python)}catch{return {ready:false,reason:'The configured training Python executable is missing.'}}
+    let catalog:TrainingModel[]=[];
+    try{catalog=JSON.parse(await fs.readFile(join(this.dir,'fine-tune-models.json'),'utf8'))}catch{}
+    const base=catalog.find(m=>m.model===model);
+    if(!base?.baseModel||! /^[a-f0-9]{40}$/.test(base.revision))return {ready:false,reason:'No pinned training base is configured for this model. Serving weights cannot be used directly.'};
+    return {ready:true,reason:'Training configuration found. GPU and dataset checks run before training.'};
+  }
   async launch(job:FineTuneJob,rows:any[],onEvent:(value:any)=>void) {
     if(this.running)throw Error('Another training task is using this host.');
     const python=process.env.LOCALBOT_TRAINER_PYTHON;

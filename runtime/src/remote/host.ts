@@ -7,7 +7,7 @@ import { remoteURL, type RPCRequest } from "./protocol.js";
 
 // Deliberately excludes credentials, provider configuration and pairing administration.
 const reads = new Set([
-  "/fine-tune", "/fine-tune/detail", "/fine-tune/models",
+  "/fine-tune", "/fine-tune/detail", "/fine-tune/models", "/fine-tune/readiness",
   "/telemetry/gpus",
   "/research",
   "/personal/context",

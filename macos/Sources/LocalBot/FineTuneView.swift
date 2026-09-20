@@ -7,6 +7,7 @@ struct FineTuneJob: Decodable, Identifiable {
 }
 private struct FineTuneList: Decodable {var jobs: [FineTuneJob]}
 private struct FineTuneModel: Decodable, Identifiable {var providerId:String;var provider:String;var model:String;var id:String {providerId+"|"+model}}
+private struct FineTuneReadiness: Decodable {var ready:Bool;var reason:String}
 private struct FineTuneCatalog: Decodable {var options:[FineTuneModel]}
 private struct FineTuneSource: Decodable, Identifiable {var id:String;var title:String;var url:String;var license:String;var evidence:String}
 private struct FineTuneExample: Decodable, Identifiable {var id:String;var prompt:String;var answer:String;var split:String;var verification:String}
@@ -70,6 +71,7 @@ private struct FineTuneCreate:View {
   @State private var gpuIds=Set<String>()
   @State private var budget=100.0
   @State private var overnight=false
+  @State private var readiness:FineTuneReadiness?
   @State private var maxSteps=200
   @State private var busy=false
   @State private var error:String?
@@ -77,6 +79,7 @@ private struct FineTuneCreate:View {
     ScrollView {VStack(alignment:.leading,spacing:22){
       HStack {Text("New Fine Tune").font(.title2.bold());Spacer();Button("Cancel"){dismiss()}}
       Picker("Model",selection:$selected){Text("Choose a local model").tag("");ForEach(models){Text($0.model).tag($0.id)}}.pickerStyle(.menu)
+      if let readiness {Label(readiness.reason,systemImage:readiness.ready ? "checkmark.circle" : "exclamationmark.triangle").font(.callout).foregroundStyle(.secondary)}
       TextField("What should the model learn?",text:$topic,axis:.vertical).lineLimit(4...8).textFieldStyle(.plain).padding(16).modifier(FineTuneGlass())
       DisclosureGroup("Advanced") {VStack(alignment:.leading,spacing:16){
         ForEach(gpus){gpu in Toggle("\(gpu.name) · \(gpu.id.suffix(8))",isOn:Binding(get:{gpuIds.contains(gpu.id)},set:{if $0{gpuIds.insert(gpu.id)}else{gpuIds.remove(gpu.id)}}))}
@@ -89,8 +92,14 @@ private struct FineTuneCreate:View {
         Text("Uses the workspace computer’s time zone.").font(.caption).foregroundStyle(.secondary)
       }.padding(.top,12)}
       if let error {Text(error).foregroundStyle(.red)}
-      HStack{Spacer();if busy{ProgressView()};Button("Start"){Task{await start()}}.buttonStyle(.borderedProminent).disabled(busy||selected.isEmpty||topic.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty)}
+      HStack{Spacer();if busy{ProgressView()};Button(readiness?.ready == true ? "Start" : "Research only"){Task{await start()}}.buttonStyle(.borderedProminent).disabled(busy||selected.isEmpty||topic.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty)}
     }.padding(24)}.frame(idealWidth:520,idealHeight:520).task {do{models=try JSONDecoder().decode(FineTuneCatalog.self,from:await request("/fine-tune/models")).options;selected=models.first?.id ?? "";gpus=try JSONDecoder().decode(GPUEnvelope.self,from:await request("/telemetry/gpus")).gpus;gpuIds=Set(gpus.map(\.id))}catch{self.error=error.localizedDescription}}
+    .task(id:selected) {
+      readiness=nil
+      guard let model=models.first(where:{$0.id==selected}) else{return}
+      var parts=URLComponents();parts.queryItems=[URLQueryItem(name:"model",value:model.model)]
+      do{readiness=try JSONDecoder().decode(FineTuneReadiness.self,from:await request("/fine-tune/readiness?"+(parts.percentEncodedQuery ?? "")))}catch{readiness=FineTuneReadiness(ready:false,reason:"Training readiness could not be verified on this host.")}
+    }
   }
   private func start()async {guard let m=models.first(where:{$0.id==selected})else{return};busy=true;defer{busy=false};do{_ = try await write("/fine-tune/create",["providerId":m.providerId,"model":m.model,"topic":topic,"gpuIds":Array(gpuIds).sorted(),"budgetPercent":Int(budget),"overnight":overnight,"maxSteps":maxSteps]);dismiss()}catch{self.error=error.localizedDescription}}
 }
