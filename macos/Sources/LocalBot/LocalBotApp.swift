@@ -97,8 +97,8 @@ struct MainView: View {
   @EnvironmentObject var model: AppModel
   @FocusState var searchFocused: Bool
   @State private var collapsedProjects = Set(UserDefaults.standard.stringArray(forKey: "collapsedProjects") ?? [])
-  var body: some View {
-    NavigationSplitView(columnVisibility: $model.sidebarVisibility) {
+  @State private var fullscreenSidebarWidth: CGFloat = 300
+  private var sidebarContent: some View {
       VStack(spacing: 0) {
         if model.isFullscreen {
           HStack { Spacer(); FullscreenNavigationControls() }.frame(height: 44).padding(.horizontal, 14)
@@ -186,30 +186,39 @@ struct MainView: View {
           }.buttonStyle(.plain).help("Model settings")
         }.frame(height: 40).padding(.horizontal, 14).padding(.bottom, 16).padding(.top, 7)
       }
-      .ignoresSafeArea(.container, edges: model.isFullscreen ? .top : [])
-      .navigationSplitViewColumnWidth(min: 250, ideal: 300, max: 380)
-      .toolbar {
-        ToolbarItemGroup {
-          Button {
-            Task { await model.newConversation() }
-          } label: {
-            Image(systemName: "square.and.pencil")
-          }.help("New conversation (⌘N)")
-          Button { model.showProject = true } label: { Image(systemName: "folder.badge.plus") }
-            .help("New project")
-        }
-      }
-    } detail: {
-      if let c = model.selected {
-        ConversationView(conversation: c)
+  }
+  @ViewBuilder private var conversationContent: some View {
+    if let c = model.selected { ConversationView(conversation: c) }
+    else { ContentUnavailableView("Your agents, one conversation away", systemImage: "bubble.left.and.bubble.right", description: Text("Choose a contact to begin.")) }
+  }
+  var body: some View {
+    Group {
+      if model.isFullscreen {
+        HStack(spacing: 0) {
+          if model.sidebarVisibility != .detailOnly {
+            sidebarContent
+              .scrollContentBackground(.hidden)
+              .frame(width: fullscreenSidebarWidth)
+              .modifier(PanelGlass())
+              .padding(.leading, 10).padding(.vertical, 8)
+            PanelResizeHandle { delta in fullscreenSidebarWidth = min(380, max(250, fullscreenSidebarWidth + delta)) }
+              .frame(width: 8)
+          }
+          conversationContent.frame(maxWidth: .infinity, maxHeight: .infinity)
+        }.ignoresSafeArea(.container, edges: .top)
       } else {
-        ContentUnavailableView(
-          "Your agents, one conversation away", systemImage: "bubble.left.and.bubble.right",
-          description: Text("Choose a contact to begin."))
+        NavigationSplitView(columnVisibility: $model.sidebarVisibility) {
+          sidebarContent
+            .navigationSplitViewColumnWidth(min: 250, ideal: 300, max: 380)
+            .toolbar {
+              ToolbarItemGroup {
+                Button { Task { await model.newConversation() } } label: { Image(systemName: "square.and.pencil") }.help("New conversation (⌘N)")
+                Button { model.showProject = true } label: { Image(systemName: "folder.badge.plus") }.help("New project")
+              }
+            }
+        } detail: { conversationContent }
       }
     }
-    .ignoresSafeArea(.container, edges: model.isFullscreen ? .top : [])
-    .padding(.top, model.isFullscreen ? 8 : 0)
     .onReceive(NotificationCenter.default.publisher(for: NSWindow.didEnterFullScreenNotification)) { _ in model.isFullscreen = true }
     .onReceive(NotificationCenter.default.publisher(for: NSWindow.didExitFullScreenNotification)) { _ in model.isFullscreen = false }
     .overlay {
@@ -427,7 +436,7 @@ struct ConversationView: View {
         .modifier(PanelGlass())
         .clipShape(RoundedRectangle(cornerRadius: 22))
 
-        .padding(.top, model.isFullscreen ? 0 : 8).padding(.trailing, 10).padding(.bottom, 10)
+        .padding(.top, 8).padding(.trailing, 10).padding(.bottom, 10)
         .ignoresSafeArea(.container, edges: .top)
         .overlay(alignment: .leading) {
           PanelResizeHandle { delta in panelWidth = max(280, min(900, panelWidth - delta)) }.frame(width: 8)
