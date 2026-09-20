@@ -43,7 +43,7 @@ The worker supports `--probe` to report CUDA availability. Job artifacts are und
 
 ## Validation
 
-Runtime tests cover job persistence, pause/resume state, overnight scheduling, route access, source split isolation, duplicate rejection, and missing trainer configuration. Native Mac and iPhone builds pass. Actual ChatGPT web-to-dataset execution and GPU training must still be verified before this preview is described as an end-to-end training system.
+Runtime tests cover job persistence, pause/resume state, overnight scheduling, route access, source split isolation, duplicate rejection, and missing trainer configuration. Native Mac and iPhone builds pass. The dual-3090 GPU training path passed a real 10-step arithmetic run, including pause at step 2, checkpoint resume, and adapter export. Held-out loss changed from 2.33684 to 0.40164 on four synthetic examples; this does not establish general model quality. ChatGPT web-to-dataset execution remains separately unverified.
 
 ## Container training host
 

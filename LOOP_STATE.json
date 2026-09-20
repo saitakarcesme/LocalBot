@@ -459,5 +459,25 @@
       "actual GPU training and pause/resume evaluation"
     ],
     "training_claim": "No actual model training completed"
+  },
+  "fine_tune_training_repair": {
+    "status": "gpu_train_pause_resume_verified",
+    "date": "2026-09-21",
+    "branch": "codex/fine-tune-workflows",
+    "runtime_tests": 178,
+    "job_id": "3ed65c29-4600-4614-be35-3be364de1e6a",
+    "optimizer_steps": 10,
+    "checkpoint_resume": true,
+    "baseline_loss": 2.3368406295776367,
+    "evaluation_loss": 0.40163588523864746,
+    "inference_restored": true,
+    "pending": [
+      "Mac Keychain access to paired PC; live dashboard and ChatGPT web-to-dataset check",
+      "iPhone update when connected"
+    ],
+    "limitations": [
+      "Small arithmetic fixture does not establish model quality",
+      "Crash recovery may require host inspection"
+    ]
   }
 }

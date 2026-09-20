@@ -473,3 +473,12 @@ Streaming checkpoint requested by the concurrent UI task: fixed dropped trailing
 - 177 runtime tests passed. Signed physical iPhone Release installed; launch rejected because device is locked.
 - Windows runtime 3f38612 installed with backup; new readiness endpoint confirmed missing training environment; both existing jobs preserved. No existing research job resumed.
 - Actual training remains incomplete: no training environment/pinned compatible base; previous disk check only 50 GiB free. No GPU training, checkpoint resume, or live ChatGPT end-to-end success claimed.
+
+## 2026-09-21 Real dual-GPU training repair
+- Installed isolated `localbot-trainer` container and pinned Unsloth bitsandbytes training base (22.4 GB), retaining existing inference weights. CUDA tensor operations succeeded on both RTX 3090s.
+- Fixed Fine Tune catalog excluding loopback OpenAI-compatible/SGLang providers. Regression tests retain rejection of public endpoints and lookalike localhost domains.
+- Live tests found WSL expandable-segment mapping failure and FP32 expansion of the frozen 248K-token output head exhausting VRAM. Disabled expandable segments on WSL and preserved frozen BF16 base parameters during LoRA preparation.
+- Real API verification job `3ed65c29-4600-4614-be35-3be364de1e6a`: 16 deterministic arithmetic training examples, four held-out examples, 10 optimizer steps. Paused at step 2, saved checkpoint-2, resumed from it, saved checkpoint-10 and adapter. Harness emitted VERIFIED_TRAIN_PAUSE_RESUME. Baseline loss 2.3368406295776367; held-out loss 0.40163588523864746. This validates mechanics, not production model quality.
+- Configured idle LocalBot inference GPU reservation and restore. The original SGLang model endpoint responded again after training. Failed synthetic verification attempts were cancelled with artifacts preserved; pre-existing user jobs were not resumed.
+- 178 runtime tests passed; heartbeat lease Python test passed. Mac source06d0baf installed with signed manifest/backup. Mac PC workspace selection is waiting inside Keychain; native SecurityAgent automation is denied, so user unlock requested. Live Mac dashboard/ChatGPT-to-dataset validation remains pending that connection.
+- Phone is disconnected per user: installation deferred until it is connected. No simulator launched for this training work.
