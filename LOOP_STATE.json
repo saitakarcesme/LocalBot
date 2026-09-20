@@ -429,9 +429,12 @@
       "ChatGPT live source research: Mac browser required",
       "training Python environment and pinned compatible base weights",
       "actual dual-GPU QLoRA run and checkpoint resume",
-      "continuous large-scale dataset acquisition and benchmark validation"
+      "continuous large-scale dataset acquisition and benchmark validation",
+      "Insufficient host disk for official 55.6 GB base plus environment/checkpoints; Qwen conditional-generation loader requires validation"
     ],
     "models_changed": false,
-    "guide": "docs/FINE-TUNE.md"
+    "guide": "docs/FINE-TUNE.md",
+    "pull_request": "https://github.com/saitakarcesme/LocalBot/pull/3",
+    "host_free_GiB": 50
   }
 }

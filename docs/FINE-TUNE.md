@@ -44,3 +44,9 @@ The worker supports `--probe` to report CUDA availability. Job artifacts are und
 ## Validation
 
 Runtime tests cover job persistence, pause/resume state, overnight scheduling, route access, source split isolation, duplicate rejection, and missing trainer configuration. Native Mac and iPhone builds pass. Actual ChatGPT web-to-dataset execution and GPU training must still be verified before this preview is described as an end-to-end training system.
+
+## Current dual-3090 host readiness
+
+The Windows host reported approximately 50 GiB free on C:. The official [Qwen3.8-27B repository](https://huggingface.co/Qwen/Qwen3.8-27B/tree/main) is 55.6 GB before the training environment, datasets, and checkpoints. A fresh full-base download does not fit with working headroom; no existing models were deleted.
+
+The running inference container has Transformers 5.12.1 and PyTorch 2.13.0+cu130, but no TRL, PEFT, or bitsandbytes. It was inspected without changing its environment. Qwen's [pinned configuration](https://huggingface.co/Qwen/Qwen3.8-27B/blob/1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0/config.json) uses a conditional-generation architecture; the preview's causal-model loader needs a validated Qwen-specific training path. Installing dependencies alone is not enough to certify support.
