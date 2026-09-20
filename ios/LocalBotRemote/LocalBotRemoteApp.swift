@@ -116,6 +116,7 @@ struct MobileChat: View {
   @State private var browser: URL?
   @State private var agent: String?
   @State private var followsOutput = true
+  @State private var bubbleWidths: [String: CGFloat] = [:]
   @State private var photo: PhotosPickerItem?
   @State private var pickPhoto = false
   @State private var pickFile = false
@@ -207,11 +208,13 @@ struct MobileChat: View {
         if !user, let bot { Text(bot.name).font(.caption).foregroundStyle(.secondary).padding(.leading, 8) }
         Text(.init(message.content)).textSelection(.enabled).padding(14)
           .foregroundStyle(user ? .white : .primary).background(user ? Color.accentColor : Color(uiColor: .secondarySystemBackground),in: RoundedRectangle(cornerRadius: 22))
+          .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { bubbleWidths[message.id] = $0 }
+          .zIndex(1)
         ForEach(message.attachments) { attachment in
           Label(attachment.name, systemImage: attachment.mime.hasPrefix("image/") ? "photo" : "doc").font(.caption).lineLimit(2).padding(8).background(.thinMaterial, in: RoundedRectangle(cornerRadius: 10))
         }
         if !user && !events.isEmpty {
-          Button { activity = true } label: { Label(events.last?.name.replacingOccurrences(of: "_",with: " ").capitalized ?? "Activity",systemImage: "waveform.path").font(.caption).lineLimit(1).padding(10).frame(maxWidth: .infinity) }.buttonStyle(.plain).background(.thinMaterial,in: RoundedRectangle(cornerRadius: 14)).padding(.horizontal, 12)
+          Button { activity = true } label: { Label(events.last?.name.replacingOccurrences(of: "_",with: " ").capitalized ?? "Activity",systemImage: "waveform.path").font(.caption).lineLimit(1).truncationMode(.tail).padding(.horizontal, 8).padding(.top, 16).padding(.bottom, 9).frame(width: max(0, (bubbleWidths[message.id] ?? 0) * 0.9)) }.buttonStyle(.plain).background(.thinMaterial,in: RoundedRectangle(cornerRadius: 14)).frame(width: bubbleWidths[message.id] ?? 0).padding(.top, -15)
         }
         if !user { Button { UIPasteboard.general.string = message.content } label: { Image(systemName: "doc.on.doc").font(.caption).padding(6) }.foregroundStyle(.secondary).accessibilityLabel("Copy response") }
       }
