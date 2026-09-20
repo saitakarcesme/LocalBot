@@ -84,6 +84,7 @@ struct ConversationsView: View {
         Section("Recents") { ForEach(conversations.filter { $0.projectId == nil }) { row($0) } }
       }.searchable(text: $search).navigationTitle("LocalBot")
         .toolbar {
+          ToolbarItem(placement: .topBarTrailing) { NavigationLink { ResearchDashboard(request: {try await store.read($0)},save:{try await store.personalWrite("/research",body:$0)},conversations:store.snapshot?.conversations ?? []) } label: {Image(systemName:"chart.xyaxis.line")}.accessibilityLabel("Research") }
           ToolbarItem(placement: .topBarLeading) { Button { profile = true } label: { ProfileBadge(profile: store.snapshot?.profile ?? UserProfile()) }.accessibilityLabel("Profile and settings") }
           ToolbarItem(placement: .topBarTrailing) { Button { project = nil; newChat = true; store.selected = nil; store.messages = []; store.activity = [] } label: { Image(systemName: "square.and.pencil") }.accessibilityLabel("New conversation") }
         }
