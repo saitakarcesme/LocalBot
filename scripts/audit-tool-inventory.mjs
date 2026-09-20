@@ -24,7 +24,7 @@ for(const entry of [...inventory.tools,...controls]){
  assert(entry.route?.trim(),`Missing concrete route or blocker for ${entry.name}`);
 }
 assert.deepEqual([...inventory.localbotBuiltins].sort(),[...names].sort(),'Update inventory built-ins to match runtime definitions');
-const fullyEnabled={permissions:{filesystem:'write',terminal:true,git:true,web:true},integrations:['audit-fixture']};
+const fullyEnabled={permissions:{filesystem:'write',terminal:true,git:true,web:true,computer:true},integrations:['audit-fixture']};
 for(const definition of definitions){
  const {name,description,parameters}=definition.function;
  assert(description?.trim(),`${name} has no description`);

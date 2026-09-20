@@ -1616,7 +1616,10 @@
     "read_personal_context",
     "phone_request_action",
     "phone_action_status",
-    "read_document"
+    "read_document",
+    "computer_snapshot",
+    "computer_click",
+    "computer_type"
   ],
   "verifiedIntegrationTransport": "MCP Streamable HTTP 2025-11-25 plus 2025-06-18/2025-03-26 negotiation",
   "controlCount": 13,
