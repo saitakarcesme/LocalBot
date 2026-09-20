@@ -105,3 +105,11 @@ This pass does not send a real message, connect a new email account, or claim en
 - Local-provider context budgeting now includes tool definitions, retains complete tool-call/result groups and explicitly rejects a window too small for instructions and tools. New local configurations default to 16K; existing provider choices are preserved. This is conservative character-based budgeting, not exact tokenization.
 
 These checks establish the specific flows above. They are not a benchmark showing parity with Codex, a full regression of every integration, or a measured iPhone frame-time test.
+
+## September 20 update: device controls and research
+
+- **Mac controls:** optional `computer_snapshot`, `computer_click`, and `computer_type` use macOS Accessibility. Enable the contact's Computer permission and grant LocalBot Accessibility access in macOS. Snapshots omit protected text fields; references expire after 30 seconds and after an action. The model must inspect again to verify the result. Accessibility traversal runs outside the UI thread and has a bounded traversal budget. Native-app action coverage still needs physical OS-permission testing.
+- **iPhone actions:** reviewed SMS composition and Reminders join Mail, Calendar, Shortcuts and HTTPS links. LocalBot Remote can carry out supported foreground actions after review and the relevant iOS permission. It cannot arbitrarily tap through every other iPhone app or bypass the lock screen. Opening a composer is not proof a message was sent.
+- **Full Access:** an explicit task/workspace grant applies to later eligible actions in that same task. It does not enable disabled tools, apply to a different workspace/task, or replace operating-system permission prompts.
+- **Research:** the iPhone dashboard shows separate rolling GPU utilization/temperature charts plus current VRAM and power. Measurements are cached on the host; polling stops when the app is not active. Research output uses document sections with copy/share controls. The daily target is not a throughput promise and no fine-tuning job is automatically launched by viewing this page.
+- **History:** append-only transfer preserves Mac originals and creates a PC backup before import. Conversation/project metadata and messages transfer; local attachment and project-file bytes do not automatically move.

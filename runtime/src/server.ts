@@ -1,3 +1,5 @@
+import { exportHistory, importHistory } from "./workspace-history.js";
+import { gpuTelemetry } from "./gpu-telemetry.js";
 import { AutoResearch, initResearch, researchStatus, saveResearch } from "./research.js";
 import { personalContext, savePersonalContext, phoneActions, updatePhoneAction } from "./personal.js";
 import { setTokenUsageSink } from "./token-usage.js";
@@ -141,6 +143,7 @@ function cleanAgent(a: any): Agent {
       terminal: p.terminal === true,
       git: p.git === true,
       web: p.web === true,
+      computer: p.computer === true,
     },
     autonomy: a.autonomy,
     maxSteps: agentStepLimit(a.maxSteps),
@@ -171,6 +174,22 @@ const server = createServer(async (req, res) => {
     const u = new URL(req.url ?? "/", "http://localhost"),
       p = u.pathname,
       m = req.method;
+    if (m === "POST" && p === "/workspace-host/sync-history") {
+      const b=await body(req), config=store.provider(b.providerId), credential=engine.secrets.get(config.id);
+      if(config.transport!=="center"||!credential)throw Error("Unlock the model PC connection first.");
+      const link=parseLink(credential);
+      if(link.kind!=="center"||link.url!==new URL(config.endpoint).origin)throw Error("Workspace connection does not match this PC.");
+      const archive=exportHistory(store), transferId=randomUUID();
+      let inserted=0;
+      for(const [table,rows] of Object.entries(archive.tables)) {
+        for(let offset=0;offset<rows.length;offset+=100) {
+          const batch={version:1,transferId,tables:Object.fromEntries(Object.keys(archive.tables).map(t=>[t,t===table?rows.slice(offset,offset+100):[]]))};
+          const result:any=await invoke(link,{operation:"workspace_api",path:"/history/import",method:"POST",body:batch},AbortSignal.timeout(180000));
+          inserted+=result.inserted;
+        }
+      }
+      json(res,200,{inserted,note:"Conversation history synced. Project files and attachments remain on this Mac."});return;
+    }
     if (p === "/workspace-host/api") {
       if(req.headers["x-localbot-remote"] === "true") throw Error("Use a direct workspace pairing on your phone.");
       const config=store.provider(String(u.searchParams.get("providerId")));const credential=engine.secrets.get(config.id);
@@ -195,6 +214,9 @@ const server = createServer(async (req, res) => {
       const device = req.headers["x-localbot-remote"] === "true" ? String(req.headers["x-localbot-device"] ?? "") : "";
       const value=updatePhoneAction(store,device,await body(req));change();json(res,200,value);return;
     }
+    if (m === "GET" && p === "/history/export") {json(res,200,exportHistory(store));return;}
+    if (m === "POST" && p === "/history/import") {const result=importHistory(store,await body(req));change();json(res,200,result);return;}
+    if (m === "GET" && p === "/telemetry/gpus") {json(res,200,await gpuTelemetry());return;}
     if (m === "GET" && p === "/research") {json(res,200,researchStatus(store));return;}
     if (m === "POST" && p === "/research") {const settings=saveResearch(store,await body(req));
       if (!settings.enabled) { const latest=researchStatus(store).latest; if(latest && ["queued","running","awaiting_approval","awaiting_input"].includes(latest.status)) engine.cancel(latest.id); }
@@ -326,7 +348,8 @@ const server = createServer(async (req, res) => {
       if (typeof b.allow !== "boolean")
         throw new Error("allow must be boolean");
       if (b.always !== undefined && typeof b.always !== "boolean") throw new Error("always must be boolean");
-      engine.decide(b.id, b.allow, b.always === true);
+      if (b.fullTask !== undefined && typeof b.fullTask !== "boolean") throw Error("fullTask must be boolean");
+      engine.decide(b.id, b.allow, b.always === true, b.fullTask === true);
       json(res, 200, { ok: true });
       return;
     }

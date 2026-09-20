@@ -20,6 +20,10 @@ struct RemoteSettingsView: View {
           ForEach(model.centerConnections) { provider in Button(provider.name) { switchHost(provider.id) } }
         }.disabled(busy)
       }
+      if let host=model.workspaceProviderId {
+        Button("Sync Mac conversation history") {Task {busy=true;defer{busy=false};do {_ = try await model.request("/workspace-host/sync-history",body:["providerId":host]);await model.refresh();error=nil}catch{self.error=error.localizedDescription}}}.disabled(busy)
+        Text("Copies missing conversations and project history. Project files remain on this Mac.").font(.caption).foregroundStyle(.secondary)
+      }
       Text(model.workspaceProviderId == nil ? "Choose a model PC with Workspace host enabled to work while this Mac is off. Mac-only projects stay on this Mac." : "Conversations live on the model PC. Your Mac and iPhone reconnect to the same workspace.")
         .font(.caption).foregroundStyle(.secondary)
       HStack {

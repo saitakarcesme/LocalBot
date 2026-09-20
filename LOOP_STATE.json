@@ -371,5 +371,40 @@
       "No physical phone frame-time benchmark"
     ],
     "iphone_build": "6de33e8 signed Release installed and launched on physical iPhone 15 Pro"
+  },
+  "research_device_workspace": {
+    "status": "installed_model_verified_device_unlock_pending",
+    "branch": "codex/research-device-workspace",
+    "runtime_tests_passed": 168,
+    "runtime_tests_failed": 0,
+    "built_in_tools": 50,
+    "mac_installed_source": "719dd1d",
+    "iphone_installed_source": "9183056",
+    "windows_center_source": "4ee4082",
+    "pc_default_model": "qwen3.8-27b-awq",
+    "pc_default_provider": "qwen38-sglang",
+    "dual_gpu_tokens_per_second": [
+      45.3004,
+      46.677
+    ],
+    "benchmark_completion_tokens": 256,
+    "gpu_utilization_percent": [
+      75,
+      77
+    ],
+    "model_tool_test": "completed: task-specific progress, current_time, observed final answer",
+    "history_rows_transferred": 676,
+    "pc_projects": 6,
+    "pc_conversations_before_model_test": 39,
+    "research_enabled": false,
+    "remaining": [
+      "Physical iPhone launch and validation: device locked",
+      "Mac PC credential restoration: Keychain unlock pending",
+      "Mac Accessibility permission/live execution validation",
+      "Auto-research remains paused after previous partial failure; no fine-tuning performed",
+      "Project files and attachments remain on Mac",
+      "DSpark speculative decoding disabled; no sustained throughput benchmark"
+    ],
+    "goal_started": false
   }
 }

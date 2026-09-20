@@ -25,6 +25,9 @@ enum Keychain {
       : update
     if status != errSecSuccess { throw NSError(domain: NSOSStatusErrorDomain, code: Int(status)) }
   }
+  static func readAsync(_ id: String) async -> String? {
+    await Task.detached(priority: .userInitiated) { read(id) }.value
+  }
   static func read(_ id: String) -> String? {
     let context = LAContext()
     context.interactionNotAllowed = true
@@ -278,12 +281,12 @@ enum Keychain {
       if workspaceProviderId == nil { centerConnections = providers.filter { $0.transport == "center" } }
       if first && workspaceProviderId == nil {
         for i in integrations {
-          if let secret = Keychain.read("mcp:" + i.id + "@" + i.endpoint) {
+          if let secret = await Keychain.readAsync("mcp:" + i.id + "@" + i.endpoint) {
             _ = try? await request("/integrations/credentials", body: ["id": i.id, "secret": secret])
           }
         }
         for p in providers {
-          if let secret = Keychain.read(p.id + "@" + p.endpoint) {
+          if let secret = await Keychain.readAsync(p.id + "@" + p.endpoint) {
             _ = try? await request("/credentials", body: ["providerId": p.id, "secret": secret])
           }
         }

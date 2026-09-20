@@ -22,7 +22,7 @@ struct PersonalContextView: View {
       Text("Passwords stay in Keychain. This context is stored on your Mac; existing chats and shared memories remain separate.").font(.caption).foregroundStyle(.secondary)
       if let error { Text(error).font(.callout).foregroundStyle(.red).textSelection(.enabled) }
       HStack { Button("Reload") { Task { await refresh() } }.disabled(busy); Spacer(); if saved { Label("Saved", systemImage: "checkmark").font(.caption).foregroundStyle(.secondary) }; Button("Save context") { Task { busy = true; defer { busy = false }; do { record = try JSONDecoder().decode(PersonalContextRecord.self, from: await save(["text":record.text,"revision":record.revision])); saved = true; error = nil } catch { self.error = error.localizedDescription } } }.buttonStyle(.borderedProminent).disabled(!ready || busy || record.text.count > 30000) }
-    }.padding(24).frame(minWidth: 300, idealWidth: 560, minHeight: 420)
+    }.padding(24).frame(idealWidth: 560, minHeight: 420)
       .task { await refresh() }
   }
   private func refresh() async { busy = true; defer { busy = false }; do { record = try JSONDecoder().decode(PersonalContextRecord.self, from: await load()); ready = true; error = nil } catch { self.error = error.localizedDescription } }

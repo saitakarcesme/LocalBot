@@ -6,7 +6,29 @@ import UniformTypeIdentifiers
 @main struct LocalBotRemoteApp: App {
   @StateObject private var store = RemoteStore()
   @State private var launching = true
-  var body: some Scene { WindowGroup { RemoteRoot().environmentObject(store).overlay { if launching { LaunchScreen { launching = false } } } } }
+  var body: some Scene { WindowGroup {
+    #if DEBUG
+    if ProcessInfo.processInfo.arguments.contains("--research-preview") {
+      NavigationStack {ResearchDashboard(request:researchFixture,save:{_ in try researchFixture("/research")},conversations:[])}
+    } else {root}
+    #else
+    root
+    #endif
+  } }
+  private var root:some View {RemoteRoot().environmentObject(store).overlay {if launching {LaunchScreen {launching=false}}}}
+  #if DEBUG
+  private func researchFixture(_ path:String)throws->Data {
+    let object:Any
+    if path == "/research" {object=["enabled":false,"topic":"Qwen fine-tuning research","conversationId":"preview","dailyTarget":1000000000,"maxPasses":24,"passes":3,"tokens":379880] as [String:Any]}
+    else if path == "/telemetry/gpus" {
+      let first:[String:Any]=["id":"gpu-0","name":"NVIDIA GeForce RTX 3090","utilization":65.0,"temperature":61.0,"memoryUsedMB":16384.0,"memoryTotalMB":24576.0,"powerWatts":275.0]
+      var second=first;second["id"]="gpu-1";second["utilization"]=72.0
+      object=["sampledAt":ISO8601DateFormatter().string(from:Date()),"available":true,"gpus":[first,second]] as [String:Any]
+    }
+    else {object=[["id":"preview","conversationId":"preview","agentId":"Athena","role":"assistant","content":"## Verification findings\nCompare the base model and adapter on held-out examples. Keep provenance and independent validation separate from generated proposals.","createdAt":"2026-09-20T00:00:00Z","reactions":[],"attachments":[]] as [String:Any]]}
+    return try JSONSerialization.data(withJSONObject:object)
+  }
+  #endif
 }
 struct RemoteRoot: View {
   @EnvironmentObject private var store: RemoteStore
@@ -84,6 +106,7 @@ struct ConversationsView: View {
         Section("Recents") { ForEach(conversations.filter { $0.projectId == nil }) { row($0) } }
       }.searchable(text: $search).navigationTitle("LocalBot")
         .toolbar {
+          ToolbarItem(placement: .topBarTrailing) { NavigationLink { ResearchDashboard(request: {try await store.read($0)},save:{try await store.personalWrite("/research",body:$0)},conversations:store.snapshot?.conversations ?? []) } label: {Image(systemName:"chart.xyaxis.line")}.accessibilityLabel("Research") }
           ToolbarItem(placement: .topBarLeading) { Button { profile = true } label: { ProfileBadge(profile: store.snapshot?.profile ?? UserProfile()) }.accessibilityLabel("Profile and settings") }
           ToolbarItem(placement: .topBarTrailing) { Button { project = nil; newChat = true; store.selected = nil; store.messages = []; store.activity = [] } label: { Image(systemName: "square.and.pencil") }.accessibilityLabel("New conversation") }
         }
@@ -116,6 +139,7 @@ struct MobileChat: View {
   @State private var browser: URL?
   @State private var agent: String?
   @State private var followsOutput = true
+  @State private var bubbleWidths: [String: CGFloat] = [:]
   @State private var photo: PhotosPickerItem?
   @State private var pickPhoto = false
   @State private var pickFile = false
@@ -132,12 +156,7 @@ struct MobileChat: View {
           if let run = store.snapshot?.activeRuns?.first(where: { $0.taskId == running?.id }) {
             HStack { LocalBotMascot(state: .thinking, color: palette(store.snapshot?.agents.first { $0.id == run.agentId }?.color)).frame(width: 32,height: 32); Text(run.phase?.capitalized ?? "Working…").foregroundStyle(.secondary) }
           }
-          ForEach(store.snapshot?.approvals.filter { $0.status == "pending" && $0.taskId == running?.id } ?? []) { approval in
-            VStack(alignment: .leading, spacing: 12) {
-              Text(approval.summary).font(.callout)
-              HStack { Button("Deny", role: .destructive) { Task { await store.action("/approvals", body:["id":approval.id,"allow":false]) } }; Spacer(); Button("Allow once") { Task { await store.action("/approvals", body:["id":approval.id,"allow":true]) } } }.buttonStyle(.bordered)
-            }.padding().background(.thinMaterial, in: RoundedRectangle(cornerRadius: 20))
-          }
+          ForEach(pendingApprovals) { approval in approvalCard(approval) }
           Color.clear.frame(height: 1).id("bottom").onAppear { followsOutput = true }.onDisappear { followsOutput = false }
         }.padding(16)
       }.defaultScrollAnchor(.bottom)
@@ -197,6 +216,19 @@ struct MobileChat: View {
       }.padding(.horizontal, 14).padding(.vertical, 5).modifier(NativeGlass())
     }.padding(.horizontal, 14).padding(.vertical, 8)
   }
+  private var pendingApprovals: [Approval] {store.snapshot?.approvals.filter {$0.status == "pending" && $0.taskId == running?.id} ?? []}
+  private func approvalCard(_ approval: Approval) -> some View {
+    VStack(alignment: .leading, spacing: 12) {
+      Text(approval.summary).font(.callout)
+      HStack {
+        Button("Deny", role: .destructive) {Task {await store.action("/approvals",body:["id":approval.id,"allow":false])}}
+        Spacer()
+        Button("Allow once") {Task {await store.action("/approvals",body:["id":approval.id,"allow":true])}}
+      }.buttonStyle(.bordered)
+      Button("Full access for task") {Task {await store.action("/approvals",body:["id":approval.id,"allow":true,"fullTask":true])}}
+      Text("Enabled tools and integrations for this task. System permissions still apply.").font(.caption).foregroundStyle(.secondary)
+    }.padding().background(.thinMaterial,in:RoundedRectangle(cornerRadius:20))
+  }
   private func messageRow(_ message: ChatMessage) -> some View {
     let user = message.role == "user"
     let bot = store.snapshot?.agents.first { $0.id == message.agentId }
@@ -207,11 +239,13 @@ struct MobileChat: View {
         if !user, let bot { Text(bot.name).font(.caption).foregroundStyle(.secondary).padding(.leading, 8) }
         Text(.init(message.content)).textSelection(.enabled).padding(14)
           .foregroundStyle(user ? .white : .primary).background(user ? Color.accentColor : Color(uiColor: .secondarySystemBackground),in: RoundedRectangle(cornerRadius: 22))
+          .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { bubbleWidths[message.id] = $0 }
+          .zIndex(1)
         ForEach(message.attachments) { attachment in
           Label(attachment.name, systemImage: attachment.mime.hasPrefix("image/") ? "photo" : "doc").font(.caption).lineLimit(2).padding(8).background(.thinMaterial, in: RoundedRectangle(cornerRadius: 10))
         }
         if !user && !events.isEmpty {
-          Button { activity = true } label: { Label(events.last?.name.replacingOccurrences(of: "_",with: " ").capitalized ?? "Activity",systemImage: "waveform.path").font(.caption).lineLimit(1).padding(10).frame(maxWidth: .infinity) }.buttonStyle(.plain).background(.thinMaterial,in: RoundedRectangle(cornerRadius: 14)).padding(.horizontal, 12)
+          Button { activity = true } label: { Label(events.last?.name.replacingOccurrences(of: "_",with: " ").capitalized ?? "Activity",systemImage: "waveform.path").font(.caption).lineLimit(1).truncationMode(.tail).padding(.horizontal, 8).padding(.top, 16).padding(.bottom, 9).frame(width: max(0, (bubbleWidths[message.id] ?? 0) * 0.9)) }.buttonStyle(.plain).background(.thinMaterial,in: RoundedRectangle(cornerRadius: 14)).frame(width: bubbleWidths[message.id] ?? 0).padding(.top, -15)
         }
         if !user { Button { UIPasteboard.general.string = message.content } label: { Image(systemName: "doc.on.doc").font(.caption).padding(6) }.foregroundStyle(.secondary).accessibilityLabel("Copy response") }
       }

@@ -54,3 +54,18 @@ test('routing retries a missing metadata call without running task tools',async(
  assert.equal(routes,2);assert.equal(answers,1);assert.equal(store.messages(c.id).at(-1).content,'side chat ready');
  assert.equal(store.all('SELECT * FROM tool_calls').length,0);store.db.close();
 });
+test('full task access permits different actions only within the approved task',async()=>{
+ const dir=await mkdtemp(join(tmpdir(),'localbot-task-access-'));const store=new Store(join(dir,'data'));store.seed(dir);
+ const factory=()=>({capabilities:()=>({images:false}),generate:async messages=>{
+  const n=messages.filter(m=>m.role==='tool').length;
+  return n>=2?{content:'Done',calls:[]}:{content:'Saving file',calls:[{id:`write-${n}`,type:'function',function:{name:'write_file',arguments:JSON.stringify({path:`file-${n}.txt`,content:String(n)})}}]};
+ }});
+ const engine=new Engine(store,()=>{},factory),c=store.createConversation('Task access',['coder']);
+ const task=engine.enqueue(c.id,'Save two files');await wait(()=>store.task(task.id).status==='awaiting_approval');
+ engine.decide(store.get("SELECT id FROM approvals WHERE taskId=? AND status='pending'",task.id).id,true,false,true);
+ await wait(()=>store.task(task.id).status==='completed');
+ assert.equal(store.all('SELECT * FROM approvals WHERE taskId=?',task.id).length,1);
+ assert.equal(await readFile(join(dir,'file-1.txt'),'utf8'),'1');
+ const next=engine.enqueue(c.id,'Save two files again');await wait(()=>store.task(next.id).status==='awaiting_approval');
+ engine.cancel(next.id);await wait(()=>engine.active.size===0&&!engine.pumping);store.db.close();
+});
