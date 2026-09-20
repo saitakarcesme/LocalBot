@@ -51,7 +51,7 @@ export class FineTune {
     return this.store.transaction(()=>{
       const c=this.store.createConversation('Fine Tune · '+input.topic.trim().slice(0,60),['researcher']);
       this.store.exec('INSERT INTO settings VALUES(?,?)','model:'+c.id,JSON.stringify({providerId:config.id,model:input.model}));
-      const job:FineTuneJob={id,topic:input.topic.trim(),providerId:config.id,model:input.model,conversationId:c.id,stage:'sources',status:'queued',gpuIds:[...new Set(gpuIds)] as string[],budgetPercent,maxSteps,overnight:input.overnight===true,createdAt:now,updatedAt:now};
+      const job:FineTuneJob={id,topic:input.topic.trim(),providerId:config.id,model:input.model,conversationId:c.id,stage:'sources',status:input.paused===true?'paused':'queued',gpuIds:[...new Set(gpuIds)] as string[],budgetPercent,maxSteps,overnight:input.overnight===true,createdAt:now,updatedAt:now};
       this.put(job);this.event(id,'created','Research requested. Model weights remain unchanged.');return job;
     });
   }
@@ -113,6 +113,7 @@ export class FineTune {
           if(j.status==='running'||j.status==='pausing'){j.status='waiting';j.reason='Training host restarted. Resume from the last saved checkpoint.';this.put(j);continue;}
           if(j.overnight&&date.getHours()>=7&&date.getHours()<22)continue;
           if(this.trainer.active)continue;
+          if(this.store.get("SELECT id FROM tasks WHERE status IN ('queued','running','awaiting_approval','awaiting_input') LIMIT 1"))continue;
           try {
             const rows=this.store.all('SELECT prompt,answer,split,sourceId,verification FROM fine_tune_examples WHERE jobId=? ORDER BY id',j.id);
             await this.trainer.launch(j,rows,event=>{

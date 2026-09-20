@@ -1,4 +1,4 @@
-import {trainingHost,probeTrainingHost} from './training-host.js';
+import {trainingHost,probeTrainingHost,reserveTrainingGPUs,restoreInference} from './training-host.js';
 import {spawn, type ChildProcess} from 'node:child_process';
 import {promises as fs} from 'node:fs';
 import {join,dirname,isAbsolute} from 'node:path';
@@ -43,6 +43,7 @@ export class FineTuneTrainer {
     await fs.writeFile(path,JSON.stringify(manifest),{mode:0o600});await fs.writeFile(join(root,'dataset.json'),data,{mode:0o600});
     await fs.rm(join(root,'pause'),{force:true});
     const worker=join(dirname(fileURLToPath(import.meta.url)),'training','worker.py');
+    const reserved=host?await reserveTrainingGPUs(host):[];
     let lease:ReturnType<typeof setInterval>|undefined;
     if(host){
       await fs.copyFile(worker,join(host.root,'worker.py'));
@@ -54,7 +55,15 @@ export class FineTuneTrainer {
     const child=spawn(command,args,{env:{...process.env,CUDA_VISIBLE_DEVICES:job.gpuIds.join(','),LOCALBOT_PARENT_PID:String(process.pid),TOKENIZERS_PARALLELISM:'false'},stdio:['ignore','pipe','pipe'],windowsHide:true});
     this.running={id:job.id,child,root};
     let buffer='',tail='',terminal=false;
-    const finish=(message:string)=>{if(lease)clearInterval(lease);if(this.running?.child===child)this.running=undefined;if(!terminal){terminal=true;onEvent({kind:'failed',message})}};
+    let finishing=false;
+    const finish=(message:string)=>{
+      if(finishing)return;finishing=true;if(lease)clearInterval(lease);
+      void (async()=>{
+        try{if(host)await restoreInference(host,reserved)}catch(error){onEvent({kind:'restore_failed',message:String(error)})}
+        if(this.running?.child===child)this.running=undefined;
+        if(!terminal){terminal=true;onEvent({kind:'failed',message})}
+      })();
+    };
     child.stdout!.on('data',b=>{buffer+=b.toString();if(buffer.length>200000)buffer=buffer.slice(-200000);let at;while((at=buffer.indexOf('\n'))>=0){const line=buffer.slice(0,at);buffer=buffer.slice(at+1);try{const event=JSON.parse(line);if(['failed','completed','paused'].includes(event.kind))terminal=true;onEvent(event)}catch{}}});
     child.stderr!.on('data',b=>{tail=(tail+b.toString()).slice(-1500)});
     child.on('error',e=>finish(e.message));child.on('exit',code=>finish(tail||`Training worker exited (${code}).`));
