@@ -19,6 +19,14 @@ def main():
     manifest_path=Path(sys.argv[1]).resolve()
     cfg=json.loads(manifest_path.read_text())
     root=manifest_path.parent
+    import atexit
+    lock=root/'worker.pid'
+    try:
+        handle=os.open(lock, os.O_CREAT|os.O_EXCL|os.O_WRONLY)
+    except FileExistsError:
+        raise RuntimeError('A worker lock exists. Verify the previous worker stopped before recovering this task.')
+    os.write(handle,str(os.getpid()).encode());os.close(handle)
+    atexit.register(lambda:lock.unlink(missing_ok=True))
     if not torch.cuda.is_available():
         raise RuntimeError('CUDA is required on the training host.')
     if torch.cuda.device_count()!=len(cfg['gpuIds']):
@@ -41,7 +49,10 @@ def main():
         def on_step_end(self,args,state,control,**kw):
             elapsed=time.monotonic()-self.started
             hour=datetime.now().hour
-            if (root/'pause').exists() or (cfg['overnight'] and 7<=hour<22):
+            parent_alive=True
+            try: os.kill(int(os.environ['LOCALBOT_PARENT_PID']),0)
+            except (ProcessLookupError,KeyError): parent_alive=False
+            if not parent_alive or (root/'pause').exists() or (cfg['overnight'] and 7<=hour<22):
                 control.should_save=True;control.should_training_stop=True
             else:
                 time.sleep(min(60,elapsed*(100/cfg['budgetPercent']-1)))

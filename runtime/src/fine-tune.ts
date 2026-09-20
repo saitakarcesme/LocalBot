@@ -1,3 +1,5 @@
+import { prepareDataset } from "./fine-tune-dataset.js";
+import { FineTuneTrainer } from "./fine-tune-trainer.js";
 import { randomUUID, createHash } from 'node:crypto';
 import type { Store } from './store.js';
 import type { Engine } from './engine.js';
@@ -20,7 +22,9 @@ export function initFineTune(s: Store) {
 }
 export class FineTune {
   private ticking=false;
-  constructor(private store:Store,private engine:Engine,private changed:()=>void) {initFineTune(store)}
+  private preparing?:{id:string;abort:AbortController};
+  private trainer:FineTuneTrainer;
+  constructor(private store:Store,private engine:Engine,private changed:()=>void) {initFineTune(store);this.trainer=new FineTuneTrainer(store.dir)}
   list():FineTuneJob[] {return this.store.all('SELECT data FROM fine_tune_jobs ORDER BY rowid DESC').map(r=>JSON.parse(r.data))}
   get(id:string):FineTuneJob {const row=this.store.get('SELECT data FROM fine_tune_jobs WHERE id=?',id);if(!row)throw Error('Fine Tune task not found');return JSON.parse(row.data)}
   private put(j:FineTuneJob){j.updatedAt=new Date().toISOString();this.store.exec('INSERT INTO fine_tune_jobs VALUES(?,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data',j.id,JSON.stringify(j));this.changed()}
@@ -46,14 +50,22 @@ export class FineTune {
   control(id:string,action:string) {
     const j=this.get(id);
     if(['completed','cancelled'].includes(j.status))throw Error('This task is finished. Create a new task.');
-    if(action==='pause') {
+    if(action==='prepare') {
+      if(!['waiting','paused'].includes(j.status))throw Error('Wait for the current step.');
+      j.stage='dataset';j.status='queued';j.reason=undefined;
+    } else if(action==='train') {
+      if(!['waiting','paused'].includes(j.status))throw Error('Wait for research to finish.');
+      j.stage='training';j.status='queued';j.reason=undefined;
+    } else if(action==='pause') {
+      if(this.preparing?.id===id)this.preparing.abort.abort();
+      if(this.trainer.active===id){void this.trainer.pause(id);j.status='pausing';j.reason='Saving a training checkpoint.';this.put(j);return j;}
       j.status=j.taskId&&['running','queued'].includes(this.store.get('SELECT status FROM tasks WHERE id=?',j.taskId)?.status)?'pausing':'paused';
       j.reason=j.status==='pausing'?'Finishing the current research step before pausing.':undefined;
     } else if(action==='resume') {
       if(!['paused','waiting'].includes(j.status))throw Error('Only a paused or waiting task can resume.');
       j.status='queued';j.reason=undefined;
     } else if(action==='cancel') {
-      if(j.taskId)this.engine.cancel(j.taskId);j.status='cancelled';j.reason='Stopped. Existing artifacts are preserved.';
+      if(this.preparing?.id===id)this.preparing.abort.abort();if(j.taskId)this.engine.cancel(j.taskId);if(this.trainer.active===id)void this.trainer.pause(id);j.status='cancelled';j.reason='Stopped. Existing artifacts are preserved.';
     } else throw Error('Unknown Fine Tune action.');
     this.put(j);this.event(id,action,j.reason??action);return j;
   }
@@ -81,12 +93,42 @@ export class FineTune {
     try {
       for(const j of this.list()) {
         if(['completed','cancelled','paused','waiting'].includes(j.status))continue;
+        if(j.stage==='dataset') {
+          if(j.overnight&&date.getHours()>=7&&date.getHours()<22)continue;
+          const abort=new AbortController();this.preparing={id:j.id,abort};j.status='running';this.put(j);
+          try{const count=await prepareDataset(this,j,this.store,this.engine,abort.signal);const current=this.get(j.id);if(current.status==='running'){current.status='waiting';current.reason=`${count} source-supported examples added. Review dataset quality before training.`;this.put(current);}}
+          catch(error){const current=this.get(j.id);if(!['paused','cancelled'].includes(current.status)){current.status='waiting';current.reason=String(error);this.put(current);}}
+          finally{this.preparing=undefined;}continue;
+        }
+        if(j.stage==='training') {
+          if(this.trainer.active===j.id)continue;
+          if(j.status==='running'||j.status==='pausing'){j.status='waiting';j.reason='Training host restarted. Resume from the last saved checkpoint.';this.put(j);continue;}
+          if(j.overnight&&date.getHours()>=7&&date.getHours()<22)continue;
+          if(this.trainer.active)continue;
+          try {
+            const rows=this.store.all('SELECT prompt,answer,split,sourceId,verification FROM fine_tune_examples WHERE jobId=? ORDER BY id',j.id);
+            await this.trainer.launch(j,rows,event=>{
+              const current=this.get(j.id);
+              if(typeof event.step==='number')current.trainingStep=event.step;
+              if(typeof event.loss==='number')current.loss=event.loss;
+              if(event.kind==='checkpoint'&&/^checkpoint-[0-9]+$/.test(event.path??''))current.checkpoint=event.path;
+              if(current.status!=='cancelled') {
+                if(event.kind==='paused'){current.status='paused';current.reason='Training checkpoint saved.';}
+                if(event.kind==='failed'){current.status='waiting';current.reason=event.message;}
+                if(event.kind==='completed'){current.status='completed';current.stage='evaluation';current.reason=event.improved?'Adapter saved. Held-out loss improved; deployment requires review.':'Adapter saved. Held-out loss did not improve; current model unchanged.';}
+              }
+              this.put(current);this.event(current.id,event.kind,JSON.stringify(event));
+            });
+            j.status='running';j.reason=undefined;this.put(j);
+          }catch(error){j.status='waiting';j.reason=String(error);this.put(j);}
+          continue;
+        }
         if(j.taskId) {
           const task=this.store.get('SELECT status FROM tasks WHERE id=?',j.taskId);
           if(task&&['queued','running','awaiting_approval','awaiting_input'].includes(task.status))continue;
           const taskId=j.taskId;delete j.taskId;
           if(task?.status!=='completed'){j.status='waiting';j.reason='Research step interrupted. Review the output before resuming.';}
-          else {j.status=j.status==='pausing'?'paused':'waiting';j.reason='Research output ready for source and dataset verification.';}
+          else {const paused=j.status==='pausing';j.status=paused?'paused':'queued';j.stage='dataset';j.reason=paused?'Research saved. Resume to prepare source-supported examples.':undefined;}
           this.put(j);this.event(j.id,'research_finished',`Task ${taskId}: ${task?.status??'missing'}`);continue;
         }
         if(j.status==='pausing'){j.status='paused';this.put(j);continue}

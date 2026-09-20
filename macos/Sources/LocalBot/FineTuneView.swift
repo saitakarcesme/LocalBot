@@ -34,7 +34,13 @@ struct FineTuneDashboard: View {
             HStack {
               if ["paused","waiting"].contains(job.status) {Button("Resume"){Task{await control(job,"resume")}}}
               if ["queued","running"].contains(job.status) {Button("Pause"){Task{await control(job,"pause")}}}
-              if !["completed","cancelled"].contains(job.status) {Button("Stop",role:.destructive){Task{await control(job,"cancel")}}}
+              Menu {
+                if job.status == "waiting" && job.stage != "training" {
+                  Button("Prepare data"){Task{await control(job,"prepare")}}
+                  Button("Train reviewed dataset"){Task{await control(job,"train")}}
+                }
+                if !["completed","cancelled"].contains(job.status){Button("Stop",role:.destructive){Task{await control(job,"cancel")}}}
+              } label:{Image(systemName:"ellipsis").frame(minWidth:32,minHeight:32)}.accessibilityLabel("Task actions")
               Spacer();Button("Details"){selected=job}
             }.buttonStyle(.bordered)
           }.padding(18).modifier(FineTuneGlass())

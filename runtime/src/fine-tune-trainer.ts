@@ -28,7 +28,7 @@ export class FineTuneTrainer {
     if(previous&&previous!==JSON.stringify(manifest))throw Error('Training configuration or dataset changed. Create a new task to preserve checkpoint compatibility.');
     await fs.writeFile(path,JSON.stringify(manifest),{mode:0o600});await fs.writeFile(join(root,'dataset.json'),data,{mode:0o600});
     await fs.rm(join(root,'pause'),{force:true});
-    const child=spawn(python,[join(dirname(fileURLToPath(import.meta.url)),'training','worker.py'),path],{env:{...process.env,CUDA_VISIBLE_DEVICES:job.gpuIds.join(','),TOKENIZERS_PARALLELISM:'false'},stdio:['ignore','pipe','pipe'],windowsHide:true});
+    const child=spawn(python,[join(dirname(fileURLToPath(import.meta.url)),'training','worker.py'),path],{env:{...process.env,CUDA_VISIBLE_DEVICES:job.gpuIds.join(','),LOCALBOT_PARENT_PID:String(process.pid),TOKENIZERS_PARALLELISM:'false'},stdio:['ignore','pipe','pipe'],windowsHide:true});
     this.running={id:job.id,child,root};
     let buffer='',tail='',terminal=false;
     const finish=(message:string)=>{if(this.running?.child===child)this.running=undefined;if(!terminal){terminal=true;onEvent({kind:'failed',message})}};
