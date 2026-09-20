@@ -1,5 +1,5 @@
 import type {Store} from './store.js';
-import {mkdirSync} from 'node:fs';
+import {mkdirSync,existsSync} from 'node:fs';
 import {join} from 'node:path';
 import {randomUUID} from 'node:crypto';
 const tables=['projects','conversations','conversation_context','conversation_archive','threads','tasks','runs','messages','reactions','run_events','tool_calls'] as const;
@@ -12,8 +12,10 @@ export function importHistory(store:Store,input:any) {
   let count=0;
   for(const table of tables){if(!Array.isArray(input.tables[table])||input.tables[table].length>100000)throw Error('Invalid history table');count+=input.tables[table].length;}
   if(count>200000)throw Error('History archive too large');
-  const backup=join(store.dir,`before-history-${Date.now()}.sqlite`);
-  store.exec('VACUUM INTO ?',backup);
+  const transferId=input.transferId ?? randomUUID();
+  if(typeof transferId!=='string'||! /^[a-zA-Z0-9-]{1,64}$/.test(transferId))throw Error('Invalid transfer identity');
+  const backup=join(store.dir,`before-history-${transferId}.sqlite`);
+  if(!existsSync(backup))store.exec('VACUUM INTO ?',backup);
   return store.transaction(()=>{
     let inserted=0;
     for(const table of tables) {
@@ -33,6 +35,6 @@ export function importHistory(store:Store,input:any) {
         const result=store.exec(`INSERT OR IGNORE INTO ${table} (${columns.join(',')}) VALUES (${columns.map(()=>'?').join(',')})`,...columns.map(c=>row[c]));inserted+=Number(result.changes);
       }
     }
-    return {inserted,backup,transferId:randomUUID(),note:'History copied. Project files remain on the source device.'};
+    return {inserted,backup,transferId,note:'History copied. Project files remain on the source device.'};
   });
 }

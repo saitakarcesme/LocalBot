@@ -179,11 +179,11 @@ const server = createServer(async (req, res) => {
       if(config.transport!=="center"||!credential)throw Error("Unlock the model PC connection first.");
       const link=parseLink(credential);
       if(link.kind!=="center"||link.url!==new URL(config.endpoint).origin)throw Error("Workspace connection does not match this PC.");
-      const archive=exportHistory(store);
+      const archive=exportHistory(store), transferId=randomUUID();
       let inserted=0;
       for(const [table,rows] of Object.entries(archive.tables)) {
         for(let offset=0;offset<rows.length;offset+=100) {
-          const batch={version:1,tables:Object.fromEntries(Object.keys(archive.tables).map(t=>[t,t===table?rows.slice(offset,offset+100):[]]))};
+          const batch={version:1,transferId,tables:Object.fromEntries(Object.keys(archive.tables).map(t=>[t,t===table?rows.slice(offset,offset+100):[]]))};
           const result:any=await invoke(link,{operation:"workspace_api",path:"/history/import",method:"POST",body:batch},AbortSignal.timeout(180000));
           inserted+=result.inserted;
         }
