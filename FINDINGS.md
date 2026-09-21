@@ -486,3 +486,7 @@ Streaming checkpoint requested by the concurrent UI task: fixed dropped trailing
 ## 2026-09-21 Connected iPhone update
 - Built current source cd00fe3 as a signed iPhone Release with one build worker; build succeeded. Installed app.localbot.remote on the paired physical iPhone 15 Pro without uninstalling or resetting pairing.
 - Launch verification was denied by iOS because the device was locked. Installation succeeded; in-app connection and Fine Tune UI verification on this build remain pending unlock. No simulator used.
+
+## 2026-09-21 Cross-network and toolbar verification
+- User reports Mac and PC on different networks. Existing encrypted Center relay returned Model PC snapshot (7 projects, 49 conversations) in 163 ms. Real qwen3.8-27b-awq task d72b5605-3c4e-4f06-b7c3-4cb5ae2ac393 completed with LOCALBOT_REMOTE_OK.
+- Moved Fine Tune to the New Conversation/New Project toolbar group, including fullscreen controls. Signed Mac build aaa87bb installed (125 manifest hashes). Clicking the new icon opened live PC Fine Tune jobs in both windowed and fullscreen modes; dashboard displayed completed step-10 adapter and both GPU telemetry readings. Existing pairing reconnected after app restart.

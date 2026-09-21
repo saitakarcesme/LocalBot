@@ -487,5 +487,13 @@
     "installation": "succeeded",
     "launch": "blocked by device lock",
     "existing_pairing": "not reset"
+  },
+  "cross_network_2026_09_21": {
+    "relay_snapshot": "passed",
+    "model_reply": "LOCALBOT_REMOTE_OK",
+    "model": "qwen3.8-27b-awq",
+    "mac_installed": "aaa87bb",
+    "fine_tune_toolbar": "windowed and fullscreen clicks verified",
+    "pc_dashboard": "live jobs and GPU telemetry verified"
   }
 }
