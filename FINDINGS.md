@@ -490,3 +490,10 @@ Streaming checkpoint requested by the concurrent UI task: fixed dropped trailing
 ## 2026-09-21 Cross-network and toolbar verification
 - User reports Mac and PC on different networks. Existing encrypted Center relay returned Model PC snapshot (7 projects, 49 conversations) in 163 ms. Real qwen3.8-27b-awq task d72b5605-3c4e-4f06-b7c3-4cb5ae2ac393 completed with LOCALBOT_REMOTE_OK.
 - Moved Fine Tune to the New Conversation/New Project toolbar group, including fullscreen controls. Signed Mac build aaa87bb installed (125 manifest hashes). Clicking the new icon opened live PC Fine Tune jobs in both windowed and fullscreen modes; dashboard displayed completed step-10 adapter and both GPU telemetry readings. Existing pairing reconnected after app restart.
+
+## 2026-09-21 University Assistant kickoff
+- Created PC Fine Tune job e93b3038-111a-4abc-a7d0-69ae3d913f4f with both GPU IDs and a 200-step pilot ceiling. Source research started; no training launched. The 104-hour plan is a quality-gated project budget, not an implemented 104-hour scheduler.
+- Login was initially missing in the embedded ChatGPT browser; user logged in. Fixed pointer-triggered browser menu activation and exposed menuitem/option controls. Live tool snapshot now shows Thinking effort/model menu. Power remained Instant (1/5); user asked to select 5/5 before submission.
+- Added readable/grouped model names and expandable technical details in shared native UI. Mac e21e867 installed; iOS Release build passed. Subsequent extra-family naming refinement built separately. 178 runtime tests pass, tool inventory consistent.
+- Chrome Remote inspection found ordinary user windows; sent graceful close requests to ChatGPT, Discord, Task Manager and Settings. Preserved Docker, Center and remote access. C drive reported 36.6 GB free. No files removed or unknown processes killed.
+- Added a 30-minute thread heartbeat for continued project development and meaningful progress/blocker reporting; it must honor user pause/stop. See docs/university/PROJECT.md for unimplemented multi-pass and retrieval work.

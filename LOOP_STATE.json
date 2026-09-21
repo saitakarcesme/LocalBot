@@ -495,5 +495,27 @@
     "mac_installed": "aaa87bb",
     "fine_tune_toolbar": "windowed and fullscreen clicks verified",
     "pc_dashboard": "live jobs and GPU telemetry verified"
+  },
+  "university_assistant": {
+    "jobId": "e93b3038-111a-4abc-a7d0-69ae3d913f4f",
+    "conversationId": "e66212ec-f7f6-47cc-a531-5d12a0b3f26e",
+    "phase": "source-discovery pilot",
+    "projectBudgetHours": 104,
+    "trainingHoursStarted": 0,
+    "currentTrainingStepCeiling": 200,
+    "plan": "docs/university/PROJECT.md",
+    "monitor": "university-assistant-progress",
+    "researchDependency": "Mac LocalBot browser remains required for ChatGPT; GPU training runs on Windows",
+    "userAction": "Set ChatGPT Thinking effort Power to 5/5; login confirmed",
+    "tests": "178 runtime tests passed; Mac and iOS Release builds passed",
+    "macInstalled": "e21e867",
+    "pending": [
+      "Verify highest reasoning mode and submitted ChatGPT source request",
+      "Verify live source-phase pause/resume",
+      "Install final additional-family display normalization after active browser work",
+      "Implement durable multi-pass 104-hour campaign and university retrieval/evaluation layers",
+      "Install iPhone update when connected"
+    ],
+    "pausePolicy": "Never override user Pause or Stop; preceding engineering pause was agent-initiated for app upgrade and was resumed"
   }
 }
