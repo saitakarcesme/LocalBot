@@ -173,12 +173,16 @@ struct ModelSelector: View {
           if let catalog {
             ScrollView {
               LazyVStack(spacing: 8) {
-                ForEach(catalog.options) { option in
+                ForEach(Array(Set(catalog.options.map { ModelDisplay.name($0.model) })).sorted(), id: \.self) { family in
+                  DisclosureGroup(family) {
+                    ForEach(catalog.options.filter { ModelDisplay.name($0.model) == family }) { option in
                   Button { Task { busy = true; defer { busy = false }; do { try await select(option); self.catalog?.selected = option; presented = false } catch { self.error = error.localizedDescription } } } label: {
-                    HStack { VStack(alignment: .leading, spacing: 4) { Text(ModelDisplay.name(option.model)).font(.callout).lineLimit(2); Text(ModelDisplay.variant(option.model)).font(.caption).foregroundStyle(.secondary) }; Spacer(); if catalog.selected?.id == option.id { Image(systemName: "checkmark.circle.fill").foregroundStyle(Color.accentColor) } }.padding(14).frame(maxWidth: .infinity, alignment: .leading).background(.thinMaterial, in: RoundedRectangle(cornerRadius: 16))
+                    HStack { VStack(alignment: .leading, spacing: 4) { Text(ModelDisplay.variant(option.model)).font(.callout).lineLimit(2); Text(option.provider ?? "Local model").font(.caption).foregroundStyle(.secondary) }; Spacer(); if catalog.selected?.id == option.id { Image(systemName: "checkmark.circle.fill").foregroundStyle(Color.accentColor) } }.padding(14).frame(maxWidth: .infinity, alignment: .leading).background(.thinMaterial, in: RoundedRectangle(cornerRadius: 16))
                   }.buttonStyle(.plain).disabled(busy)
                   DisclosureGroup("Details") { Text(option.model).textSelection(.enabled); Text(option.provider ?? "") }.font(.caption).foregroundStyle(.secondary).padding(.horizontal, 14)
                 }
+                  }
+                }.padding(10).background(.thinMaterial, in: RoundedRectangle(cornerRadius: 16))
               }
             }
             if catalog.options.isEmpty { Text("No models available").foregroundStyle(.secondary) }
