@@ -16,7 +16,7 @@ export class BrowserBridge {
   private pending = new Map<string, Pending>();
   private heartbeat = 0;
   get available() {
-    return Date.now() - this.heartbeat < 5000;
+    return this.pending.size > 0 || (this.heartbeat > 0 && Date.now() - this.heartbeat < 30000);
   }
   poll() {
     this.heartbeat = Date.now();
@@ -71,6 +71,7 @@ export class BrowserBridge {
   complete(id: string, result: unknown, error?: string) {
     const entry = this.pending.get(id);
     if (!entry) return false;
+    this.heartbeat = Date.now();
     entry.cleanup();
     this.pending.delete(id);
     if (error) entry.reject(Error(error));

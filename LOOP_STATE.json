@@ -311,7 +311,7 @@
     "installed_mac_source": "50a6645",
     "signed_iphone_profile_expires": "2026-09-26"
   },
-  "last_update": "2026-09-20 PC workspace paired with physical iPhone; fullscreen glass verified",
+  "last_update": "2026-09-20 Fine Tune preview installed; real training remains pending",
   "verification_profile": "141 existing + 3 new runtime tests; Mac signed build; physical iPhone install/launch; encrypted upload bytes and shared profile/usage verified",
   "verification_team": "144 runtime tests; resumed native PTY; signed Mac and physical iPhone install; Mac splash observed",
   "pull_request": "https://github.com/saitakarcesme/LocalBot/pull/1",
@@ -406,5 +406,116 @@
       "DSpark speculative decoding disabled; no sustained throughput benchmark"
     ],
     "goal_started": false
+  },
+  "fine_tune": {
+    "status": "preview_installed_end_to_end_training_pending",
+    "date": "2026-09-20",
+    "branch": "codex/fine-tune-workflows",
+    "runtime_tests_passed": 174,
+    "mac_installed_source": "5b9ca54",
+    "windows_runtime_source": "761fe52",
+    "iphone_installed_source": "c53dc56",
+    "verified": [
+      "native builds",
+      "Mac Fine Tune navigation",
+      "PC Fine Tune/model endpoints",
+      "PC project creation",
+      "dual GPU telemetry",
+      "iPhone simulator portrait and landscape fixture"
+    ],
+    "pending": [
+      "Mac Keychain unlock and selected-PC native UI verification",
+      "physical iPhone launch: locked",
+      "ChatGPT live source research: Mac browser required",
+      "training Python environment and pinned compatible base weights",
+      "actual dual-GPU QLoRA run and checkpoint resume",
+      "continuous large-scale dataset acquisition and benchmark validation",
+      "Insufficient host disk for official 55.6 GB base plus environment/checkpoints; Qwen conditional-generation loader requires validation"
+    ],
+    "models_changed": false,
+    "guide": "docs/FINE-TUNE.md",
+    "pull_request": "https://github.com/saitakarcesme/LocalBot/pull/3",
+    "host_free_GiB": 50
+  },
+  "fine_tune_repair": {
+    "date": "2026-09-21",
+    "status": "partial_repair_installed_training_blocked",
+    "runtime_tests_passed": 177,
+    "runtime_tests_failed": 0,
+    "windows_runtime_source": "3f38612",
+    "iphone_source": "3f38612",
+    "iphone_install": "successful",
+    "iphone_launch": "blocked_device_locked",
+    "verified": [
+      "browser lease regression fails before fix and passes after",
+      "training readiness endpoint live on Windows",
+      "two existing Fine Tune jobs preserved after Center restart",
+      "signed iPhone Release build and physical install"
+    ],
+    "pending": [
+      "physical iPhone UI confirmation",
+      "live ChatGPT source research end to end",
+      "training environment and compatible pinned base setup",
+      "actual GPU training and pause/resume evaluation"
+    ],
+    "training_claim": "No actual model training completed"
+  },
+  "fine_tune_training_repair": {
+    "status": "gpu_train_pause_resume_verified",
+    "date": "2026-09-21",
+    "branch": "codex/fine-tune-workflows",
+    "runtime_tests": 178,
+    "job_id": "3ed65c29-4600-4614-be35-3be364de1e6a",
+    "optimizer_steps": 10,
+    "checkpoint_resume": true,
+    "baseline_loss": 2.3368406295776367,
+    "evaluation_loss": 0.40163588523864746,
+    "inference_restored": true,
+    "pending": [
+      "Mac Keychain access to paired PC; live dashboard and ChatGPT web-to-dataset check",
+      "iPhone installed from cd00fe3; launch verification awaits device unlock"
+    ],
+    "limitations": [
+      "Small arithmetic fixture does not establish model quality",
+      "Crash recovery may require host inspection"
+    ]
+  },
+  "iphone_install_2026_09_21": {
+    "source": "cd00fe3",
+    "device": "iPhone 15 Pro",
+    "release_build": "passed",
+    "installation": "succeeded",
+    "launch": "blocked by device lock",
+    "existing_pairing": "not reset"
+  },
+  "cross_network_2026_09_21": {
+    "relay_snapshot": "passed",
+    "model_reply": "LOCALBOT_REMOTE_OK",
+    "model": "qwen3.8-27b-awq",
+    "mac_installed": "aaa87bb",
+    "fine_tune_toolbar": "windowed and fullscreen clicks verified",
+    "pc_dashboard": "live jobs and GPU telemetry verified"
+  },
+  "university_assistant": {
+    "jobId": "e93b3038-111a-4abc-a7d0-69ae3d913f4f",
+    "conversationId": "e66212ec-f7f6-47cc-a531-5d12a0b3f26e",
+    "phase": "source-discovery pilot",
+    "projectBudgetHours": 104,
+    "trainingHoursStarted": 0,
+    "currentTrainingStepCeiling": 200,
+    "plan": "docs/university/PROJECT.md",
+    "monitor": "university-assistant-progress",
+    "researchDependency": "Mac LocalBot browser remains required for ChatGPT; GPU training runs on Windows",
+    "userAction": "Set ChatGPT Thinking effort Power to 5/5; login confirmed",
+    "tests": "178 runtime tests passed; Mac and iOS Release builds passed",
+    "macInstalled": "e21e867",
+    "pending": [
+      "Verify highest reasoning mode and submitted ChatGPT source request",
+      "Verify live source-phase pause/resume",
+      "Install final additional-family display normalization after active browser work",
+      "Implement durable multi-pass 104-hour campaign and university retrieval/evaluation layers",
+      "Install iPhone update when connected"
+    ],
+    "pausePolicy": "Never override user Pause or Stop; preceding engineering pause was agent-initiated for app upgrade and was resumed"
   }
 }

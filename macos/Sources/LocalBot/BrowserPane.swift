@@ -39,7 +39,7 @@ import WebKit
     if url.isFileURL { web.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent()) }
     else { web.load(URLRequest(url: url)) }
   }
-  func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) { sync() }
+  func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) { error = nil; sync() }
   func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) { failed(error) }
   func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) { failed(error) }
   private func failed(_ value: Error) {

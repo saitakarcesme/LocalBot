@@ -8,12 +8,15 @@ import Foundation
   func poll(_ model: AppModel) async {
     guard !busy else { return }; busy = true; defer { busy = false }
     do {
+      let host = model.workspaceProviderId
       let data = try await model.request("/browser/poll")
+      guard model.workspaceProviderId == host else { return }
       guard let response = try JSONSerialization.jsonObject(with: data) as? [String:Any], let action = response["action"] as? [String:Any], let id = action["id"] as? String, let task = action["taskId"] as? String, let name = action["name"] as? String, let args = action["args"] as? [String:Any] else { return }
       do {
         let result = try await perform(model, task: task, name: name, args: args)
+        guard model.workspaceProviderId == host else { return }
         _ = try await model.request("/browser/result", body:["id":id,"result":result])
-      } catch { _ = try? await model.request("/browser/result", body:["id":id,"error":error.localizedDescription]) }
+      } catch { guard model.workspaceProviderId == host else { return }; _ = try? await model.request("/browser/result", body:["id":id,"error":error.localizedDescription]) }
     } catch { /* The next foreground poll reconnects to the runtime. */ }
   }
   private func perform(_ model: AppModel, task: String, name: String, args: [String:Any]) async throws -> Any {
@@ -41,7 +44,7 @@ import Foundation
     if (action==='browser_snapshot') {
       const version=crypto.randomUUID(); const refs=new Map(); let i=0;
       const controls=[];
-      for (const e of document.querySelectorAll('a,button,input,textarea,select,[role="button"],[contenteditable="true"]')) {
+      for (const e of document.querySelectorAll('a,button,input,textarea,select,[role="button"],[role="menuitem"],[role="menuitemradio"],[role="option"],[contenteditable="true"]')) {
         if (!visible(e) || controls.length>=120) continue;
         const ref=version+':'+(++i); refs.set(ref,e);
         controls.push({ref,tag:e.tagName.toLowerCase(),type:e.type||'',name:(e.getAttribute('aria-label')||e.innerText||e.getAttribute('placeholder')||'').slice(0,200),value:e.type==='password'?'[redacted]':String(e.value||'').slice(0,300),disabled:!!e.disabled});
@@ -53,7 +56,15 @@ import Foundation
     const state=window.__localbotReferences, e=state?.refs.get(args.ref);
     if (!e || !e.isConnected || state.url!==location.href || !visible(e)) throw Error('Stale element reference. Take a fresh snapshot.');
     if (e.disabled) throw Error('This control is disabled.');
-    if (action==='browser_click') { e.click(); return {clicked:true,url:location.href}; }
+    if (action==='browser_click') {
+      const r=e.getBoundingClientRect(), init={bubbles:true,cancelable:true,composed:true,button:0,buttons:1,clientX:r.x+r.width/2,clientY:r.y+r.height/2,pointerId:1,pointerType:'mouse',isPrimary:true};
+      e.dispatchEvent(new PointerEvent('pointerdown',init));
+      e.dispatchEvent(new MouseEvent('mousedown',init));
+      e.focus();
+      e.dispatchEvent(new PointerEvent('pointerup',{...init,buttons:0}));
+      e.dispatchEvent(new MouseEvent('mouseup',{...init,buttons:0}));
+      e.click(); return {clicked:true,url:location.href};
+    }
     if (action==='browser_type') {
       if (e.type==='password') throw Error('Enter passwords manually in the browser.');
       e.focus();

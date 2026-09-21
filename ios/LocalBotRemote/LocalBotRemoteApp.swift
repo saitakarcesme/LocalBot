@@ -8,8 +8,8 @@ import UniformTypeIdentifiers
   @State private var launching = true
   var body: some Scene { WindowGroup {
     #if DEBUG
-    if ProcessInfo.processInfo.arguments.contains("--research-preview") {
-      NavigationStack {ResearchDashboard(request:researchFixture,save:{_ in try researchFixture("/research")},conversations:[])}
+    if ProcessInfo.processInfo.arguments.contains("--fine-tune-preview") {
+      NavigationStack {FineTuneDashboard(request:researchFixture,write:{_,_ in Data("{}".utf8)})}
     } else {root}
     #else
     root
@@ -19,10 +19,12 @@ import UniformTypeIdentifiers
   #if DEBUG
   private func researchFixture(_ path:String)throws->Data {
     let object:Any
-    if path == "/research" {object=["enabled":false,"topic":"Qwen fine-tuning research","conversationId":"preview","dailyTarget":1000000000,"maxPasses":24,"passes":3,"tokens":379880] as [String:Any]}
+    if path == "/fine-tune" {object=["jobs":[]] as [String:Any]}
+    else if path == "/fine-tune/models" {object=["options":[["providerId":"preview","provider":"Preview","model":"Qwen3.8 27B · Very long model name for responsive layout verification"]]]}
+    else if path == "/research" {object=["enabled":false,"topic":"Qwen fine-tuning research","conversationId":"preview","dailyTarget":1000000000,"maxPasses":24,"passes":3,"tokens":379880] as [String:Any]}
     else if path == "/telemetry/gpus" {
-      let first:[String:Any]=["id":"gpu-0","name":"NVIDIA GeForce RTX 3090","utilization":65.0,"temperature":61.0,"memoryUsedMB":16384.0,"memoryTotalMB":24576.0,"powerWatts":275.0]
-      var second=first;second["id"]="gpu-1";second["utilization"]=72.0
+      let first:[String:Any]=["id":"GPU-preview-0","name":"NVIDIA GeForce RTX 3090","utilization":65.0,"temperature":61.0,"memoryUsedMB":16384.0,"memoryTotalMB":24576.0,"powerWatts":275.0]
+      var second=first;second["id"]="GPU-preview-1";second["utilization"]=72.0
       object=["sampledAt":ISO8601DateFormatter().string(from:Date()),"available":true,"gpus":[first,second]] as [String:Any]
     }
     else {object=[["id":"preview","conversationId":"preview","agentId":"Athena","role":"assistant","content":"## Verification findings\nCompare the base model and adapter on held-out examples. Keep provenance and independent validation separate from generated proposals.","createdAt":"2026-09-20T00:00:00Z","reactions":[],"attachments":[]] as [String:Any]]}
@@ -106,11 +108,11 @@ struct ConversationsView: View {
         Section("Recents") { ForEach(conversations.filter { $0.projectId == nil }) { row($0) } }
       }.searchable(text: $search).navigationTitle("LocalBot")
         .toolbar {
-          ToolbarItem(placement: .topBarTrailing) { NavigationLink { ResearchDashboard(request: {try await store.read($0)},save:{try await store.personalWrite("/research",body:$0)},conversations:store.snapshot?.conversations ?? []) } label: {Image(systemName:"chart.xyaxis.line")}.accessibilityLabel("Research") }
+          ToolbarItem(placement: .topBarTrailing) { NavigationLink { FineTuneDashboard(request: {try await store.read($0)},write:{try await store.personalWrite($0,body:$1)}) } label: {Image(systemName:"chart.xyaxis.line")}.accessibilityLabel("Fine Tune") }
           ToolbarItem(placement: .topBarLeading) { Button { profile = true } label: { ProfileBadge(profile: store.snapshot?.profile ?? UserProfile()) }.accessibilityLabel("Profile and settings") }
           ToolbarItem(placement: .topBarTrailing) { Button { project = nil; newChat = true; store.selected = nil; store.messages = []; store.activity = [] } label: { Image(systemName: "square.and.pencil") }.accessibilityLabel("New conversation") }
         }
-        .sheet(isPresented: $profile) { ProfileEditor(profile: store.snapshot?.profile ?? UserProfile(), loadUsage: { try await store.read("/usage") }, save: { try await store.saveProfile($0) }, settings: { store.disconnect() }, loadModels: { try await store.read("/models") }, selectModel: { try await store.selectModel($0) }, personal: { AnyView(PhonePersonalView().environmentObject(store)) }, research: { AnyView(ResearchView(load: { try await store.read("/research") }, save: { try await store.personalWrite("/research", body: $0) }, conversations: store.snapshot?.conversations ?? [])) }) }
+        .sheet(isPresented: $profile) { ProfileEditor(profile: store.snapshot?.profile ?? UserProfile(), loadUsage: { try await store.read("/usage") }, save: { try await store.saveProfile($0) }, settings: { store.disconnect() }, loadModels: { try await store.read("/models") }, selectModel: { try await store.selectModel($0) }, personal: { AnyView(PhonePersonalView().environmentObject(store)) }, research: { AnyView(FineTuneDashboard(request: {try await store.read($0)},write:{try await store.personalWrite($0,body:$1)})) }) }
         .navigationDestination(isPresented: $newChat) { MobileChat(project: project) }
     }
   }

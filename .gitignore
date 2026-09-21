@@ -11,3 +11,5 @@ build/
 screenshots/messages-*
 
 .vercel/
+
+__pycache__/

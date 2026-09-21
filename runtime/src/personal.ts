@@ -4,7 +4,7 @@ import type { ProviderConfig } from "./types.js";
 export function localPersonalProvider(config: ProviderConfig) {
   return (
     config.transport === "center" ||
-    (config.kind === "ollama" &&
+    ((config.kind === "ollama" || config.kind === "openai") &&
       /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(?::|\/|$)/.test(
         config.endpoint,
       ))

@@ -84,6 +84,8 @@ test("personal context rejects stale writes and only injects into explicit local
       true,
     );
     assert.equal(localPersonalProvider({ transport: "center" }), true);
+    assert.equal(localPersonalProvider({kind:"openai",endpoint:"http://localhost:8000/v1"}),true);
+    assert.equal(localPersonalProvider({kind:"openai",endpoint:"http://localhost.evil.com:8000/v1"}),false);
   }));
 test("phone actions are immutable, device-owned and cannot execute twice", () =>
   fixture((s, c) => {

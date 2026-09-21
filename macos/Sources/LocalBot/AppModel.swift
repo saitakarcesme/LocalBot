@@ -25,12 +25,12 @@ enum Keychain {
       : update
     if status != errSecSuccess { throw NSError(domain: NSOSStatusErrorDomain, code: Int(status)) }
   }
-  static func readAsync(_ id: String) async -> String? {
-    await Task.detached(priority: .userInitiated) { read(id) }.value
+  static func readAsync(_ id: String, allowInteraction: Bool = false) async -> String? {
+    await Task.detached(priority: .userInitiated) { read(id, allowInteraction: allowInteraction) }.value
   }
-  static func read(_ id: String) -> String? {
+  static func read(_ id: String, allowInteraction: Bool = false) -> String? {
     let context = LAContext()
-    context.interactionNotAllowed = true
+    context.interactionNotAllowed = !allowInteraction
     let query: [String: Any] = [
       kSecClass as String: kSecClassGenericPassword,
       kSecAttrService as String: "LocalBot.providers", kSecAttrAccount as String: id,
@@ -150,7 +150,7 @@ enum Keychain {
       await connect()
       while !Task.isCancelled {
         await refresh()
-        if persistsSelection && connected && workspaceProviderId == nil { await browserAutomation.poll(self) }
+        if persistsSelection && connected { await browserAutomation.poll(self) }
         try? await Task.sleep(for: .seconds(connected ? 1 : 3))
         if !connected { await connect() }
       }
@@ -244,7 +244,15 @@ enum Keychain {
   func selectWorkspaceHost(_ id: String?) async throws {
     if let id {
       var parts=URLComponents();parts.path="/workspace-host/api";parts.queryItems=[URLQueryItem(name:"providerId",value:id),URLQueryItem(name:"path",value:"/snapshot")]
-      _ = try await request(parts.string!)
+      do { _ = try await request(parts.string!) }
+      catch {
+        guard error.localizedDescription.contains("Unlock the model PC connection"),
+          let provider = centerConnections.first(where: { $0.id == id }),
+          let secret = await Keychain.readAsync(id + "@" + provider.endpoint, allowInteraction: true)
+        else { throw error }
+        _ = try await request("/credentials", body: ["providerId": id, "secret": secret])
+        _ = try await request(parts.string!)
+      }
     }
     guard !workspace.tabs.contains(where: { $0.hasUnsavedChanges }) else { throw NSError(domain: "LocalBot", code: 1, userInfo: [NSLocalizedDescriptionKey: "Save or close edited files before switching workspace hosts."]) }
     for tab in workspace.tabs { workspace.close(tab) }

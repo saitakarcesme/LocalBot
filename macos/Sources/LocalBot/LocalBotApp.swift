@@ -94,6 +94,7 @@ struct TypingDots: View {
 }
 struct MainView: View {
   @State private var showProfile = false
+  @State private var showFineTune = false
   @EnvironmentObject var model: AppModel
   @FocusState var searchFocused: Bool
   @State private var collapsedProjects = Set(UserDefaults.standard.stringArray(forKey: "collapsedProjects") ?? [])
@@ -172,7 +173,7 @@ struct MainView: View {
         }
         HStack(spacing: 7) {
           Button { showProfile = true } label: { ProfileBadge(profile: model.profile) }.buttonStyle(.plain)
-            .sheet(isPresented: $showProfile) { ProfileEditor(profile: model.profile, loadUsage: { try await model.request("/usage") }, save: { profile in _ = try await model.request("/profile", body: ["name":profile.name,"photo":profile.photo ?? ""]); model.profile = profile }, loadModels: { try await model.request("/models") }, selectModel: { _ = try await model.request("/models/select", body: $0.payload) }, personal: { AnyView(PersonalContextView(load: { try await model.request("/personal/context") }, save: { try await model.request("/personal/context", body: $0) })) }, research: { AnyView(ResearchView(load: { try await model.request("/research") }, save: { try await model.request("/research", body: $0) }, conversations: model.conversations)) }) }
+            .sheet(isPresented: $showProfile) { ProfileEditor(profile: model.profile, loadUsage: { try await model.request("/usage") }, save: { profile in _ = try await model.request("/profile", body: ["name":profile.name,"photo":profile.photo ?? ""]); model.profile = profile }, loadModels: { try await model.request("/models") }, selectModel: { _ = try await model.request("/models/select", body: $0.payload) }, personal: { AnyView(PersonalContextView(load: { try await model.request("/personal/context") }, save: { try await model.request("/personal/context", body: $0) })) }, research: { AnyView(FineTuneDashboard(request: {try await model.request($0)},write:{try await model.request($0,body:$1)})) }) }
           Spacer()
           Button { model.toggleArchiveList() } label: {
             Image(systemName: model.showingArchived ? "bubble.left.and.bubble.right" : "archivebox").font(.system(size: 17))
@@ -214,6 +215,7 @@ struct MainView: View {
               ToolbarItemGroup {
                 Button { Task { await model.newConversation() } } label: { Image(systemName: "square.and.pencil") }.help("New conversation (⌘N)")
                 Button { model.showProject = true } label: { Image(systemName: "folder.badge.plus") }.help("New project")
+                Button { showFineTune = true } label: { Image(systemName: "brain") }.help("Fine Tune").accessibilityLabel("Fine Tune")
               }
             }
         } detail: { conversationContent }
@@ -234,6 +236,8 @@ struct MainView: View {
         }.frame(maxWidth: .infinity, maxHeight: .infinity).background(.background)
       }
     }
+    .onReceive(NotificationCenter.default.publisher(for: .init("OpenFineTune"))) { _ in showFineTune = true }
+    .sheet(isPresented: $showFineTune) { FineTuneDashboard(request: { try await model.request($0) }, write: { try await model.request($0, body: $1) }) }
     .sheet(isPresented: $model.showNew) { NewConversationView() }
     .sheet(isPresented: $model.showProject) { NewProjectView() }
     .sheet(isPresented: $model.showIntegrations) { IntegrationsView() }

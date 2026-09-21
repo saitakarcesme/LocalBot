@@ -455,3 +455,45 @@ Streaming checkpoint requested by the concurrent UI task: fixed dropped trailing
 - Installed Mac source719dd1d and physical iPhone source9183056. Mac startup Keychain reads now run off the main thread. iPhone launch is blocked by device lock; Mac PC credentials await Keychain access. Pairing was preserved.
 - Research UI checked in iPhone simulator portrait and landscape; native glass and document formatting built for both apps. Simulator shut down. 168 runtime tests pass, inventory audit passes (50 built-ins). Live macOS Accessibility execution and physical iPhone UI/performance remain unverified.
 - Auto-research remains paused following its previous completed_with_errors pass. No training was launched. Existing target requires 11,574 tokens/s, far beyond the measured single-stream throughput; no billion-token/day claim is made.
+
+## 2026-09-20 — Fine Tune preview
+- Replaced normal Research navigation with Fine Tune on Mac and iPhone. Added model/topic creation, advanced GPU selection, duty-cycle budget, overnight scheduling, durable pause/resume states, source/dataset review, and live GPU charts. Previous research history remains; old automatic scheduler is disabled on migration.
+- Added constrained ChatGPT web source-research orchestration, excluding saved personal context and memory, plus bounded CC0/CC-BY source extraction and exact-answer checks. ChatGPT live execution remains unverified and currently requires the Mac browser bridge. This is not yet a library-scale continuous dataset pipeline.
+- Added a separate QLoRA worker with immutable manifests, optimizer checkpoints and held-out loss comparison. Training environment/base weights are not configured on the PC; no GPU training or model replacement occurred. Native Windows parent checks use read-only process APIs.
+- 174 runtime tests pass. Mac/iPhone Release and simulator Debug builds succeed. Mac source5b9ca54 installed; Windows runtime761fe52 staged with matching SHA256, restarted while idle, and launcher updated. Fine Tune/model endpoints and both RTX3090 telemetry readings verified. Created Fine Tune Verification project on the PC.
+- Physical iPhone Release sourcec53dc56 installed; launch blocked by device lock. Simulator fixture checked in portrait and landscape, including long model names and GPU controls; lower landscape scroll interaction was interrupted by computer-control noWindowsAvailable. Simulator shutdown requested. No physical phone performance measurement.
+- Mac Fine Tune opens. Existing PC connection secret is unavailable in Keychain; explicit workspace selection now permits the normal native unlock flow without blocking the main thread. User unlock requested; selected-PC native UI and ChatGPT browser end-to-end verification remain pending.
+- Details and host requirements: docs/FINE-TUNE.md. Branch codex/fine-tune-workflows.
+- Additional host preflight: C: has approximately 50 GiB free, below the official 55.6 GB base repository plus environment/checkpoint headroom. Existing inference container: Transformers5.12.1, PyTorch2.13.0+cu130; TRL/PEFT/bitsandbytes absent. Qwen conditional-generation architecture requires a validated loader beyond the preview causal-model worker. No destructive cleanup or training install performed.
+- GitHub draft PR: https://github.com/saitakarcesme/LocalBot/pull/3, stacked on prior workspace branch.
+
+## 2026-09-21 Fine Tune repair
+- Live failed job stopped during source research; its report says browser snapshot was unavailable. Browser lease expired after 5 seconds while native navigation can take over 10 seconds. Keep in-flight actions available and renew a 30-second lease on completion. Regression test reproduced failure before fix.
+- Surface task errors and source/dataset events in Fine Tune details. Add training configuration readiness; label unconfigured hosts Research only. This is configuration detection, not a GPU execution certification.
+- 177 runtime tests passed. Signed physical iPhone Release installed; launch rejected because device is locked.
+- Windows runtime 3f38612 installed with backup; new readiness endpoint confirmed missing training environment; both existing jobs preserved. No existing research job resumed.
+- Actual training remains incomplete: no training environment/pinned compatible base; previous disk check only 50 GiB free. No GPU training, checkpoint resume, or live ChatGPT end-to-end success claimed.
+
+## 2026-09-21 Real dual-GPU training repair
+- Installed isolated `localbot-trainer` container and pinned Unsloth bitsandbytes training base (22.4 GB), retaining existing inference weights. CUDA tensor operations succeeded on both RTX 3090s.
+- Fixed Fine Tune catalog excluding loopback OpenAI-compatible/SGLang providers. Regression tests retain rejection of public endpoints and lookalike localhost domains.
+- Live tests found WSL expandable-segment mapping failure and FP32 expansion of the frozen 248K-token output head exhausting VRAM. Disabled expandable segments on WSL and preserved frozen BF16 base parameters during LoRA preparation.
+- Real API verification job `3ed65c29-4600-4614-be35-3be364de1e6a`: 16 deterministic arithmetic training examples, four held-out examples, 10 optimizer steps. Paused at step 2, saved checkpoint-2, resumed from it, saved checkpoint-10 and adapter. Harness emitted VERIFIED_TRAIN_PAUSE_RESUME. Baseline loss 2.3368406295776367; held-out loss 0.40163588523864746. This validates mechanics, not production model quality.
+- Configured idle LocalBot inference GPU reservation and restore. The original SGLang model endpoint responded again after training. Failed synthetic verification attempts were cancelled with artifacts preserved; pre-existing user jobs were not resumed.
+- 178 runtime tests passed; heartbeat lease Python test passed. Mac source06d0baf installed with signed manifest/backup. Mac PC workspace selection is waiting inside Keychain; native SecurityAgent automation is denied, so user unlock requested. Live Mac dashboard/ChatGPT-to-dataset validation remains pending that connection.
+- Phone is disconnected per user: installation deferred until it is connected. No simulator launched for this training work.
+
+## 2026-09-21 Connected iPhone update
+- Built current source cd00fe3 as a signed iPhone Release with one build worker; build succeeded. Installed app.localbot.remote on the paired physical iPhone 15 Pro without uninstalling or resetting pairing.
+- Launch verification was denied by iOS because the device was locked. Installation succeeded; in-app connection and Fine Tune UI verification on this build remain pending unlock. No simulator used.
+
+## 2026-09-21 Cross-network and toolbar verification
+- User reports Mac and PC on different networks. Existing encrypted Center relay returned Model PC snapshot (7 projects, 49 conversations) in 163 ms. Real qwen3.8-27b-awq task d72b5605-3c4e-4f06-b7c3-4cb5ae2ac393 completed with LOCALBOT_REMOTE_OK.
+- Moved Fine Tune to the New Conversation/New Project toolbar group, including fullscreen controls. Signed Mac build aaa87bb installed (125 manifest hashes). Clicking the new icon opened live PC Fine Tune jobs in both windowed and fullscreen modes; dashboard displayed completed step-10 adapter and both GPU telemetry readings. Existing pairing reconnected after app restart.
+
+## 2026-09-21 University Assistant kickoff
+- Created PC Fine Tune job e93b3038-111a-4abc-a7d0-69ae3d913f4f with both GPU IDs and a 200-step pilot ceiling. Source research started; no training launched. The 104-hour plan is a quality-gated project budget, not an implemented 104-hour scheduler.
+- Login was initially missing in the embedded ChatGPT browser; user logged in. Fixed pointer-triggered browser menu activation and exposed menuitem/option controls. Live tool snapshot now shows Thinking effort/model menu. Power remained Instant (1/5); user asked to select 5/5 before submission.
+- Added readable/grouped model names and expandable technical details in shared native UI. Mac e21e867 installed; iOS Release build passed. Subsequent extra-family naming refinement built separately. 178 runtime tests pass, tool inventory consistent.
+- Chrome Remote inspection found ordinary user windows; sent graceful close requests to ChatGPT, Discord, Task Manager and Settings. Preserved Docker, Center and remote access. C drive reported 36.6 GB free. No files removed or unknown processes killed.
+- Added a 30-minute thread heartbeat for continued project development and meaningful progress/blocker reporting; it must honor user pause/stop. See docs/university/PROJECT.md for unimplemented multi-pass and retrieval work.

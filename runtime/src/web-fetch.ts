@@ -88,6 +88,7 @@ export async function fetchPage(value: string, parent: AbortSignal,
           let text = Buffer.concat(chunks).toString("utf8");
           if (mime === "text/html" || mime === "application/xhtml+xml") text = text
             .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
+            .replace(/<a\b([^>]+)>([\s\S]*?)<\/a>/gi, (match,attrs,label) => /rel=["\']license["\']/i.test(attrs) ? label + " " + (attrs.match(/href=["\'](https:\/\/creativecommons\.org\/[^"\']+)["\']/i)?.[1] ?? "") : match)
             .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
             .replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
           resolve({ text });
