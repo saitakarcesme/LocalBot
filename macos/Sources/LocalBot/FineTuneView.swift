@@ -29,7 +29,7 @@ struct FineTuneDashboard: View {
         if jobs.isEmpty {ContentUnavailableView("Build a better model",systemImage:"brain",description:Text("Choose a model and a topic to begin."))}
         ForEach(jobs) {job in
           VStack(alignment:.leading,spacing:12) {
-            Button {selected=job} label:{VStack(alignment:.leading,spacing:6){Text(job.topic).font(.headline).multilineTextAlignment(.leading);Text(job.model).font(.caption).foregroundStyle(.secondary)}}.buttonStyle(.plain)
+            Button {selected=job} label:{VStack(alignment:.leading,spacing:6){Text(job.topic.components(separatedBy: " — ").first ?? job.topic).font(.headline).multilineTextAlignment(.leading);Text(ModelDisplay.name(job.model)).font(.caption).foregroundStyle(.secondary)}}.buttonStyle(.plain)
             HStack {Label(job.stage.capitalized,systemImage:icon(job.stage));Spacer();Text(job.status.capitalized)}.font(.caption).foregroundStyle(.secondary)
             if let reason=job.reason {Text(reason).font(.callout).foregroundStyle(.secondary)}
             if let step=job.trainingStep {Text("Step \(step)").monospacedDigit()}
@@ -78,7 +78,7 @@ private struct FineTuneCreate:View {
   var body:some View {
     ScrollView {VStack(alignment:.leading,spacing:22){
       HStack {Text("New Fine Tune").font(.title2.bold());Spacer();Button("Cancel"){dismiss()}}
-      Picker("Model",selection:$selected){Text("Choose a local model").tag("");ForEach(models){Text($0.model).tag($0.id)}}.pickerStyle(.menu)
+      Picker("Model",selection:$selected){Text("Choose a local model").tag("");ForEach(models){Text(ModelDisplay.name($0.model) + " · " + ModelDisplay.variant($0.model)).tag($0.id)}}.pickerStyle(.menu)
       if let readiness {Label(readiness.reason,systemImage:readiness.ready ? "checkmark.circle" : "exclamationmark.triangle").font(.callout).foregroundStyle(.secondary)}
       TextField("What should the model learn?",text:$topic,axis:.vertical).lineLimit(4...8).textFieldStyle(.plain).padding(16).modifier(FineTuneGlass())
       DisclosureGroup("Advanced") {VStack(alignment:.leading,spacing:16){
@@ -114,7 +114,7 @@ private struct FineTuneDetails:View {
     ScrollView {LazyVStack(alignment:.leading,spacing:18){
       HStack{Text("Fine Tune").font(.title2.bold());Spacer();Button("Done"){dismiss()}}
       if let d=detail {
-        Text(d.job.topic).font(.headline);Text(d.job.model).font(.caption).foregroundStyle(.secondary)
+        Text(d.job.topic).font(.headline);Text(ModelDisplay.name(d.job.model)).font(.caption).foregroundStyle(.secondary)
         if let reason=d.job.reason {Text(reason).foregroundStyle(.secondary)}
         if let checkpoint=d.job.checkpoint {Label(checkpoint,systemImage:"externaldrive.badge.checkmark").font(.caption).textSelection(.enabled)}
         if let events=d.events, !events.isEmpty {

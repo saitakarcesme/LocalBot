@@ -58,7 +58,7 @@ struct ProfileEditor: View {
         if profile.photo != nil { Button("Remove photo") { profile.photo = nil } }
       }
       if let loadModels, let selectModel {
-        HStack { VStack(alignment: .leading, spacing: 5) { Text("Model").font(.caption).foregroundStyle(.secondary); Text(currentModel?.model ?? "Agent defaults").font(.callout).lineLimit(2) }; Spacer(); ModelSelector(load: loadModels, select: { option in try await selectModel(option); currentModel = option }) }.padding(16).background(.thinMaterial, in: RoundedRectangle(cornerRadius: 20))
+        HStack { VStack(alignment: .leading, spacing: 5) { Text("Model").font(.caption).foregroundStyle(.secondary); Text(currentModel.map { ModelDisplay.name($0.model) } ?? "Agent defaults").font(.callout).lineLimit(2) }; Spacer(); ModelSelector(load: loadModels, select: { option in try await selectModel(option); currentModel = option }) }.padding(16).background(.thinMaterial, in: RoundedRectangle(cornerRadius: 20))
       }
       if research != nil { Button { showResearch = true } label: { Label("Fine Tune", systemImage: "sparkle.magnifyingglass").frame(maxWidth: .infinity, alignment: .leading).padding(14).background(.thinMaterial, in: RoundedRectangle(cornerRadius: 18)) }.buttonStyle(.plain) }
       if personal != nil { Button { showPersonal = true } label: { Label("Personal workspace", systemImage: "person.text.rectangle").frame(maxWidth: .infinity, alignment: .leading).padding(14).background(.thinMaterial, in: RoundedRectangle(cornerRadius: 18)) }.buttonStyle(.plain) }
@@ -67,7 +67,7 @@ struct ProfileEditor: View {
       if let usage {
         Text(usage.tokens.map { $0.formatted() + " tokens" } ?? "No token data recorded yet").font(.title3.monospacedDigit())
         ForEach(usage.models ?? []) { model in
-          HStack { Text(model.model).font(.caption).lineLimit(2); Spacer(); Text(model.tokens.formatted()).font(.callout.monospacedDigit()) }.padding(12).background(.thinMaterial, in: RoundedRectangle(cornerRadius: 14))
+          HStack { Text(ModelDisplay.name(model.model)).font(.caption).lineLimit(2); Spacer(); Text(model.tokens.formatted()).font(.callout.monospacedDigit()) }.padding(12).background(.thinMaterial, in: RoundedRectangle(cornerRadius: 14))
         }
         ForEach(usage.windows) { window in
           VStack(alignment: .leading) {
@@ -125,6 +125,27 @@ struct UsageSummary: Decodable {
   }
 }
 
+enum ModelDisplay {
+  static func name(_ raw: String) -> String {
+    let key = raw.lowercased()
+    if key.contains("university") { return "Qwen · University" + (key.contains("candidate") ? " — Candidate" : "") }
+    if key.contains("qwen") {
+      if key.contains("coder") { return "Qwen · Coding" }
+      if key.contains("3.8") { return "Qwen · Everyday" }
+      return "Qwen · " + (key.contains("3.5") ? "3.5" : key.contains("2.5") ? "2.5" : "3")
+    }
+    if key.contains("bge") { return "BGE · Search" }
+    return raw.replacingOccurrences(of: "-", with: " ").capitalized
+  }
+  static func variant(_ raw: String) -> String {
+    let key = raw.lowercased()
+    if key.contains("awq") { return "Fast · 27B" }
+    if key.contains("q8_0") { return "High precision · 27B" }
+    if let range = key.range(of: #"\d+(?:\.\d+)?b"#, options: .regularExpression) { return String(key[range]).uppercased() }
+    return "Standard"
+  }
+}
+
 struct ModelOption: Codable, Identifiable, Equatable {
   var providerId: String
   var provider: String?
@@ -154,8 +175,9 @@ struct ModelSelector: View {
               LazyVStack(spacing: 8) {
                 ForEach(catalog.options) { option in
                   Button { Task { busy = true; defer { busy = false }; do { try await select(option); self.catalog?.selected = option; presented = false } catch { self.error = error.localizedDescription } } } label: {
-                    HStack { VStack(alignment: .leading, spacing: 4) { Text(option.model).font(.callout).lineLimit(2); Text(option.provider ?? "").font(.caption).foregroundStyle(.secondary) }; Spacer(); if catalog.selected?.id == option.id { Image(systemName: "checkmark.circle.fill").foregroundStyle(Color.accentColor) } }.padding(14).frame(maxWidth: .infinity, alignment: .leading).background(.thinMaterial, in: RoundedRectangle(cornerRadius: 16))
+                    HStack { VStack(alignment: .leading, spacing: 4) { Text(ModelDisplay.name(option.model)).font(.callout).lineLimit(2); Text(ModelDisplay.variant(option.model)).font(.caption).foregroundStyle(.secondary) }; Spacer(); if catalog.selected?.id == option.id { Image(systemName: "checkmark.circle.fill").foregroundStyle(Color.accentColor) } }.padding(14).frame(maxWidth: .infinity, alignment: .leading).background(.thinMaterial, in: RoundedRectangle(cornerRadius: 16))
                   }.buttonStyle(.plain).disabled(busy)
+                  DisclosureGroup("Details") { Text(option.model).textSelection(.enabled); Text(option.provider ?? "") }.font(.caption).foregroundStyle(.secondary).padding(.horizontal, 14)
                 }
               }
             }
