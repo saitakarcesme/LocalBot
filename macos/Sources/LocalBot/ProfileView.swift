@@ -135,6 +135,13 @@ enum ModelDisplay {
       return "Qwen · " + (key.contains("3.5") ? "3.5" : key.contains("2.5") ? "2.5" : "3")
     }
     if key.contains("bge") { return "BGE · Search" }
+    if key.contains("deepseek") { return "DeepSeek · Reasoning" }
+    if key.contains("devstral") { return "Devstral · Coding" }
+    if key.contains("gemma") { return "Gemma · Everyday" }
+    if key.contains("hermes") { return "Hermes · Everyday" }
+    if key.contains("llama") { return "Llama · Everyday" }
+    if key.contains("mistral") { return "Mistral · Everyday" }
+    if key.contains("phi") { return "Phi · Everyday" }
     return raw.replacingOccurrences(of: "-", with: " ").capitalized
   }
   static func variant(_ raw: String) -> String {
