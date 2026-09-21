@@ -473,11 +473,19 @@
     "inference_restored": true,
     "pending": [
       "Mac Keychain access to paired PC; live dashboard and ChatGPT web-to-dataset check",
-      "iPhone update when connected"
+      "iPhone installed from cd00fe3; launch verification awaits device unlock"
     ],
     "limitations": [
       "Small arithmetic fixture does not establish model quality",
       "Crash recovery may require host inspection"
     ]
+  },
+  "iphone_install_2026_09_21": {
+    "source": "cd00fe3",
+    "device": "iPhone 15 Pro",
+    "release_build": "passed",
+    "installation": "succeeded",
+    "launch": "blocked by device lock",
+    "existing_pairing": "not reset"
   }
 }

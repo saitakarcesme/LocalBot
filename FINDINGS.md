@@ -482,3 +482,7 @@ Streaming checkpoint requested by the concurrent UI task: fixed dropped trailing
 - Configured idle LocalBot inference GPU reservation and restore. The original SGLang model endpoint responded again after training. Failed synthetic verification attempts were cancelled with artifacts preserved; pre-existing user jobs were not resumed.
 - 178 runtime tests passed; heartbeat lease Python test passed. Mac source06d0baf installed with signed manifest/backup. Mac PC workspace selection is waiting inside Keychain; native SecurityAgent automation is denied, so user unlock requested. Live Mac dashboard/ChatGPT-to-dataset validation remains pending that connection.
 - Phone is disconnected per user: installation deferred until it is connected. No simulator launched for this training work.
+
+## 2026-09-21 Connected iPhone update
+- Built current source cd00fe3 as a signed iPhone Release with one build worker; build succeeded. Installed app.localbot.remote on the paired physical iPhone 15 Pro without uninstalling or resetting pairing.
+- Launch verification was denied by iOS because the device was locked. Installation succeeded; in-app connection and Fine Tune UI verification on this build remain pending unlock. No simulator used.
