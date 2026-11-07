@@ -1,11 +1,4 @@
-node_modules/
-runtime/dist/
-macos/.build/
 build/
 .DS_Store
 *.log
-.env*
-.localbot/
-
-# Messages reference can contain private contacts
-screenshots/messages-*
+node_modules/
