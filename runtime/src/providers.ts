@@ -1,3 +1,4 @@
+import { publicSearch } from "./local-search.js";
 import { imageMessages } from "./http-images.js";
 import { randomUUID } from "node:crypto";
 import { CodexProvider } from "./codex-provider.js";
@@ -48,6 +49,7 @@ export function provider(p: ProviderConfig, secret?: string): ModelProvider {
   return new HTTPProvider(p, secret);
 }
 class HTTPProvider implements ModelProvider {
+  search = publicSearch;
   constructor(
     private p: ProviderConfig,
     private secret?: string,

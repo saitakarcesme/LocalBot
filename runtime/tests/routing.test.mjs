@@ -453,7 +453,7 @@ test('automatic routing sees executable tool permissions rather than trusting co
    assert(!restricted.tools.includes('write_file'));
    assert(!restricted.tools.includes('terminal'));
    assert(!restricted.tools.includes('view_image'));
-   assert(!restricted.tools.includes('web_search'));
+   assert(restricted.tools.includes('web_search'));
    assert(restricted.tools.includes('read_file'));
    assert(capable.tools.includes('write_file'));
    assert(!JSON.stringify(data.agents).includes('PRIVATE_CONTACT_MEMORY'));
@@ -559,7 +559,7 @@ test('each model step receives current permissions while the run keeps its selec
    reply(res,{content:'',tool_calls:[{function:{name:'write_file',arguments:{path:'revoked.txt',content:'must not write'}}}]});
   }else if(step===2){
    assert(!names.includes('write_file'));assert(!names.includes('terminal'));assert(names.includes('read_file'));
-   assert(!names.includes('web_search'));assert(!names.includes('view_image')); // The active local run cannot inherit Codex-only capabilities.
+   assert(names.includes('web_search'));assert(!names.includes('view_image')); // Local web search is provider-independent; vision still follows the selected run.
    const a=f.store.agent('coder');f.store.saveAgent({...a,permissions:{...a.permissions,filesystem:'write'}});
    reply(res,{content:'',tool_calls:[{function:{name:'current_time',arguments:{}}}]});
   }else if(step===3){
@@ -754,4 +754,25 @@ test('background process start streams into its Activity record while provider w
   await until(()=>!f.store.get("SELECT id FROM runs WHERE taskId=? AND status='running'",task.id));
   assert.match(call().output,/background-onebackground-two/);
  }finally{release();await f.close();}
+});
+
+test('delegation waits for approval and preserves the selected child identity',async()=>{
+ let step=0;
+ const f=await setup(async(body,res)=>{
+  if(step++===0) reply(res,{content:'',tool_calls:[{function:{name:'delegate_task',arguments:{agent_id:'researcher',prompt:'Inspect the project without changes'}}}]});
+  else reply(res,{content:'Recorded work complete.'});
+ });
+ try {
+  const c=f.store.createConversation('Delegation',['coder']);
+  const task=f.engine.enqueue(c.id,'Delegate inspection to the researcher');
+  await until(()=>f.store.get("SELECT id FROM approvals WHERE taskId=? AND status='pending'",task.id));
+  assert.equal(f.store.all('SELECT * FROM delegated_tasks').length,0);
+  f.engine.decide(f.store.get("SELECT id FROM approvals WHERE taskId=? AND status='pending'",task.id).id,true);
+  await until(()=>f.store.task(task.id).status==='completed');
+  const link=f.store.get('SELECT * FROM delegated_tasks WHERE parentTaskId=?',task.id);
+  assert.equal(link.agentId,'researcher');
+  const child=f.store.task(link.childTaskId);
+  assert.deepEqual(f.store.conversation(child.conversationId).members,['researcher']);
+  await until(()=>f.store.task(child.id).status==='completed');
+ }finally{await f.close();}
 });

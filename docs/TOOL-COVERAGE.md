@@ -1,6 +1,6 @@
 # Tool coverage inventory
 
-Captured target: **269 Codex tools**. Registered LocalBot tools: **38**.
+Captured target: **269 Codex tools**. Registered LocalBot tools: **51**.
 
 Separate control surfaces: **13**. Total assessed entries: **282**. Control entries are not added to the primary catalog denominator.
 
@@ -16,6 +16,19 @@ These counts summarize the inventory labels. They do not prove functional parity
 
 ## Registered LocalBot tools
 
+- `delegate_task`
+- `check_delegated_task`
+- `computer_snapshot`
+- `computer_click`
+- `computer_type`
+- `browser_open`
+- `browser_snapshot`
+- `browser_click`
+- `browser_type`
+- `browser_scroll`
+- `create_routine`
+- `list_routines`
+- `pause_routine`
 - `get_usage_limits`
 - `list_conversations`
 - `rename_conversation`

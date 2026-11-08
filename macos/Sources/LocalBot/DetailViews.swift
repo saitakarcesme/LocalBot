@@ -441,12 +441,14 @@ struct SettingsView: View {
   }
   var providerForm: some View {
     VStack(spacing: 10) {
+      Text("Local inference only · Ollama or a local OpenAI-compatible endpoint. Cloud fallback is disabled.")
+        .font(.caption).foregroundStyle(.secondary)
       TextField("Connection name", text: field(\.name)).textFieldStyle(.roundedBorder)
       Picker("Protocol", selection: field(\.kind)) {
         Text("Ollama").tag("ollama")
         Text("OpenAI compatible").tag("openai")
-        Text("Anthropic (optional)").tag("anthropic")
-        Text("Codex subscription").tag("codex")
+        Text("Anthropic — disabled").tag("anthropic").disabled(true)
+        Text("Codex — disabled").tag("codex").disabled(true)
       }.pickerStyle(.segmented)
         .onChange(of: editing?.kind) { _, kind in
           if kind == "codex", editing?.timeout == 180 { editing?.timeout = 900 }

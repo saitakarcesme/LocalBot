@@ -311,13 +311,17 @@ struct ConversationView: View {
   @State var initialScroll = true
   @FocusState var composing: Bool
   var members: [Agent] { conversation.members.compactMap { model.agent($0) } }
-  var body: some View {
-    GeometryReader { geometry in
-    HStack(spacing: 0) {
-      VStack(spacing: 0) {
-        if model.messages.isEmpty {
-          emptyConversation.frame(maxWidth: .infinity, maxHeight: .infinity)
-        } else {
+  @ViewBuilder private var messageRows: some View {
+              ForEach(Array(model.messages.enumerated()), id: \.element.id) { index, m in
+                let begins = index == 0 || !sameMessageGroup(model.messages[index - 1], m)
+                let ends = index == model.messages.count - 1 || !sameMessageGroup(m, model.messages[index + 1])
+                MessageBubble(message: m, group: conversation.projectId != nil || members.count > 1, beginsGroup: begins, endsGroup: ends).id(m.id)
+                .padding(.top, begins ? 12 : 0)
+                .background(m.id == model.searchFocusId ? Color.accentColor.opacity(0.12) : .clear, in: RoundedRectangle(cornerRadius: 12))
+
+              }
+  }
+  private func transcript(_ geometry: GeometryProxy) -> some View {
         ScrollViewReader { proxy in
           ScrollView {
             VStack(spacing: 4) {
@@ -339,14 +343,7 @@ struct ConversationView: View {
                   else { Text("Load earlier messages") }
                 }.buttonStyle(.borderless).disabled(model.loadingEarlierMessages)
               }
-              ForEach(Array(model.messages.enumerated()), id: \.element.id) { index, m in
-                let begins = index == 0 || !sameMessageGroup(model.messages[index - 1], m)
-                let ends = index == model.messages.count - 1 || !sameMessageGroup(m, model.messages[index + 1])
-                MessageBubble(message: m, group: conversation.projectId != nil || members.count > 1, beginsGroup: begins, endsGroup: ends).id(m.id)
-                .padding(.top, begins ? 12 : 0)
-                .background(m.id == model.searchFocusId ? Color.accentColor.opacity(0.12) : .clear, in: RoundedRectangle(cornerRadius: 12))
-
-              }
+              messageRows
               if progress != .hidden { progressIndicator }
               Color.clear.frame(height: 1).id("bottom")
             }.padding(.bottom, 16)
@@ -389,6 +386,15 @@ struct ConversationView: View {
             }
           }
         }
+  }
+  var body: some View {
+    GeometryReader { geometry in
+    HStack(spacing: 0) {
+      VStack(spacing: 0) {
+        if model.messages.isEmpty {
+          emptyConversation.frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else {
+        transcript(geometry)
         }
         if model.searchFocusId != nil {
           HStack {
@@ -460,7 +466,9 @@ struct ConversationView: View {
       }
       if #available(macOS 26.0, *), model.rightPanel != nil {
         ToolbarItem { RightPanelControls().padding(.horizontal, 12).fixedSize() }
+          #if compiler(>=6.2)
           .sharedBackgroundVisibility(.hidden)
+          #endif
       } else {
         ToolbarItem { RightPanelControls().padding(.horizontal, 12).fixedSize() }
       }

@@ -1,3 +1,5 @@
+import { desktopBridge } from "./desktop-bridge.js";
+import { Routines } from "./routines.js";
 import { WorkspaceLocks } from "./workspace-lock.js";
 import { conversationTool } from "./conversation-tools.js";
 import { isDeepStrictEqual } from "node:util";
@@ -19,6 +21,7 @@ import {
 } from "./tools.js";
 import { Agent, Chat, ProviderConfig, ToolDefinition, now, errorText } from "./types.js";
 export class Engine {
+  readonly routines: Routines;
   private active = new Map<string, AbortController>();
   private approvals = new Map<string, (allow: boolean) => void>();
   secrets = new Map<string, string>();
@@ -32,7 +35,10 @@ export class Engine {
     public store: Store,
     private changed: () => void = () => {},
     private makeProvider: typeof provider = provider,
-  ) {}
+  ) {
+    this.routines = new Routines(store);
+    store.exec('CREATE TABLE IF NOT EXISTS delegated_tasks(parentTaskId TEXT NOT NULL, childTaskId TEXT PRIMARY KEY, agentId TEXT NOT NULL)');
+  }
   private availableTools(agent: Agent, runConfig?: ProviderConfig) {
     const config = runConfig ?? this.store.provider(agent.providerId);
     if (!runConfig && agent.model) config.model = agent.model;
@@ -638,6 +644,29 @@ export class Engine {
                 );
                 this.changed();
                 return;
+              } else if (name === "delegate_task") {
+                if (this.store.get('SELECT childTaskId FROM delegated_tasks WHERE childTaskId=?', taskId)) throw new Error('Nested delegation is disabled');
+                if (this.store.all('SELECT childTaskId FROM delegated_tasks WHERE parentTaskId=?', taskId).length >= 4) throw new Error('Maximum four delegated tasks per parent');
+                const target = this.store.agent(args.agent_id);
+                if (target.id === agent.id) throw new Error('Choose a different teammate');
+                const child = this.store.createConversation(`Delegated · ${target.name}`, [target.id]);
+                const queued = this.enqueue(child.id, args.prompt);
+                this.store.exec('INSERT INTO delegated_tasks VALUES(?,?,?)', taskId, queued.id, target.id);
+                result = JSON.stringify({taskId:queued.id,conversationId:child.id,status:queued.status,notice:'Queued with the target contact permissions and model. Overlapping workspaces run sequentially; do not wait for a child while holding its workspace. Finish your turn and check on a follow-up.'});
+              } else if (name === "check_delegated_task") {
+                const link = this.store.get('SELECT d.childTaskId FROM delegated_tasks d JOIN tasks p ON p.id=d.parentTaskId WHERE d.childTaskId=? AND p.conversationId=?', args.task_id, c.id);
+                if (!link) throw new Error('Delegated task not found in this conversation');
+                const child = this.store.task(args.task_id);
+                const messages = this.store.all("SELECT content FROM messages WHERE taskId=? AND role='assistant' ORDER BY createdAt DESC LIMIT 3",child.id);
+                result = JSON.stringify({taskId:child.id,status:child.status,error:child.error,messages:messages.map(m=>m.content.slice(0,6000))});
+              } else if (name.startsWith("browser_") || name.startsWith("computer_")) {
+                result = await desktopBridge.call(taskId, name, args, signal);
+              } else if (name === "create_routine") {
+                result = JSON.stringify(this.routines.create(c.id, args.prompt, args.at, args.repeat_minutes));
+              } else if (name === "list_routines") {
+                result = JSON.stringify(this.routines.list(c.id));
+              } else if (name === "pause_routine") {
+                result = JSON.stringify(this.routines.pause(c.id, args.id));
               } else if (name === "create_goal") {
                 result = JSON.stringify(this.store.createGoal(c.id, args.objective));
               } else if (name === "get_usage_limits") {

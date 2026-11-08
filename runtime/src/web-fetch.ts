@@ -38,7 +38,7 @@ async function abortable<T>(promise: Promise<T>, signal: AbortSignal): Promise<T
 }
 
 export async function fetchPage(value: string, parent: AbortSignal,
-  dependencies = { lookup, request }): Promise<string> {
+  dependencies = { lookup, request }, preserveLinks = false): Promise<string> {
   const signal = AbortSignal.any([parent, AbortSignal.timeout(20_000)]);
   let url = publicURL(value);
   const visited = new Set<string>();
@@ -86,6 +86,14 @@ export async function fetchPage(value: string, parent: AbortSignal,
         });
         res.on("end", () => {
           let text = Buffer.concat(chunks).toString("utf8");
+          if (preserveLinks) text = text.replace(/<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, (_, href, label) => {
+            try {
+              let link = new URL(href.replace(/&amp;/g, '&'), url);
+              const destination = link.searchParams.get('uddg');
+              if (destination) link = new URL(destination);
+              return link.protocol === 'https:' ? `${label} (${link.href})` : label;
+            } catch { return label; }
+          });
           if (mime === "text/html" || mime === "application/xhtml+xml") text = text
             .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
             .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")

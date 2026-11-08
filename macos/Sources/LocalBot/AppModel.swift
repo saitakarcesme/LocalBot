@@ -226,6 +226,7 @@ enum Keychain {
   }
   func refresh() async {
     guard connection != nil else { return }
+    await BrowserAutomation.shared.poll(self)
     do {
       let s = try JSONDecoder().decode(Snapshot.self, from: await request("/snapshot"))
       if !connected { connected = true }

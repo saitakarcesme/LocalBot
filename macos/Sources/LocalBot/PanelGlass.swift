@@ -27,7 +27,11 @@ struct PanelGlass: ViewModifier {
     if reduceTransparency {
       content.background(Color(nsColor: .windowBackgroundColor), in: RoundedRectangle(cornerRadius: 22))
     } else if #available(macOS 26.0, *) {
+      #if compiler(>=6.2)
       content.glassEffect(.regular, in: RoundedRectangle(cornerRadius: 22))
+      #else
+      content.background(.regularMaterial, in: RoundedRectangle(cornerRadius: 22))
+      #endif
     } else {
       content.background(.regularMaterial, in: RoundedRectangle(cornerRadius: 22))
     }

@@ -11,6 +11,7 @@ async function fixture(fn) {
   else if(path==='/downgrade'){res.writeHead(301,{Location:'http://public.example/text'});res.end();}
   else if(path==='/loop'){res.writeHead(308,{Location:'/loop'});res.end();}
   else if(path.startsWith('/hop/')){res.writeHead(302,{Location:'/hop/'+(Number(path.split('/').at(-1))+1)});res.end();}
+  else if(path==='/links'){res.setHeader('Content-Type','text/html');res.end('<a href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fexample.com%2Fsource">Evidence</a><script>secretScript()</script>');}
   else if(path==='/binary'){res.writeHead(200,{'Content-Type':'image/png'});res.end('binary');}
   else if(path==='/large'){res.end('a'.repeat(500001));}
   else if(path==='/slow'){res.writeHead(200);res.write('waiting');}
@@ -41,3 +42,9 @@ test('public IP policy excludes special-use and transition addresses',()=>{
  for(const ip of ['192.0.2.1','198.51.100.1','203.0.113.1','100.64.0.1','::ffff:127.0.0.1','64:ff9b::a00:1','2002:7f00:1::','2001:0:1234::1','2001:db8::1','3fff::1','fc00::1','fe80::1'])assert.equal(publicIP(ip),false,ip);
  for(const ip of ['1.1.1.1','8.8.8.8','2606:4700:4700::1111','2001:4860:4860::8888'])assert.equal(publicIP(ip),true,ip);
 });
+
+test('search extraction preserves destination links without scripts',()=>fixture(async(d)=>{
+ const result=await fetchPage('https://public.example/links',new AbortController().signal,d,true);
+ assert.match(result,/Evidence \(https:\/\/example.com\/source\)/);
+ assert(!result.includes('secretScript'));
+}));

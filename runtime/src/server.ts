@@ -1,3 +1,5 @@
+import { desktopBridge } from "./desktop-bridge.js";
+import { requireLocalProvider } from "./local-policy.js";
 import { defaultProjectFolder } from "./project-folder.js";
 import { agentStepLimit } from "./run-limits.js";
 import { MCPStdioTransport } from "./mcp-stdio.js";
@@ -68,7 +70,15 @@ const change = () => {
   for (const s of streams)
     s.write(`id: ${revision}\ndata: ${JSON.stringify({ revision })}\n\n`);
 };
-const engine = new Engine(store, change);
+const engine = new Engine(store, change, (config, secret) => {
+  requireLocalProvider(config);
+  return provider(config, secret);
+});
+const routineTimer = setInterval(() => {
+  try { engine.routines.tick((conversation, prompt, id) => engine.enqueue(conversation, prompt, [], id)); }
+  catch { console.error("Routine dispatch failed; durable request will retry."); }
+}, 15000);
+routineTimer.unref();
 async function body(req: IncomingMessage) {
   let text = "";
   for await (const b of req) {
@@ -147,6 +157,14 @@ const server = createServer(async (req, res) => {
     const u = new URL(req.url ?? "/", "http://localhost"),
       p = u.pathname,
       m = req.method;
+    if (m === "POST" && p === "/desktop/claim") {
+      json(res, 200, {request:desktopBridge.claim()}); return;
+    }
+    if (m === "POST" && p === "/desktop/complete") {
+      const b = await body(req);
+      if (typeof b.id !== 'string' || typeof b.result !== 'string' || (b.error !== undefined && typeof b.error !== 'string')) throw new Error('Invalid desktop response');
+      desktopBridge.complete(b.id,b.result,b.error); json(res,200,{ok:true}); return;
+    }
     if (m === "GET" && p === "/health") {
       json(res, 200, { ok: true, version: "0.2.0", pid: process.pid });
       return;
