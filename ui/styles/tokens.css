@@ -1,0 +1,134 @@
+/*
+ * LocalBot design tokens.
+ * Rules the whole UI follows:
+ *  - 4px spacing grid.
+ *  - Concentric corners: an inner radius = outer radius − the padding between them.
+ *  - One hover / pressed / selected fill per surface, shared by every control.
+ *  - Motion: 120ms for state changes, 200ms for entering, one easing curve.
+ */
+:root {
+  /* spacing */
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 20px; --s-6: 24px; --s-8: 32px; --s-10: 40px;
+
+  /* radius scale */
+  --r-xs: 4px; --r-sm: 6px; --r-md: 8px; --r-row: 10px; --r-lg: 12px; --r-xl: 16px; --r-bubble: 22px; --r-full: 999px;
+
+  /* type */
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
+  --t-xs: 11px; --t-sm: 12px; --t-md: 13px; --t-base: 14px; --t-lg: 15px; --t-xl: 17px; --t-2xl: 22px;
+  --lh-sm: 16px; --lh-md: 18px; --lh-base: 20px; --lh-lg: 22px;
+  --t-chat: 15px; --lh-chat: 22px;
+
+  /* layout */
+  --titlebar: 52px;
+  --sidebar-width: 288px;
+  --details-width: 320px;
+  --chat-width: 720px;
+  --control: 32px;
+  /* Ruler rules:
+     - panels inset rows by --inset; row content starts at --edge from the panel edge;
+     - right-side controls are --control wide and end at --edge (one vertical column);
+     - every chat row is a multiple of --row-chat or the 28px step row. */
+  --inset: 8px;
+  --edge: 16px;
+  --avatar-turn: 28px;
+  --bubble-x: 12px;
+  --row-chat: calc(var(--lh-chat) + 14px);
+
+  /* motion */
+  --ease: cubic-bezier(.2, 0, 0, 1);
+  --ease-spring: cubic-bezier(.34, 1.36, .64, 1);
+  --fast: 120ms; --normal: 200ms; --slow: 320ms;
+}
+:root[data-text-size="small"] { --t-chat: 14px; --lh-chat: 20px; }
+:root[data-text-size="large"] { --t-chat: 17px; --lh-chat: 25px; }
+:root[data-chat-width="wide"] { --chat-width: 920px; }
+
+:root, :root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #141414;
+  --bg-sidebar: #0f0f0f;
+  --bg-elevated: #1f1f1f;
+  --bg-composer: #1d1d1d;
+  --bg-scrim: rgb(0 0 0 / .55);
+
+  --fill-hover: rgb(255 255 255 / .045);
+  --fill-selected: rgb(255 255 255 / .09);
+  --fill-pressed: rgb(255 255 255 / .13);
+  --fill-control: rgb(255 255 255 / .08);
+  --fill-control-hover: rgb(255 255 255 / .12);
+  --fill-subtle: rgb(255 255 255 / .035);
+  --fill-segment: rgb(255 255 255 / .13);
+
+  --bubble-bot: rgb(255 255 255 / .075);
+  --bubble-user: #424242;
+  --bubble-user-text: #f2f2f2;
+
+  --text: #ececec;
+  --text-2: rgb(236 236 236 / .66);
+  --text-3: rgb(236 236 236 / .46);
+  --text-4: rgb(236 236 236 / .3);
+  --text-on-strong: #141414;
+  --strong: #ececec;
+  --strong-hover: #ffffff;
+
+  --border: rgb(255 255 255 / .075);
+  --border-strong: rgb(255 255 255 / .13);
+  --focus: #5aa2ff;
+  --accent: #5aa2ff;
+  --danger: #ff6b6b;
+  --success: #44d18a;
+  --warning: #f5b544;
+  --highlight: rgb(245 181 68 / .32);
+  --highlight-current: rgb(245 181 68 / .7);
+
+  --shadow-pop: 0 0 0 .5px rgb(255 255 255 / .1), 0 12px 32px rgb(0 0 0 / .45), 0 2px 6px rgb(0 0 0 / .3);
+  --shadow-dialog: 0 0 0 .5px rgb(255 255 255 / .1), 0 24px 70px rgb(0 0 0 / .55);
+  --shadow-composer: 0 0 0 .5px rgb(255 255 255 / .05), 0 8px 24px rgb(0 0 0 / .25);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #ffffff;
+  --bg-sidebar: #f5f5f5;
+  --bg-elevated: #ffffff;
+  --bg-composer: #ffffff;
+  --bg-scrim: rgb(0 0 0 / .28);
+
+  --fill-hover: rgb(28 28 28 / .04);
+  --fill-selected: rgb(28 28 28 / .08);
+  --fill-pressed: rgb(28 28 28 / .12);
+  --fill-control: rgb(28 28 28 / .06);
+  --fill-control-hover: rgb(28 28 28 / .1);
+  --fill-subtle: rgb(28 28 28 / .03);
+  --fill-segment: #ffffff;
+
+  --bubble-bot: rgb(28 28 28 / .06);
+  --bubble-user: #1c1c1c;
+  --bubble-user-text: #ffffff;
+
+  --text: #1c1c1c;
+  --text-2: rgb(28 28 28 / .68);
+  --text-3: rgb(28 28 28 / .5);
+  --text-4: rgb(28 28 28 / .32);
+  --text-on-strong: #ffffff;
+  --strong: #1c1c1c;
+  --strong-hover: #363636;
+
+  --border: rgb(28 28 28 / .08);
+  --border-strong: rgb(28 28 28 / .14);
+  --focus: #1e86fc;
+  --accent: #0b6dd3;
+  --danger: #d93b3b;
+  --success: #17a35d;
+  --warning: #c97c08;
+  --highlight: rgb(245 181 68 / .38);
+  --highlight-current: rgb(245 160 20 / .75);
+
+  --shadow-pop: 0 0 0 .5px rgb(0 0 0 / .1), 0 12px 32px rgb(0 0 0 / .12), 0 2px 6px rgb(0 0 0 / .06);
+  --shadow-dialog: 0 0 0 .5px rgb(0 0 0 / .1), 0 24px 70px rgb(0 0 0 / .18);
+  --shadow-composer: 0 0 0 .5px rgb(0 0 0 / .04), 0 8px 24px rgb(0 0 0 / .06);
+}
+
+/* Palette surfaces are inherited by chat, menus and settings alike. */
