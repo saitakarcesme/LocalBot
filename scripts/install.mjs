@@ -11,4 +11,4 @@ await mkdir(backup,{recursive:true});
 try{await stat(destination);await rename(destination,join(backup,'LocalBot.app'));}catch(e){if(e.code!=='ENOENT')throw e;}
 try{await cp(source,destination,{recursive:true});execFileSync('/usr/bin/codesign',['--verify','--deep','--strict',destination]);}
 catch(e){throw Error('Install failed; previous bundle is preserved at '+backup+'; '+e.message);}
-console.log(JSON.stringify({installed:destination,backup,data:'Fresh state in Library/Application Support/LocalBot/Rebuilt; legacy data not loaded'}));
+console.log(JSON.stringify({installed:destination,backup,data:'New builds start fresh on first launch; previous data is archived in LocalBot/Update Archives'}));

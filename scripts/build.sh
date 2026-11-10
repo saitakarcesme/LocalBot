@@ -21,12 +21,14 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
 <key>CFBundleName</key><string>LocalBot</string><key>CFBundleDisplayName</key><string>LocalBot</string>
 <key>CFBundleIdentifier</key><string>com.localbot.rebuilt</string>
 <key>CFBundleExecutable</key><string>LocalBot</string>
-<key>CFBundleVersion</key><string>120</string><key>CFBundleShortVersionString</key><string>1.2.0</string>
+<key>CFBundleVersion</key><string>130</string><key>CFBundleShortVersionString</key><string>1.3.0</string>
 <key>CFBundleIconFile</key><string>LocalBot.icns</string>
 <key>CFBundlePackageType</key><string>APPL</string><key>NSHighResolutionCapable</key><true/>
 <key>NSAppTransportSecurity</key><dict><key>NSAllowsLocalNetworking</key><true/></dict>
 </dict></plist>
 PLIST
+BUILD_ID="$(node scripts/build-id.mjs)"
+/usr/libexec/PlistBuddy -c "Add :LocalBotBuildID string $BUILD_ID" "$APP/Contents/Info.plist"
 # A stable signing identity keeps Keychain trust across rebuilds (no password prompts).
 # Override with LOCALBOT_SIGN_ID; falls back to ad-hoc when no identity is installed.
 SIGN_ID="${LOCALBOT_SIGN_ID:-$(security find-identity -v -p codesigning 2>/dev/null | grep -Eo '"(Developer ID Application|Apple Development)[^"]*"' | head -1 | tr -d '"')}"

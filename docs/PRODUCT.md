@@ -56,3 +56,8 @@ Every side effect follows the permission rules. Password and payment fields are 
 - **Open source**: `npx localbot` (self-hosted) or build the Mac app from source.
 - **Download**: the same runtime inside a signed, notarized Mac app with auto-update. Needs an Apple Developer ID and an update feed.
 - **Account (optional)**: for downloads, updates and future device pairing (phone ↔ Mac). Conversations stay local, and the account never sees them.
+
+## Update and identity policy
+The owner requested a fresh start after every new native build (11 November 2026). A content fingerprint in the signed bundle identifies each build. Before opening SQLite, the runtime archives the previous Rebuilt data directory and starts a fresh store when the fingerprint changes. Reopening the same build keeps its chats. Archives are not loaded automatically. The model credential remains in macOS Keychain, and the default endpoint/model remains the local Elpis LLMRig connection.
+
+First launch presents a brief orb splash followed by Enter Your Name and a large name field. Submitting opens the pinned main assistant, LocalBot, with a welcome message. Its display name remains editable. The update_self_profile tool can change only the acting bot's name, use an existing workspace raster image as its profile photo, choose an orb palette, or restore the orb. It follows the existing bots permission category.

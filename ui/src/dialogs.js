@@ -138,28 +138,21 @@ function CommandPalette({state, onClose, onSelect}) {
 }
 
 export function Onboarding({state}) {
-  const [step, setStep] = useState(0);
-  const [name, setName] = useState('');
-  const ref = useRef();
-  useEffect(() => { ref.current?.querySelector('input')?.focus(); }, [step]);
-  const finish=()=>setStep(2);
-  const [task,setTask]=useState('');
-  const complete=()=>attempt(async()=>{await api('preferences',{onboarded:true});if(task.trim()&&state.bots[0])await api('send',{bot:state.bots[0].id,prompt:task});});
-  return html`<div class="onboarding" ref=${ref} role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
-    <div class="onboarding-card">
-      <${Figure} shape="round" color="#b5a3e5" size=${96} follow state=${step === 1 ? 'thinking' : 'idle'} seed="welcome"/>
-      ${step === 0 ? html`
-        <h1 id="onboarding-title">Hi, I’m LocalBot.</h1>
-        <p>Your bots run on your own computer. Nothing you say leaves it.</p>
-        <form class="onboarding-form" onSubmit=${e => { e.preventDefault(); if (name.trim()) attempt(async () => { await api('preferences', {user: name.trim()}); setStep(1); }); }}>
-          <label for="onboarding-name">What should I call you?</label>
-          <input id="onboarding-name" value=${name} maxlength="80" autocomplete="given-name" placeholder=${t("Your name")} onInput=${e => setName(e.target.value)}/>
-          <${Button} kind="primary" type="submit" disabled=${!name.trim()}>Continue</${Button}>
-        </form>` : html`
-        ${step===2?html`<h1 id="onboarding-title">What would you like to work on?</h1><p>Your first bot is ${state.bots[0]?.name}. Give it a task to begin.</p><textarea aria-label="First task" value=${task} onInput=${e=>setTask(e.target.value)}/><${Button} onClick=${complete}>Start</${Button}>`:html`<h1 id="onboarding-title">Connect a model</h1>
-        <p>Pick the model your bots will think with. I looked for ones already running on this computer.</p>
-        <div class="onboarding-model"><${ModelSetup} state=${state} compact onReady=${finish}/></div>
-        <button type="button" class="link-button" onClick=${finish}>Set up later</button>`}` }
-    </div>
-  </div>`;
+ const [phase,setPhase]=useState('splash'),[name,setName]=useState(''),[busy,setBusy]=useState(false);
+ const ref=useRef();
+ useEffect(()=>{const timer=setTimeout(()=>setPhase('name'),1000);return()=>clearTimeout(timer);},[]);
+ useEffect(()=>{if(phase==='name')ref.current?.focus();},[phase]);
+ const submit=async e=>{e.preventDefault();if(!name.trim()||busy)return;setBusy(true);try{await api('onboard',{name:name.trim()});}catch(error){toast(error.message);setBusy(false);}};
+ return html`<main class="onboarding welcome-name" aria-labelledby="onboarding-title">
+  ${phase==='splash'?html`<div class="welcome-splash" role="status"><${Figure} size=${128} color="#b5a3e5"/><h1 id="onboarding-title">LocalBot</h1></div>`:html`
+  <div class="welcome-content"><${Figure} size=${88} color="#b5a3e5"/>
+   <h1 id="onboarding-title">Enter Your Name</h1>
+   <form class="welcome-form" onSubmit=${submit}>
+    <label class="sr-only" for="welcome-name">Your name</label>
+    <div class="welcome-chatbox"><input ref=${ref} id="welcome-name" name="name" value=${name} maxlength="80" autocomplete="given-name" placeholder="Your name" disabled=${busy} onInput=${e=>setName(e.target.value)}/>
+    <button class="welcome-send" type="submit" aria-label="Start with LocalBot" disabled=${busy||!name.trim()}><${Icon} name="arrowUp"/></button></div>
+    <p>Meet LocalBot. Make it yours.</p>
+   </form>
+  </div>`}
+ </main>`;
 }

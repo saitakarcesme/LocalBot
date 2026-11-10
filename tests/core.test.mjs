@@ -222,3 +222,18 @@ test('context checkpoint preserves task continuation without orphan tool message
   });
  });
 });
+
+test('a bot can change only its own profile using a workspace image',async()=>{
+ await fixture(async(store,root)=>{
+  const engine=new Engine(store),bot=store.all('SELECT id FROM bots')[0].id,other=store.addBot('Other');
+  store.set('permissions',{...store.permissions(),bots:'allow'});
+  const space=engine.root(bot);await mkdir(space,{recursive:true});
+  await writeFile(join(space,'avatar.png'),Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a9WQAAAAASUVORK5CYII=','base64'));
+  const task={id:'profile-test',bot,abort:new AbortController()};
+  await engine.tool(task,'update_self_profile',{name:'Mira',avatar_path:'avatar.png',bot_id:other});
+  assert.equal(store.bot(bot).name,'Mira');assert.match(store.bot(bot).avatar,/^data:image\/png;base64,/);assert.equal(store.bot(other).name,'Other');
+  await assert.rejects(()=>engine.tool(task,'update_self_profile',{avatar_path:'../outside.png'}),/outside/);
+  await writeFile(join(space,'bad.svg'),'<svg/>');await assert.rejects(()=>engine.tool(task,'update_self_profile',{avatar_path:'bad.svg'}),/PNG/);
+  await engine.tool(task,'update_self_profile',{palette:'lagoon',reset_avatar:true});assert.equal(store.bot(bot).avatar,'');assert.equal(store.bot(bot).color,'#7fd8b0');
+ });
+});

@@ -136,7 +136,7 @@ final class HostWebView: WKWebView {
  func startRuntime(){
   guard let resources=Bundle.main.resourceURL else{return}
   let proc=Process();proc.executableURL=resources.appendingPathComponent("node");proc.arguments=[resources.appendingPathComponent("runtime/server.mjs").path]
-  var env=ProcessInfo.processInfo.environment;env["LOCALBOT_DATA"]=dataRoot.path;proc.environment=env
+  var env=ProcessInfo.processInfo.environment;env["LOCALBOT_DATA"]=dataRoot.path;env["LOCALBOT_BUILD_ID"]=Bundle.main.object(forInfoDictionaryKey:"LocalBotBuildID") as? String;proc.environment=env
   let pipe=Pipe();proc.standardOutput=pipe;proc.standardError=FileHandle.standardError
   process=proc
   do {try proc.run()} catch {showError(error.localizedDescription);return}

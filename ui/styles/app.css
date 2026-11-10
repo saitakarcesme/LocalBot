@@ -808,3 +808,20 @@ body.is-resizing, body.is-resizing * { cursor: col-resize !important; }
 .turn-bot .bubble.typing { box-sizing: border-box; }
 .turn:has(.typing-row:last-child) .turn-avatar { margin-bottom: calc((var(--row-chat) - var(--avatar-turn)) / 2); }
 .prose > p + p { margin-top: 12px; }
+
+/* First launch: one name, one conversation. */
+.welcome-name { padding:32px; }
+.welcome-content { width:min(780px,100%);display:flex;flex-direction:column;align-items:center;gap:28px; }
+.welcome-content h1 { margin:0;font-size:clamp(28px,4vw,42px);font-weight:500;letter-spacing:-.04em; }
+.welcome-form { width:100%; }
+.welcome-chatbox { display:flex;align-items:center;gap:16px;padding:24px 28px;border:1px solid var(--border-strong);border-radius:36px;background:var(--bg-elevated); }
+.welcome-chatbox:focus-within { border-color:var(--text-3); }
+.welcome-chatbox input { width:100%;min-width:0;border:0;outline:none;background:transparent;color:var(--text);font:500 clamp(38px,7vw,76px)/1.2 var(--font);letter-spacing:-.05em; }
+.welcome-chatbox input::placeholder { color:var(--text-3); }
+.welcome-send { width:52px;height:52px;flex:none;border-radius:50%;display:grid;place-items:center;background:var(--text);color:var(--bg);--icon:24px; }
+.welcome-send:disabled { opacity:.25; }
+.welcome-send:focus-visible { outline:2px solid var(--text);outline-offset:5px; }
+.welcome-form p { margin:20px 0 0;text-align:center;color:var(--text-3);font-size:14px; }
+.welcome-splash { display:flex;flex-direction:column;align-items:center;gap:24px; }
+.welcome-splash h1 { font-size:26px;font-weight:500;letter-spacing:-.04em;margin:0; }
+@media(max-width:500px){.welcome-name{padding:20px}.welcome-chatbox{padding:20px;border-radius:28px}.welcome-send{width:42px;height:42px}}

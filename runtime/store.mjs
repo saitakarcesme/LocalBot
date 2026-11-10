@@ -90,7 +90,8 @@ export class Store {
     this.db.prepare("UPDATE runs SET status='interrupted',error='LocalBot restarted. Send a new message to continue; actions are never replayed automatically.' WHERE status IN ('queued','running','waiting')").run();
     this.db.prepare("UPDATE events SET status='interrupted' WHERE status='running'").run();
     if (!this.all('SELECT id FROM bots').length) {
-      this.addBot('LocalBot', 'You are a capable personal assistant. Be clear, concise and verify your work.', '#b5a3e5', false, 'round');
+      const mainBot=this.addBot('LocalBot', 'You are a capable personal assistant. Be clear, concise and verify your work.', '#b5a3e5', true, 'round');
+      this.set('preferences',{...this.preferences(),mainBot});
     }
   }
   seal(value) {const iv=randomBytes(12),cipher=createCipheriv('aes-256-gcm',this.vaultKey,iv);const data=Buffer.concat([cipher.update(value,'utf8'),cipher.final()]);return 'vault:v1:'+Buffer.concat([iv,cipher.getAuthTag(),data]).toString('base64');}

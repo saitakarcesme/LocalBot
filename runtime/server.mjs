@@ -11,12 +11,15 @@ import {detectServers} from './providers.mjs';
 import {normalizeSchedule, nextRun, scheduleOf, validZone} from './schedule.mjs';
 import {SHAPE_IDS, EYE_IDS, freshLook} from '../ui/src/looks.js';
 
-const VERSION = '1.2.0';
+import {prepareBuildData} from './lifecycle.mjs';
+
+const VERSION = '1.3.0';
 const REPO = 'saitakarcesme/LocalBot';
 const directory = dirname(fileURLToPath(import.meta.url));
 const uiRoot = resolve(directory, '../ui');
 const root = process.env.LOCALBOT_DATA || join(homedir(), 'Library/Application Support/LocalBot/Rebuilt');
 const host = process.env.LOCALBOT_HOST || 'local-app';   // 'local-app' (Mac app) | 'self-hosted' (CLI/browser)
+prepareBuildData(root, process.env.LOCALBOT_BUILD_ID);
 const store = new Store(root), engine = new Engine(store);
 const token = process.env.LOCALBOT_TOKEN || randomBytes(32).toString('hex');
 // Lets <img>, <video> and previews load bot files without the API token. It only reads files.
@@ -416,6 +419,20 @@ const server = createServer(async (req, res) => {
         if (b.rating !== undefined) patch.rating = ['good', 'bad'].includes(b.rating) && meta.rating !== b.rating ? b.rating : null;
         if (b.draft && meta.draft) patch.draft = {...meta.draft, ...(typeof b.draft.to === 'string' ? {to: b.draft.to.slice(0, 300)} : {}), ...(typeof b.draft.subject === 'string' ? {subject: b.draft.subject.slice(0, 300)} : {}), ...(typeof b.draft.body === 'string' && b.draft.body.trim() ? {body: b.draft.body.slice(0, 20000)} : {}), ...(['pending', 'sent', 'discarded'].includes(b.draft.status) ? {status: b.draft.status} : {})};
         result = {meta: store.patchMeta(b.id, patch)}; break;
+      }
+      case '/api/onboard': {
+        const name=text(b.name,80).trim();if(!name)throw Error('Enter your name');
+        const prefs=store.preferences();
+        const bot=store.one("SELECT id,name FROM bots WHERE kind='bot' AND archived=0 ORDER BY created LIMIT 1");
+        if(!bot)throw Error('No main bot is available');
+        store.exec('BEGIN');
+        try {
+          store.set('preferences',{...prefs,user:name,onboarded:true,mainBot:bot.id});
+          store.exec('UPDATE bots SET pinned=1 WHERE id=?',bot.id);
+          if(!store.one("SELECT id FROM messages WHERE bot=? LIMIT 1",bot.id))store.message(bot.id,'assistant',`Hi ${name}, I’m ${bot.name}. What would you like to do?`);
+          store.exec('COMMIT');
+        } catch(e) {store.exec('ROLLBACK');throw e;}
+        result={bot:bot.id};break;
       }
       case '/api/config': {
         if (engine.active || engine.queue.length) throw Error('Wait for current tasks before changing the model');
