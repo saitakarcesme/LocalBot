@@ -1,0 +1,34 @@
+export default async ({page,api,expect,send,idle})=>{
+ const state=await api('state'),bot=state.bots[0];
+ // Sections are created from a bot's menu; the sidebar itself has no management controls.
+ await page.locator('.bot-row').first().click({button:'right'});
+ await page.getByRole('menuitem',{name:'New section…'}).click();
+ await page.getByRole('dialog',{name:'New section'}).getByRole('textbox').fill('Work');
+ await page.getByRole('button',{name:'Create'}).click();
+ await page.locator('.section-head',{hasText:'Work'}).waitFor();
+ const withSection=await api('state');
+ expect(withSection.sections[0].name==='Work','section persisted');expect(withSection.bots[0].section===withSection.sections[0].id,'bot filed in the new section');
+ expect(await page.locator('.sidebar-top button').count()===3,'top bar holds search, new bot and the toggle');
+ await page.locator('.section-head').click({button:'right'});
+ await page.getByRole('menuitem',{name:'Rename…'}).click();
+ await page.getByRole('dialog',{name:'Rename section'}).getByRole('textbox').fill('Office');
+ await page.getByRole('button',{name:'Save'}).click();
+ await page.locator('.section-head',{hasText:'Office'}).waitFor();
+ await page.getByRole('button',{name:'Profile menu'}).click();
+ await page.getByRole('menuitem',{name:'Hide sidebar'}).click();
+ expect(await page.locator('.sidebar').isVisible()===false,'sidebar collapses');
+ await page.locator('.chat-header button').first().click();
+ await page.locator('.sidebar').waitFor({state:'visible'});
+ await api('send',{bot:bot.id,prompt:'unique-search-needle'});
+ await page.keyboard.press('Control+Shift+f');
+ await page.getByLabel('Search bots and messages').fill('unique-search');
+ await page.getByText('Messages',{exact:true}).waitFor();
+ expect(await page.locator('.bot-row').count()>0,'search works with paginated API');
+ await page.getByRole('button',{name:'Close search'}).click();
+ await page.getByRole('button',{name:bot.name+' details'}).click();
+ expect(await page.getByRole('separator',{name:'Resize details'}).count()===1,'details resizer present');
+ await page.getByRole('button',{name:'Close details'}).click();
+ await api('preferences',{language:'tr'});
+ await page.waitForFunction(()=>document.documentElement.lang==='tr');
+ await page.getByRole('button',{name:'Profil menüsü'}).waitFor();
+};

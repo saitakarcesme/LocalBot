@@ -1,0 +1,20 @@
+export default async ({page, api, expect, idle}) => {
+ const bot = (await api('state')).bots[0];
+ await api('send', {bot:bot.id, prompt:'hello'}); await page.waitForTimeout(500); await idle();
+ await page.getByRole('button',{name:'Profile menu'}).click();
+ await page.getByRole('menuitem',{name:'Settings',exact:true}).click();
+ await page.getByRole('button',{name:'Tasks',exact:true}).click();
+ await page.getByRole('combobox',{name:'Task filter'}).selectOption('all');
+ await page.locator('.manage-card .link-button').first().click();
+ expect(await page.getByRole('dialog').count() === 0, 'task navigation closes settings');
+ await api('preferences',{language:'tr'});
+ await page.waitForFunction(()=>document.documentElement.lang==='tr');
+ await page.locator('.bot-row, .pin').first().click({button:'right'});
+ await page.getByRole('menuitem',{name:'Yapılandır…'}).click();
+ await page.getByRole('dialog',{name:bot.name+' yapılandırması'}).waitFor();
+ await page.getByRole('button',{name:'Yetenekler',exact:true}).click();
+ await page.getByRole('switch',{name:'Komut çalıştır'}).waitFor();
+ await page.getByRole('combobox',{name:'Dosyaları kaydet'}).waitFor();
+ await page.getByRole('button',{name:'Kişilik',exact:true}).click();
+ await page.getByRole('textbox',{name:'Kalıcı talimatlar'}).waitFor();
+};

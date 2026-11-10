@@ -1,0 +1,47 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {spawn} from 'node:child_process';
+import {mkdtemp,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+test('HTTP API enforces auth and origins and persists bot edits',async()=>{
+ const root=await mkdtemp(join(tmpdir(),'localbot-http-'));
+ const child=spawn(process.execPath,['runtime/server.mjs'],{env:{...process.env,LOCALBOT_DATA:root},stdio:['ignore','pipe','pipe']});
+ try{
+  const connection=await new Promise((resolve,reject)=>{let text='';child.stdout.on('data',d=>{text+=d;if(text.includes('\n'))resolve(JSON.parse(text.split('\n')[0]));});child.on('error',reject);child.on('exit',()=>reject(Error('Server exited')));});
+  const base='http://127.0.0.1:'+connection.port;
+  assert.equal((await fetch(base+'/api/state')).status,401);
+  const headers={Authorization:'Bearer '+connection.token,'Content-Type':'application/json'};
+  assert.equal((await fetch(base+'/api/state',{headers:{...headers,Origin:'https://evil.example'}})).status,403);
+  const post=async(path,body)=>(await fetch(base+'/api/'+path,{method:'POST',headers,body:JSON.stringify(body)}));
+  const initial=await (await fetch(base+'/api/state',{headers})).json();
+  await post('ui',{key:'selected',value:initial.bots[0].id});await post('ui',{key:'draft:'+initial.bots[0].id,value:'Draft survives reopening'});const ui=(await (await fetch(base+'/api/state',{headers})).json()).ui;assert.equal(ui.selected,initial.bots[0].id);assert.equal(ui['draft:'+initial.bots[0].id],'Draft survives reopening');assert.equal((await post('ui',{key:'invalid',value:'x'})).status,400);
+  assert.equal(initial.bots.length,1);assert.equal(initial.config.model,'qwen3.8-27b');
+  await post('preferences',{user:'İbrahim',theme:'dark',onboarded:true});
+  const profile=await (await fetch(base+'/api/state',{headers})).json();assert.equal(profile.preferences.user,'İbrahim');assert.equal(profile.preferences.onboarded,true);
+  await post('preferences',{user:'İbrahim',theme:'light'});assert.equal((await (await fetch(base+'/api/state',{headers})).json()).preferences.onboarded,true);
+  const created=await (await post('bots',{name:'Research',instructions:'Verify sources',color:'#abcdef'})).json();
+  assert(created.id);await post('bots/update',{id:created.id,personality:'Be a careful skeptical researcher.'});const personalized=await (await fetch(base+'/api/bot?id='+created.id,{headers})).json();assert.equal((await (await fetch(base+'/api/state',{headers})).json()).bots.find(b=>b.id===created.id).personality,'Be a careful skeptical researcher.');assert.equal((await post('bots/update',{id:created.id,personality:'x'.repeat(6001)})).status,400);await post('bots/update',{id:created.id,pinned:true});
+  const state=await (await fetch(base+'/api/state',{headers})).json();
+  assert.equal(state.bots.find(b=>b.id===created.id).pinned,1);
+  assert.equal((await post('config',{endpoint:'https://api.openai.com/v1',model:'cloud'})).status,400);
+  assert.equal((await fetch(base+'/src/main.js')).status,200);assert.equal((await fetch(base+'/../runtime/server.mjs')).status,404);
+  const stream=await fetch(base+'/api/stream',{headers});const reader=stream.body.getReader();const first=new TextDecoder().decode((await reader.read()).value);assert.match(first,/"type":"hello"/);
+  await post('preferences',{textSize:'large',sendKey:'mod-enter',notifications:false});const prefs=(await (await fetch(base+'/api/state',{headers})).json()).preferences;assert.equal(prefs.textSize,'large');assert.equal(prefs.sendKey,'mod-enter');assert.equal(prefs.notifications,false);assert.equal(prefs.user,'İbrahim');
+  await post('permissions',{files:'allow',commands:'bogus'});const rules=(await (await fetch(base+'/api/state',{headers})).json()).permissions;assert.equal(rules.files,'allow');assert.equal(rules.commands,'ask');
+  const mem=await (await post('memories',{bot:created.id,text:'Likes tea'})).json();assert.equal((await (await fetch(base+'/api/bot?id='+created.id,{headers})).json()).memories[0].text,'Likes tea');await post('memories/remove',{id:mem.id});
+  const section=await (await post('sections',{sections:[{id:'work-section',name:'Work'}]})).json();assert.equal(section.sections[0].name,'Work');
+  await post('bots/update',{id:created.id,section:'work-section',kind:'group',members:[initial.bots[0].id],rules:{files:'never'}});
+  const configured=(await (await fetch(base+'/api/state',{headers})).json()).bots.find(b=>b.id===created.id);assert.equal(configured.kind,'group');assert.equal(configured.section,'work-section');assert.deepEqual(JSON.parse(configured.members),[initial.bots[0].id]);
+  const skill=await (await post('skills/save',{name:'research',description:'Verify facts',body:'Read primary sources.',bot:created.id})).json();assert(skill.id);
+  const routine=await (await post('routines/save',{name:'Weekly research',bot:created.id,prompt:'Research news',schedule:{type:'daily',time:'09:00',days:[1,2,3,4,5]}})).json();assert(routine.id);
+  const removed=await (await post('routines/remove',{id:routine.id})).json();await post('routines/restore',{routine:removed.restore});assert((await (await fetch(base+'/api/state',{headers})).json()).routines.some(r=>r.id===routine.id));
+  await post('secrets/save',{name:'TEST_TOKEN',purpose:'Testing',value:'never-expose-this-value'});assert(!(await (await fetch(base+'/api/state',{headers})).text()).includes('never-expose-this-value'));
+  const template=await (await post('bots/export',{id:created.id})).json();const imported=await (await post('bots/import',{content:template.content})).json();assert(imported.id);
+  const search=await (await fetch(base+'/api/search?q=missing',{headers})).json();assert(Array.isArray(search.messages));assert(Array.isArray(search.files));
+  await post('preferences',{onboarded:false,restart:true});assert.equal((await (await fetch(base+'/api/state',{headers})).json()).preferences.onboarded,false);
+  assert.equal((await post('bots/delete',{id:created.id})).status,400);await post('bots/update',{id:created.id,archived:true});assert.equal((await post('bots/delete',{id:created.id})).status,200);
+  reader.cancel();
+  await post('credentials',{key:'test-secret'});const text=await (await fetch(base+'/api/state',{headers})).text();assert(!text.includes('test-secret'));
+ }finally{child.kill('SIGTERM');await new Promise(r=>child.once('exit',r));await rm(root,{recursive:true,force:true});}
+});
