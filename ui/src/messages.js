@@ -11,55 +11,13 @@ const safeArgs = e => { try { return JSON.parse(e.args || '{}'); } catch { retur
 const hostOf = url => { try { return new URL(url).host.replace(/^www\./, ''); } catch { return url; } };
 export const metaOf = m => { try { return m.meta ? JSON.parse(m.meta) : {}; } catch { return {}; } };
 
-// ---------- Smooth reveal ----------
-// Streamed text is revealed at an adaptive pace so bursts from the model read as
-// a steady flow. Progress is keyed per run+message so the live bubble and the
-// saved message continue seamlessly when the stream ends.
-const progress = new Map();
-export const streamedRuns = new Set();
-const revealListeners = new Set();
-const finished = new Set();
-
-// While text is still arriving, drop a trailing unmatched ** or ` so markers never flash.
-function hideOpenMarker(text, marker) {
-  const count = text.split(marker).length - 1;
-  if (marker === '`' && text.includes('```')) return text;
-  if (count % 2 === 0) return text;
-  const at = text.lastIndexOf(marker);
-  return text.slice(0, at) + text.slice(at + marker.length);
+// Messages arrive as complete chat messages, without a simulated typewriter.
+function RevealMarkdown({text, context}) {
+ return html`<div class="prose" dangerouslySetInnerHTML=${{__html: markdown(text, context)}}/>`;
 }
-
-function RevealMarkdown({text, progressKey, live, context}) {
-  const [, tick] = useState(0);
-  const lastFrame = useRef(0);
-  const known = progress.has(progressKey);
-  if (!known) progress.set(progressKey, streamedRuns.has(progressKey.split(':')[0]) ? 0 : text.length);
-  // Hidden windows don't run animation frames; never leave text half-revealed.
-  if (document.hidden || document.documentElement.dataset.motion === 'reduced' || matchMedia('(prefers-reduced-motion: reduce)').matches) progress.set(progressKey, text.length);
-  const shown = Math.min(progress.get(progressKey), text.length);
-  useEffect(() => {
-    if (shown >= text.length) {
-      // Tell the transcript once that this message finished revealing.
-      if (!live && !finished.has(progressKey)) { finished.add(progressKey); revealListeners.forEach(fn => fn()); }
-      return;
-    }
-    const frame = requestAnimationFrame(now => {
-      const elapsed = lastFrame.current ? Math.min(50, now - lastFrame.current) : 16.67;
-      lastFrame.current = now;
-      const backlog = text.length - progress.get(progressKey);
-      progress.set(progressKey, progress.get(progressKey) + Math.max(1, Math.ceil(Math.max(2, backlog * (live ? 0.08 : 0.16)) * elapsed / 16.67)));
-      tick(n => n + 1);
-    });
-    return () => cancelAnimationFrame(frame);
-  });
-  let visible = text.slice(0, shown);
-  if (shown < text.length) visible = hideOpenMarker(hideOpenMarker(visible, '**'), '`');
-  return html`<div class="prose" dangerouslySetInnerHTML=${{__html: markdown(visible, context)}}/>`;
-}
-export function isRevealing(key, text) { return progress.has(key) && progress.get(key) < text.length; }
 export function useRevealTick() {
-  const [, force] = useState(0);
-  useEffect(() => { const fn = () => force(n => n + 1); revealListeners.add(fn); const off = onAssets(fn); return () => { revealListeners.delete(fn); off(); }; }, []);
+ const [,force]=useState(0);
+ useEffect(()=>onAssets(()=>force(n=>n+1)),[]);
 }
 
 // ---------- Timeline ----------
@@ -72,7 +30,7 @@ export function buildTimeline(data, {showThinking, thread = null, unreadFrom = 0
   const messages = data.messages.filter(inScope);
   const attached = new Set(data.messages.flatMap(m => (metaOf(m).files || []).map(f => f.id)));
   const files = thread ? [] : data.files.filter(f => f.imported && !attached.has(f.id)).map(f => ({...f, kind: 'file', role: 'user'}));
-  const events = data.events.filter(e => (e.thread || null) === thread && (e.kind === 'tool' || e.kind === 'error' || (e.kind === 'reset' && !thread) || (e.kind === 'thinking' && showThinking))).map(e => ({...e, eventKind: e.kind, kind: 'event'}));
+  const events = data.events.filter(e => (e.thread || null) === thread && (e.kind === 'error' || (e.kind === 'reset' && !thread))).map(e => ({...e, eventKind: e.kind, kind: 'event'}));
   const replies = new Map();
   if (!thread) for (const m of data.messages) if (m.thread) replies.set(m.thread, (replies.get(m.thread) || 0) + 1);
   const all = [...messages.map(m => ({...m, kind: 'message', meta: metaOf(m), replies: replies.get(m.id) || 0})), ...files, ...events].sort((a, b) => a.created - b.created);
@@ -531,16 +489,8 @@ function TypingBubble({queued}) {
 
 /** The in-progress part of the newest turn: thinking, streamed text, typing dots. */
 function LiveTail({run, botData, showThinking, toolRunning, waiting, context}) {
-  const stream = useLiveStream();
-  const mine = stream.run === run.id;
-  const parts = [];
-  if (mine && stream.reasoning && showThinking && !stream.content) parts.push(html`<${Thinking} key="live-think" text=${stream.reasoning} live/>`);
-  if (mine && stream.content) {
-    const index = botData.messages.filter(m => m.run === run.id && m.role === 'assistant' && m.content).length;
-    streamedRuns.add(run.id);
-    parts.push(html`<div class="bubbles is-live" key="live"><div class="bubble-row"><div class="bubble-stack"><div class="bubble"><${RevealMarkdown} text=${stream.content} progressKey=${run.id + ':' + index} live context=${context}/></div></div></div></div>`);
-  } else if (!toolRunning && !waiting && !(mine && stream.reasoning && showThinking)) parts.push(html`<div class="bubbles" key="typing"><${TypingBubble} queued=${run.status === 'queued'}/></div>`);
-  return parts;
+  // The orb conveys ongoing work; only committed messages enter the transcript.
+  return null;
 }
 
 /**

@@ -106,12 +106,10 @@ vec4 ribbons(vec3 n,float front){
  vec3 color=mix(a,b,blend);
  color=mix(base0,color,mix(.58,1.,front));
  color=mix(color,vec3(.59,.51,.59),error*.45);
- // Narrow caustic edge surrounded by a translucent, dispersed beam.
- float edge=exp(-pow((abs(f-.5)-width*.72)*35.,2.));
- float core=exp(-pow((f-.5)*6.,2.));
- color=mix(color,vec3(.94,.98,1.),edge*.48);
- color*=.70+core*.36+edge*.32;
- return vec4(color,mask*(.32+core*.40));
+ // Dense colored glass ribbons, with a soft luminous heart rather than beam outlines.
+ float core=exp(-pow((f-.5)*4.,2.));
+ color*=.78+core*.32;
+ return vec4(color,mask*(.70+core*.24));
 }
 void main(){
  vec2 q=(gl_FragCoord.xy/size*2.-1.);q.y=-q.y;
@@ -124,15 +122,22 @@ void main(){
  vec3 normal=vec3(q,z);
  vec3 ray=refract(vec3(0.,0.,-1.),normal,1./1.46);
  vec3 farPoint=normalize(normal+ray*(1.65*z));
- vec4 back=ribbons(farPoint,0.);color=mix(color*.58,back.rgb,back.a);
- vec4 middle=ribbons(normalize(mix(normal,farPoint,.48)+vec3(.04,-.06,.02)),.55);
- color=mix(color,middle.rgb,middle.a*.72);
- vec4 front=ribbons(vec3(q,z),1.);color=mix(color,front.rgb,front.a);
+ // Leave a clear glass shell around the suspended colorful core.
+ float coreRadius=.83+.025*sin(time*.6);
+ vec2 inner=q/coreRadius;
+ float coreZ=sqrt(max(0.,1.-dot(inner,inner)));
+ float coreMask=1.-smoothstep(.91,1.,dot(inner,inner));
+ vec4 back=ribbons(normalize(vec3(inner,-coreZ)),0.);
+ vec4 front=ribbons(normalize(vec3(inner,coreZ)),1.);
+ vec3 heart=mix(base0*.6,back.rgb,back.a*.8);
+ heart=mix(heart,front.rgb,front.a);
+ heart+=mix(c1,c5,.5)*exp(-dot(inner,inner)*5.)*.15;
+ color=mix(mix(base0*.3,base1*.5,z),heart,coreMask);
  float fresnel=pow(1.-z,3.);
  vec3 halfLight=normalize(vec3(-.42,-.62,1.8));
  float highlight=pow(max(0.,dot(normal,halfLight)),65.);
  float caustic=exp(-pow(length(q-vec2(.16,.22))-.67,2.)*1300.)*max(0.,q.y)*.26;
- color+=vec3(.78,.89,1.)*(highlight*.55+fresnel*.12+caustic);
+ color+=vec3(.78,.89,1.)*(highlight*.65+fresnel*.18+caustic*.15);
  color=vec3(1.)-exp(-color*1.24);
  float wash=max(0.,1.-length(q-vec2(-.3,-.4))*.65);
  color=mix(color,vec3(.88,.95,1.),wash*(concept>.5&&concept<1.5?.22:.06)+lightTheme*.02);

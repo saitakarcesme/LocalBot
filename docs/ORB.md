@@ -33,3 +33,8 @@ The native window clips to the sidebar's 22-point continuous radius. Typing uses
 Native verification: LocalBot 1.2.0 was rebuilt, signed, installed and opened. The background-window fallback issue was reproduced and fixed by mounting in a layout effect and drawing the first palette frame immediately. The installed app visibly shows teal Mivo, violet ShopBot/Lumo and warm ResearchBot/Daily. The attachment picker opens and cancels without hanging. Elpis's exact model ID was verified with a real completion.
 
 Validation: 20 core tests pass. All 12 UI scenarios passed across the suite and targeted reruns; the first suite run had a reduced-motion timing failure that did not recur in targeted runs. The orb scenario now also checks that the production component renders, not only the isolated playground.
+
+## Glass-core refinement (11 November 2026)
+The colored core is now suspended within a clear shell, with dense fluid ribbons and restrained reflection instead of beam outlines. Chat waits for committed messages and renders them without typewriter animation; tool and reasoning event rows remain in runtime storage but are omitted from the transcript.
+
+The 40-round runtime cutoff was removed. Long tasks continue until completion or cancellation, with model-generated context checkpoints near the context budget. Repeated identical calls stop with a blocker explanation. Regression tests cover 45 tool rounds, repeated-call termination, context checkpoint continuation, complete-message delivery and hidden tool activity.

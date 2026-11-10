@@ -184,3 +184,41 @@ test('a bot can create another bot only after approval, with a look of its own',
   });
  });
 });
+
+test('long tool tasks continue beyond 40 rounds and repeated calls end with a useful message',async()=>{
+ for(const repeat of [false,true]) await fixture(async store=>{
+  let requests=0;
+  await fake((req,res)=>{let body='';req.on('data',d=>body+=d);req.on('end',()=>{
+   const input=JSON.parse(body);requests++;
+   if(!input.tools?.length || requests>45) return sse(res,{content:repeat?'Blocked by a repeating action.':'Finished all 45 rounds.'});
+   sse(res,{tool_calls:[{index:0,id:'call'+requests,function:{name:'list_bots',arguments:JSON.stringify({checkpoint:repeat?0:requests})}}]});
+  });},async endpoint=>{
+   store.set('model',{endpoint,model:'mock',context:262144,contextManual:true,maxTokens:100});
+   const engine=new Engine(store),bot=store.all('SELECT id FROM bots')[0].id;
+   const id=engine.enqueue(bot,'Complete a long task');await waitFor(()=>!engine.active);
+   assert.equal(store.one('SELECT status FROM runs WHERE id=?',id).status,'done');
+   assert.equal(requests,repeat?6:46);
+   assert.match(store.one("SELECT content FROM messages WHERE run=? AND role='assistant' ORDER BY created DESC LIMIT 1",id).content,repeat?/Blocked/:/45 rounds/);
+  });
+ });
+});
+
+test('context checkpoint preserves task continuation without orphan tool messages',async()=>{
+ await fixture(async store=>{
+  let rounds=0,compacted=false;
+  await fake((req,res)=>{let body='';req.on('data',d=>body+=d);req.on('end',()=>{
+   const input=JSON.parse(body);
+   if(input.stream===false){compacted=true;res.setHeader('Content-Type','application/json');return res.end(JSON.stringify({choices:[{message:{content:'Original task: inspect files. Completed listing. Next: explain results.'}}]}));}
+   rounds++;
+   if(rounds===1)return sse(res,{tool_calls:[{index:0,id:'listing',function:{name:'list_bots',arguments:'{}'}}]});
+   assert.match(input.messages[1].content,/Original task: inspect files/);
+   assert.equal(input.messages.some(m=>m.role==='tool'),false);
+   sse(res,{content:'Here are the results.'});
+  });},async endpoint=>{
+   store.set('model',{endpoint,model:'mock',context:8000,contextManual:true,maxTokens:100});
+   const engine=new Engine(store);engine.tool=async()=> 'Result '.repeat(2500);
+   const id=engine.enqueue(store.all('SELECT id FROM bots')[0].id,'Inspect files');await waitFor(()=>!engine.active);
+   assert.equal(compacted,true);assert.equal(store.one('SELECT status FROM runs WHERE id=?',id).status,'done');
+  });
+ });
+});
