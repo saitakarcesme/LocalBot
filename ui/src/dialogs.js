@@ -6,7 +6,6 @@ import {Figure} from './figure.js';
 const ORB_COLORS = [['Marble','#86c5f7'],['Lagoon','#7fd8b0'],['Dusk','#f2a2c8']];
 import {SHAPE_IDS, EYE_IDS, freshLook} from './looks.js';
 import {Settings} from './settings.js';
-import {ModelSetup} from './models.js';
 
 let dialogListener = null;
 export function openDialog(type, props = {}) { dialogListener?.({type, props}); }

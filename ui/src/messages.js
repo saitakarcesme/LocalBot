@@ -3,7 +3,7 @@ import {Icon, toolIcon} from './icons.js';
 import {Button, IconButton, Spinner, openMenu, undoToast, Popover, confirm} from './ui.js';
 import {markdown, plainText, onAssets} from './markdown.js';
 import {Figure} from './figure.js';
-import {liveStream, useLiveStream} from './state.js';
+import {liveStream} from './state.js';
 import {EmojiPicker, QUICK_REACTIONS} from './emoji.js';
 
 const SEPARATOR_GAP = 45 * 60 * 1000;
@@ -12,7 +12,7 @@ const hostOf = url => { try { return new URL(url).host.replace(/^www\./, ''); } 
 export const metaOf = m => { try { return m.meta ? JSON.parse(m.meta) : {}; } catch { return {}; } };
 
 // Messages arrive as complete chat messages, without a simulated typewriter.
-function RevealMarkdown({text, context}) {
+function MessageMarkdown({text, context}) {
  return html`<div class="prose" dangerouslySetInnerHTML=${{__html: markdown(text, context)}}/>`;
 }
 export function useRevealTick() {
@@ -202,7 +202,7 @@ function Bubble({message, side, c, isLastOfTurn, isLastUser, canRetry, liveKey, 
       ${meta.reply ? html`<${ReplyQuote} reply=${meta.reply} onJump=${c.onJump} botName=${c.bot.name} userName=${c.state.preferences.user}/>` : null}
       ${meta.files?.length ? html`<${Attachments} files=${meta.files} onOpenFile=${c.onOpenFile} side=${side}/>` : null}
       ${message.content ? html`<div class="bubble">${side === 'bot'
-        ? html`<${RevealMarkdown} text=${message.content} progressKey=${liveKey} live=${false} context=${c.context}/>`
+        ? html`<${MessageMarkdown} text=${message.content} progressKey=${liveKey} live=${false} context=${c.context}/>`
         : html`<div class="prose" dangerouslySetInnerHTML=${{__html: markdown(message.content, c.context)}}/>`}</div>` : null}
       ${media.map(f => html`<${InlineMedia} key=${f.id} file=${f}/>`)}
       ${link ? html`<${LinkPreview} url=${link}/>` : null}
@@ -322,75 +322,6 @@ export function stepLabel(e) {
 }
 const STATUS_TEXT = {declined: 'Declined', failed: 'Failed', cancelled: 'Stopped', interrupted: 'Interrupted'};
 
-function Diff({text}) {
-  return html`<pre class="step-detail diff">${text.split('\n').map((line, i) => html`<span key=${i} class=${line === '@@' ? 'diff-gap' : line[0] === '+' ? 'diff-add' : line[0] === '-' ? 'diff-del' : 'diff-same'}>${line === '@@' ? '⋯' : line || ' '}${'\n'}</span>`)}</pre>`;
-}
-
-/** What another bot is doing with the work this bot handed over. */
-function SubTask({event, c}) {
-  let info = {};
-  try { info = JSON.parse(event.detail); } catch {}
-  const id = info.id || info.task, run = c.state.runs.find(r => r.id === id);
-  const target = c.state.bots.find(b => b.id === (run?.bot || safeArgs(event).bot_id || info.id));
-  if (!target) return null;
-  const status = !run ? '' : {queued: t('Waiting'), running: t('Working'), waiting: t('Needs your approval'), done: t('Finished'), failed: t('Failed'), cancelled: t('Stopped'), interrupted: t('Interrupted')}[run.status];
-  return html`<button type="button" class="subtask" onClick=${() => emit('localbot:open-bot', {id: target.id})}>
-    <span class="subtask-figure"><${Figure} shape=${target.shape} eyes=${target.eyes} color=${target.color} seed=${target.id} state=${run && ['running', 'queued'].includes(run.status) ? 'thinking' : 'idle'}/></span>
-    <span class="subtask-text"><strong>${target.name}</strong><span>${status || t('Open chat')}</span></span>
-    <${Icon} name="chevronRight"/>
-  </button>`;
-}
-
-function StepRow({event, c}) {
-  const [open, setOpen] = useState(false);
-  const a = safeArgs(event), running = event.status === 'running';
-  let diff = null;
-  if (event.label === 'write_file' && event.detail?.startsWith('{')) { try { diff = JSON.parse(event.detail); } catch {} }
-  const detail = diff ? diff.diff : event.label === 'run_command' || event.label === 'mac_command' ? `$ ${a.command}\n\n${event.detail}` : event.label === 'remember' ? a.note : event.detail;
-  const file = event.label === 'write_file' && event.status === 'done' ? c.files.find(f => displayName(f.name) === String(a.path).split('/').pop()) : null;
-  const delegated = ['send_to_bot', 'create_bot'].includes(event.label) && event.status === 'done';
-  return html`<div class=${cx('step', 'status-' + event.status, open && 'is-open')}>
-    <div class="step-line">
-      <button type="button" class="step-toggle" aria-expanded=${String(open)} disabled=${!detail} onClick=${() => setOpen(!open)}>
-        <span class="step-icon">${running ? html`<${Spinner} size=${12}/>` : html`<${Icon} name=${toolIcon(event.label)}/>`}</span>
-        <span class=${cx('step-label', running && 'shimmer')}>${stepLabel(event)}</span>
-        ${diff && (diff.added || diff.removed) ? html`<span class="step-diff"><span class="diff-add">+${diff.added}</span>${diff.removed ? html`<span class="diff-del">−${diff.removed}</span>` : null}</span>` : null}
-        ${STATUS_TEXT[event.status] ? html`<span class="step-status">${t(STATUS_TEXT[event.status])}</span>` : null}
-        ${a._note ? html`<span class="step-status" title=${a._note}>${t('Auto-approved')}</span>` : null}
-        ${detail ? html`<span class="step-chevron"><${Icon} name="chevronRight"/></span>` : null}
-      </button>
-      ${file ? html`<button type="button" class="step-open" onClick=${() => c.onOpenFile(file.id)}>${t('Open')}</button>` : null}
-    </div>
-    ${delegated ? html`<${SubTask} event=${event} c=${c}/>` : null}
-    ${open && detail ? (diff ? html`<${Diff} text=${detail}/>` : html`<pre class="step-detail">${String(detail).slice(0, 8000)}</pre>`) : null}
-  </div>`;
-}
-
-function Steps({items, c}) {
-  const running = items.some(e => e.status === 'running');
-  const [expanded, setExpanded] = useState(false);
-  if (items.length <= 3 || running || expanded) {
-    return html`<div class="steps">
-      ${items.length > 3 && !running ? html`<button type="button" class="steps-summary" onClick=${() => setExpanded(false)}><span class="step-icon"><${Icon} name="chevronDown"/></span>${t('Hide steps')}</button>` : null}
-      ${items.map(e => e.eventKind === 'thinking' ? html`<${Thinking} key=${e.id} text=${e.detail} seconds=${Math.round(((e.finished || e.created) - e.created) / 1000)}/>` : html`<${StepRow} key=${e.id} event=${e} c=${c}/>`)}</div>`;
-  }
-  const tools = items.filter(e => e.eventKind !== 'thinking').length;
-  return html`<div class="steps"><button type="button" class="steps-summary" onClick=${() => setExpanded(true)}>
-    <span class="step-icon"><${Icon} name="chevronRight"/></span>${tools ? plural(tools, 'Used {n} tool', 'Used {n} tools') : plural(items.length, '{n} step', '{n} steps')}</button></div>`;
-}
-
-function Thinking({text, live, seconds}) {
-  const [open, setOpen] = useState(false);
-  return html`<div class=${cx('thinking', open && 'is-open')}>
-    <button type="button" class="step-toggle" aria-expanded=${String(open)} onClick=${() => setOpen(!open)}>
-      <span class="step-icon"><${Icon} name="sparkle"/></span>
-      <span class=${cx('step-label', live && 'shimmer')}>${live ? t('Thinking') : seconds > 1 ? t('Thought for {n}s', {n: seconds}) : t('Thought briefly')}</span>
-      <span class="step-chevron"><${Icon} name="chevronRight"/></span>
-    </button>
-    ${open ? html`<div class="thinking-text">${text}</div>` : null}
-  </div>`;
-}
-
 function ErrorRow({event, c, canRetry}) {
   const raw = event.detail || event.label, plain = humanError(raw), needsKey = /api key/i.test(raw);
   const [open, setOpen] = useState(false);
@@ -483,16 +414,6 @@ export function ApprovalCard({approval, bot, state, position}) {
   </div>`;
 }
 
-function TypingBubble({queued}) {
-  return html`<div class="bubble-row typing-row"><div class="bubble typing is-live" role="status" aria-label=${queued ? t('Queued') : t('Thinking')}><span></span><span></span><span></span></div></div>`;
-}
-
-/** The in-progress part of the newest turn: thinking, streamed text, typing dots. */
-function LiveTail({run, botData, showThinking, toolRunning, waiting, context}) {
-  // The orb conveys ongoing work; only committed messages enter the transcript.
-  return null;
-}
-
 /**
  * handlers: onReply(message, quote?), onThread(id), onOpenFile(id, siblings?), onEdit(message), onJump(id), onFocusComposer()
  */
@@ -502,7 +423,6 @@ export function Transcript({bot, data, state, run, thread = null, unreadFrom = 0
   markSeen(bot.id + ':' + (thread || ''), data);
   const turns = buildTimeline(data, {showThinking, thread, unreadFrom});
   const approvals = state.approvals.filter(a => a.bot === bot.id && (a.thread || null) === thread);
-  const toolRunning = data.events.some(e => e.run === run?.id && e.status === 'running');
   const live = run && run.status !== 'queued' ? run : null;
   const idle = !run;
   const members = bot.kind === 'group' ? state.bots.filter(b => (JSON.parse(bot.members || '[]')).includes(b.id)) : [];
@@ -538,12 +458,9 @@ export function Transcript({bot, data, state, run, thread = null, unreadFrom = 0
           })}</div>`;
           if (block.kind === 'plan') return html`<${PlanCard} key=${block.key} message=${block.item}/>`;
           if (block.kind === 'draft') return html`<${DraftCard} key=${block.key} message=${block.item}/>`;
-          if (block.kind === 'steps') return html`<${Steps} key=${block.key} items=${block.items} c=${c}/>`;
-          if (block.kind === 'thinking') return html`<${Thinking} key=${block.key} text=${block.item.detail} seconds=${Math.round(((block.item.finished || block.item.created) - block.item.created) / 1000)}/>`;
           if (block.kind === 'error') return html`<${ErrorRow} key=${block.key} event=${block.item} c=${c} canRetry=${idle && turn === lastTurn}/>`;
           return null;
         })}
-        ${isLive ? html`<${LiveTail} run=${live} botData=${data} showThinking=${showThinking} toolRunning=${toolRunning} waiting=${approvals.length > 0} context=${context}/>` : null}
         ${isLive ? approvals.map((a, i) => html`<${ApprovalCard} key=${a.id} approval=${a} bot=${bot} state=${state} position=${approvals.length > 1 ? `${i + 1}/${approvals.length}` : ''}/>`) : null}
       </div>
     </div>`;

@@ -10,10 +10,8 @@ export default async ({page,api,expect})=>{
  await page.getByRole('button',{name:'Profile menu'}).click();await page.getByRole('menuitem',{name:'Settings',exact:true}).click();
  await page.getByRole('button',{name:'General',exact:true}).click();
  await page.getByRole('button',{name:'Restart guide'}).click();
- await page.getByLabel('What should I call you?').fill('Tester');
- await page.getByRole('button',{name:'Continue',exact:true}).click();
- await page.getByRole('button',{name:'Set up later'}).click();
- await page.getByLabel('First task').waitFor();
- await page.getByRole('button',{name:'Start',exact:true}).click();
+ await page.getByText('Hi, I’m LocalBot. What should I call you?',{exact:true}).waitFor();
+ await page.getByLabel('Your name',{exact:true}).fill('Tester');
+ await page.getByRole('button',{name:'Start with LocalBot'}).click();
  await page.locator('.sidebar').waitFor();
 };

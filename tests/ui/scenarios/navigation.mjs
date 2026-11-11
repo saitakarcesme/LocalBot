@@ -1,5 +1,6 @@
 export default async ({page,api,expect,send,idle})=>{
  const state=await api('state'),bot=state.bots[0];
+ await api('bots/update',{id:bot.id,pinned:false});
  // Sections are created from a bot's menu; the sidebar itself has no management controls.
  await page.locator('.bot-row').first().click({button:'right'});
  await page.getByRole('menuitem',{name:'New section…'}).click();

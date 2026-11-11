@@ -118,7 +118,7 @@ final class HostWebView: WKWebView {
   window.setFrameAutosaveName("LocalBotCleanRoom");window.center()
   let config=WKWebViewConfiguration();config.userContentController.add(self,name:"localbot")
   web=HostWebView(frame:.zero,configuration:config);web.navigationDelegate=self;web.uiDelegate=self;web.setValue(false,forKey:"drawsBackground")
-  let glass=NSVisualEffectView(frame:window.contentLayoutRect);glass.material = .underWindowBackground;glass.blendingMode = .behindWindow;glass.state = .active
+  let glass=NSView(frame:window.contentLayoutRect)
   web.frame=glass.bounds;web.autoresizingMask=[.width,.height];glass.addSubview(web)
   glass.wantsLayer=true;glass.layer?.cornerRadius=22;glass.layer?.cornerCurve = .continuous;glass.layer?.masksToBounds=true
   window.contentView=glass;window.makeKeyAndOrderFront(nil);alignWindowButtons();NSApp.activate(ignoringOtherApps:true)

@@ -1,5 +1,6 @@
 export default async ({page,api,expect}) => {
  const state=await api('state');const bot=state.bots[0];
+ await api('bots/update',{id:bot.id,pinned:false});
  await page.locator('.bot-row').first().hover();
  await page.getByRole('button',{name:'More actions for '+bot.name}).click();
  await page.getByRole('menuitem',{name:'Configure…'}).click();
