@@ -57,13 +57,13 @@ test('write tools require approval, preserve files after approval and enter Libr
   });
  });
 });
-test('single model queue serializes bots and cancellation revokes approvals',async()=>{
+test('independent bots run while another awaits approval; cancellation stays isolated',async()=>{
  await fixture(async(store)=>{
   let requests=0;
   await fake((req,res)=>{requests++;sse(res,requests===1?{tool_calls:[{index:0,id:'call',function:{name:'write_file',arguments:'{"path":"no.txt","content":"no"}'}}]}:{content:'Done'});},async endpoint=>{
    store.set('model',{endpoint,model:'mock',context:8000,contextManual:true,maxTokens:100});const engine=new Engine(store),first=store.all('SELECT id FROM bots')[0].id,second=store.addBot('Second');
    const a=engine.enqueue(first,'Write'),b=engine.enqueue(second,'Hello');await waitFor(()=>engine.approvals.size===1);
-   assert.equal(requests,1);assert.equal(store.one('SELECT status FROM runs WHERE id=?',b).status,'queued');
+   await waitFor(()=>store.one('SELECT status FROM runs WHERE id=?',b).status==='done');assert.equal(requests,2);
    const approval=[...engine.approvals.keys()][0];engine.cancel(a);await waitFor(()=>!engine.active&&!engine.queue.length);
    assert.equal(store.one('SELECT status FROM runs WHERE id=?',a).status,'cancelled');
    assert.equal(store.one('SELECT status FROM runs WHERE id=?',b).status,'done');assert.throws(()=>engine.approve(approval,true),/expired/);assert.equal(store.all('SELECT * FROM files').length,0);
@@ -234,6 +234,19 @@ test('a bot can change only its own profile using a workspace image',async()=>{
   assert.equal(store.bot(bot).name,'Mira');assert.match(store.bot(bot).avatar,/^data:image\/png;base64,/);assert.equal(store.bot(other).name,'Other');
   await assert.rejects(()=>engine.tool(task,'update_self_profile',{avatar_path:'../outside.png'}),/outside/);
   await writeFile(join(space,'bad.svg'),'<svg/>');await assert.rejects(()=>engine.tool(task,'update_self_profile',{avatar_path:'bad.svg'}),/PNG/);
-  await engine.tool(task,'update_self_profile',{palette:'lagoon',reset_avatar:true});assert.equal(store.bot(bot).avatar,'');assert.equal(store.bot(bot).color,'#7fd8b0');
+  await engine.tool(task,'update_self_profile',{palette:'mint',reset_avatar:true});assert.equal(store.bot(bot).avatar,'');assert.equal(store.bot(bot).color,'#7fd8b0');
+ });
+});
+
+test('concurrent streams stay isolated and same-conversation follow-ups wait',async()=>{
+ await fixture(async store=>{
+  const engine=new Engine(store), first=store.all('SELECT id FROM bots')[0].id, second=store.addBot('Parallel');
+  const entered=[], releases=new Map();
+  engine.run=async task=>{entered.push(task.id);engine.streams.set(task.id,{run:task.id,bot:task.bot,content:task.prompt});await new Promise((resolve,reject)=>{releases.set(task.id,resolve);task.abort.signal.addEventListener('abort',()=>reject(Error('Stopped')),{once:true});});};
+  const a=engine.enqueue(first,'A'),b=engine.enqueue(second,'B'),c=engine.enqueue(first,'Follow-up'),d=engine.enqueue(first,'Thread',{thread:'another'});
+  await waitFor(()=>entered.length===3);
+  assert.deepEqual(new Set(entered),new Set([a,b,d]));assert.equal(engine.streams.get(a).content,'A');assert.equal(engine.streams.get(b).content,'B');
+  engine.cancel(b);await waitFor(()=>!engine.activeTasks.has(b));assert.equal(engine.activeTasks.has(a),true);assert.equal(engine.streams.has(a),true);
+  releases.get(a)();await waitFor(()=>entered.includes(c));releases.get(c)();releases.get(d)();await waitFor(()=>!engine.active);assert.equal(engine.streams.size,0);
  });
 });

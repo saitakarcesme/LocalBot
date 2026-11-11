@@ -4,7 +4,7 @@ import {IconButton, Button, openMenu, confirm, promptText, undoToast} from './ui
 import {UserAvatar, figureState} from './figure.js';
 import {BotFace} from './messages.js';
 import {plainText} from './markdown.js';
-import {activeRunFor, liveStream} from './state.js';
+import {activeRunFor, streamFor} from './state.js';
 import {openDialog} from './dialogs.js';
 
 /*
@@ -57,7 +57,7 @@ function statusLine(run, approvals) {
   if (!run) return null;
   if (approvals) return t('Needs your approval');
   if (run.status === 'queued') return t('Waiting for the model…');
-  if (liveStream.run === run.id && liveStream.content) return t('Typing…');
+  if (streamFor(run.id).content) return t('Typing…');
   return t('Thinking…');
 }
 

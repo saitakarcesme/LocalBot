@@ -761,10 +761,6 @@ body.is-resizing, body.is-resizing * { cursor: col-resize !important; }
   .jump-count { display: none; }
 }
 
-/* Living Marble identity: the SVG remains underneath as a no-Canvas fallback. */
-.localbot-orb { display:inline-block; position:relative; flex:none; vertical-align:middle; }
-.localbot-orb > :is(canvas,img) { position:absolute; inset:0; width:100%; height:100%; }
-.localbot-orb:has(canvas[data-renderer="canvas"]) > img { visibility:hidden; }
 /* Settings controls must wrap instead of stealing the description column. */
 .settings-nav-item { flex-shrink:0; }
 .settings-content { min-height:0; overflow-x:hidden; }
@@ -803,3 +799,15 @@ body.is-resizing, body.is-resizing * { cursor: col-resize !important; }
 .welcome-message-send { flex:none;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:var(--text);color:var(--bg);--icon:18px; }
 .welcome-message-send:disabled { opacity:.3; }
 .welcome-message-send:focus-visible { outline:2px solid var(--text);outline-offset:4px; }
+
+/* Plan layout: fixed icon column, aligned title/progress and step markers. */
+.plan{padding:16px 18px;border-radius:18px;background:var(--bg-elevated)}
+.plan-head{display:grid;grid-template-columns:28px minmax(0,1fr) 16px;gap:12px;width:100%;text-align:left;align-items:start;padding:0;background:none}
+.plan-ring{width:28px;height:28px;display:grid;place-items:center;border-radius:8px;background:var(--fill-hover);--icon:16px}
+.plan-text{min-width:0;gap:4px;text-align:left}.plan-text strong{line-height:1.45}.plan-text>span{font-size:12px;color:var(--text-3);line-height:1.5}
+.plan-head>svg{margin-top:6px}.plan-steps{list-style:none;margin:14px 0 0 40px;padding:0;display:grid;gap:10px}.plan-steps li{display:grid;grid-template-columns:16px minmax(0,1fr);gap:8px;line-height:1.5}.plan-mark{height:21px;display:grid;place-items:center;--icon:12px}.plan-mark:empty:after{content:'';width:5px;height:5px;border-radius:50%;background:var(--text-3)}
+.settings input[type=file]{font:inherit;color:var(--text-2);padding:8px;border:1px solid var(--border);border-radius:12px;background:var(--fill-subtle);min-width:0}
+.settings input[type=file]::file-selector-button{font:inherit;color:var(--text);background:var(--fill-control);border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-right:12px;cursor:pointer}
+.settings .field{display:grid;gap:8px;width:100%;margin:12px 0}.settings .settings-row{gap:16px}.settings-row-text{overflow-wrap:anywhere}.settings-row-control{justify-content:flex-end}.settings-content :is(.manage-card,.settings-group,.field){box-sizing:border-box;max-width:100%}.settings-content textarea{width:100%;box-sizing:border-box}.settings-content .row-buttons{gap:8px}
+
+.advanced-settings{margin:16px 0;border:1px solid var(--border);border-radius:12px;padding:12px}.advanced-settings summary{cursor:pointer;color:var(--text-2);font-size:13px}.advanced-settings[open] summary{margin-bottom:14px}.settings-form{display:grid;gap:12px}.settings-form>.button{justify-self:start}

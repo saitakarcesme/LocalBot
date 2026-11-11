@@ -377,9 +377,9 @@ export function Conversation({bot, data, state, run, panel, onPanel, focusMessag
   const [newCount, setNewCount] = useState(0);
   const stick = useRef(true), unreadFrom = useRef(bot.unread > 0 && bot.read_at ? bot.read_at : 0), countAt = useRef(0), anchor = useRef(null);
   const speech = useSpeechAvailable(state);
-  const orbStream = useLiveStream();
+  const figureStream = useLiveStream(run?.id);
   const recentRun = state.runs.find(r => r.bot === bot.id && !r.thread);
-  const orbState = run ? (run.status === 'running' ? (orbStream.run === run.id && orbStream.content ? 'generating' : 'thinking') : 'idle')
+  const currentFigureState = run ? (run.status === 'running' ? (figureStream.run === run.id && figureStream.content ? 'typing' : run.activity || 'thinking') : 'idle')
     : recentRun && Date.now() - recentRun.finished < 2500 ? (recentRun.status === 'done' ? 'success' : recentRun.status === 'failed' ? 'error' : 'idle') : 'idle';
   useEffect(() => { setFinding(false); stick.current = true; setOutbox([]); setNewCount(0); }, [bot.id]);
   // Keep the newest message in view while the user is at the bottom.
@@ -460,7 +460,7 @@ export function Conversation({bot, data, state, run, panel, onPanel, focusMessag
     <header class=${cx('chat-header', 'drag-region', sidebarHidden && 'has-traffic')}>
       <div class="header-side header-start no-drag">${sidebarHidden ? html`<${IconButton} icon="sidebar" label=${t('Show sidebar')} onClick=${onShowSidebar}/>` : null}</div>
       <button type="button" class=${cx('title-pill', 'no-drag', detailsOpen && 'is-active')} onClick=${() => onPanel(detailsOpen ? null : {type: 'details'})} aria-expanded=${String(detailsOpen)} aria-label=${t('{name} details', {name: bot.name})}>
-        <span class="title-avatar"><${BotFace} bot=${bot} state=${orbState} tokenCount=${orbStream.run === run?.id ? orbStream.content?.length || 0 : 0}/></span><span class="title-name">${bot.name}</span>
+        <span class="title-avatar"><${BotFace} bot=${bot} state=${currentFigureState} tokenCount=${figureStream.run === run?.id ? figureStream.content?.length || 0 : 0}/></span><span class="title-name">${bot.name}</span>
         ${bot.label ? html`<span class="title-label">${bot.label}</span>` : null}
         ${bot.muted ? html`<span class="title-muted" title=${t('Muted')}><${Icon} name="bellOff"/></span>` : null}
       </button>

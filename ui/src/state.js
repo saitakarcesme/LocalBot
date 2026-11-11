@@ -8,18 +8,27 @@ import {playSound} from './sounds.js';
  * re-renders the whole app.
  */
 const streamListeners = new Set();
-export const liveStream = {run: null, bot: null, content: '', reasoning: '', started: 0, thread: null, author: null};
 function emitStream() { streamListeners.forEach(fn => fn()); }
-export function useLiveStream() {
+export function useLiveStream(run) {
   const [, force] = useState(0);
   useEffect(() => { const fn = () => force(n => n + 1); streamListeners.add(fn); return () => streamListeners.delete(fn); }, []);
-  return liveStream;
+  return streamFor(run);
 }
+const streams = new Map();
+export const streamFor = run => streams.get(run) || {};
 function syncStream(snapshotStreaming) {
-  if (!snapshotStreaming) { if (liveStream.run) { liveStream.run = null; liveStream.content = ''; liveStream.reasoning = ''; emitStream(); } return; }
-  if (snapshotStreaming.run !== liveStream.run || snapshotStreaming.content.length > liveStream.content.length || snapshotStreaming.started !== liveStream.started) {
-    Object.assign(liveStream, {thread: null, author: null}, snapshotStreaming); emitStream();
+  const list = Array.isArray(snapshotStreaming) ? snapshotStreaming : snapshotStreaming ? [snapshotStreaming] : [];
+  const present=new Set(list.map(s=>s.run));
+  for (const id of streams.keys()) if(!present.has(id)) streams.delete(id);
+  for (const stream of list) {
+    const current=streams.get(stream.run);
+    if(current?.started===stream.started){
+      if(current.content.length>stream.content.length)stream.content=current.content;
+      if(current.reasoning.length>stream.reasoning.length)stream.reasoning=current.reasoning;
+    }
+    streams.set(stream.run, stream);
   }
+  emitStream();
 }
 
 /** `limit` grows when the user asks for older messages. */
@@ -57,9 +66,13 @@ export function useAppData(selected, limit = 200) {
     else if (event.type === 'changed') refresh();
     else if (event.type === 'disconnected') { if (!offlineTimer.current) offlineTimer.current = setTimeout(() => setConnected(false), 2500); }
     else if (event.type === 'delta') {
-      if (liveStream.run !== event.run || (liveStream.author || null) !== (event.author || null)) Object.assign(liveStream, {run: event.run, bot: event.bot, thread: event.thread || null, author: event.author || null, content: '', reasoning: '', started: Date.now()});
-      if (event.content) liveStream.content += event.content;
-      if (event.reasoning) liveStream.reasoning += event.reasoning;
+      let stream = streams.get(event.run);
+      if (!stream || stream.started !== event.started || (stream.author || null) !== (event.author || null)) {
+        stream = {run:event.run, bot:event.bot, thread:event.thread || null, author:event.author || null, content:'', reasoning:'', started:event.started};
+        streams.set(event.run, stream);
+      }
+      if (event.content) stream.content += event.content;
+      if (event.reasoning) stream.reasoning += event.reasoning;
       emitStream();
     } else if (event.type === 'notify') notify(event);
   }), []);

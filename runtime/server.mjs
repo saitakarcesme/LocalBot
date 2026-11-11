@@ -56,7 +56,7 @@ function snapshot() {
     keyPresent: !!engine.key,
     contextDetected: engine.contexts.get(store.config().endpoint + '|' + store.config().model) || 0,
     zone: validZone(store.preferences().timezone),
-    runs: store.all('SELECT id,bot,prompt,status,error,created,finished,thread,source,routine,parent,tokens_in,tokens_out,dismissed FROM runs ORDER BY created DESC LIMIT 150').map(r => ({...r, prompt: r.prompt.slice(0, 200)})),
+    runs: store.all('SELECT id,bot,prompt,status,error,created,finished,thread,source,routine,parent,tokens_in,tokens_out,dismissed FROM runs ORDER BY created DESC LIMIT 150').map(r => ({...r, activity: engine.activeTasks.get(r.id)?.activity, prompt: r.prompt.slice(0, 200)})),
     streaming: engine.streaming,
     computer: engine.active?.computerUsed && !engine.active.abort.signal.aborted ? {bot:engine.active.bot,run:engine.active.id} : null,
     approvals: [...engine.approvals.values()].map(({id, kind, bot, persona, thread, name, args, run, category, target, reason, title, detail, code, created}) => ({id, kind, bot, persona, thread, name, args, run, category, target, reason, title, detail, code, created})),
@@ -684,7 +684,7 @@ server.listen(port, '127.0.0.1', () => {
   console.log(JSON.stringify({port: address, token}));
   if (host === 'self-hosted') console.error(`\n  LocalBot is running → http://127.0.0.1:${address}/#${token}\n`);
 });
-function stop() { clearInterval(timer); if (engine.active) engine.cancel(engine.active.id); for (const id of [...engine.stdio.keys()]) engine.stopConnection(id); for (const c of clients) c.end(); server.close(); store.db.close(); process.exit(0); }
+function stop() { clearInterval(timer); for (const id of engine.activeTasks.keys()) engine.cancel(id); for (const id of [...engine.stdio.keys()]) engine.stopConnection(id); for (const c of clients) c.end(); server.close(); store.db.close(); process.exit(0); }
 process.on('SIGTERM', stop); process.on('SIGINT', stop);
 // Inside the Mac app, exit with the host even if it crashes (no orphaned runtime).
 if (host === 'local-app') { const parent = process.ppid; setInterval(() => { if (process.ppid !== parent) stop(); }, 2000).unref(); }

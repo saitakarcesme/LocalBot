@@ -108,7 +108,7 @@ final class HostWebView: WKWebView {
   let show=windowMenu.addItem(withTitle:"Show LocalBot",action:#selector(showWindow),keyEquivalent:"");show.target=self
   let helpItem=NSMenuItem();menu.addItem(helpItem);let helpMenu=NSMenu(title:"Help");helpItem.submenu=helpMenu
   let shortcuts=helpMenu.addItem(withTitle:"Keyboard Shortcuts",action:#selector(showShortcuts),keyEquivalent:"/");shortcuts.target=self
-  statusItem=NSStatusBar.system.statusItem(withLength:NSStatusItem.variableLength);statusItem?.button?.title="L";statusItem?.button?.toolTip="LocalBot"
+  statusItem=NSStatusBar.system.statusItem(withLength:NSStatusItem.variableLength);if let path=Bundle.main.path(forResource:"LocalBot",ofType:"icns"),let image=NSImage(contentsOfFile:path){image.size=NSSize(width:18,height:18);statusItem?.button?.image=image};statusItem?.button?.toolTip="LocalBot"
   let statusMenu=NSMenu();let open=statusMenu.addItem(withTitle:"Open LocalBot",action:#selector(showWindow),keyEquivalent:"");open.target=self
   statusMenu.addItem(withTitle:"Quit LocalBot",action:#selector(NSApplication.terminate(_:)),keyEquivalent:"");statusItem?.menu=statusMenu
   NSApp.mainMenu=menu

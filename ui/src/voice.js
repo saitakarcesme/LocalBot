@@ -120,7 +120,7 @@ export function VoiceChat({bot, data, run, onClose}) {
   const label = {listening: t('Listening…'), transcribing: t('Transcribing…'), thinking: t('Thinking…'), speaking: t('Speaking…'), muted: t('Muted')}[phase];
   return html`<div class="voice-chat" role="dialog" aria-label=${t('Voice chat with {name}', {name: bot.name})}>
     <div class="voice-stage">
-      <div class=${cx('voice-figure', 'is-' + phase)} style=${`--level:${level.toFixed(2)}`}><${BotFace} bot=${bot} size=${120} amplitude=${phase === 'listening' ? level : 0} state=${phase === 'thinking' || phase === 'transcribing' ? 'thinking' : phase === 'speaking' ? 'working' : phase === 'muted' ? 'sleeping' : 'listening'}/></div>
+      <div class=${cx('voice-figure', 'is-' + phase)} style=${`--level:${level.toFixed(2)}`}><${BotFace} bot=${bot} size=${120} amplitude=${phase === 'listening' ? level : 0} state=${phase === 'thinking' || phase === 'transcribing' ? 'thinking' : phase === 'speaking' ? 'speaking' : phase === 'muted' ? 'sleeping' : 'listening'}/></div>
       <strong>${bot.name}</strong>
       <span class="voice-phase" role="status">${error || label}</span>
     </div>

@@ -174,7 +174,7 @@ function Data({state}) {
 
 function About({state}) {
   return html`<div class="about">
-    <${Figure} shape="round" color="#b5a3e5" size=${64} follow seed="about"/>
+    <${Figure} shape="round" color="#eeeef2" size=${64} follow seed="about"/>
     <h3>LocalBot</h3>
     <p>Version ${state.appVersion} · ${state.host === 'self-hosted' ? 'Self-hosted' : 'Mac app'}</p>
   </div>

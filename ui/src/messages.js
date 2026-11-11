@@ -3,7 +3,7 @@ import {Icon, toolIcon} from './icons.js';
 import {Button, IconButton, Spinner, openMenu, undoToast, Popover, confirm} from './ui.js';
 import {markdown, plainText, onAssets} from './markdown.js';
 import {Figure} from './figure.js';
-import {liveStream} from './state.js';
+import {streamFor} from './state.js';
 import {EmojiPicker, QUICK_REACTIONS} from './emoji.js';
 
 const SEPARATOR_GAP = 45 * 60 * 1000;
@@ -429,6 +429,7 @@ export function Transcript({bot, data, state, run, thread = null, unreadFrom = 0
   const context = {files: data.files, mentions: new Set(state.bots.map(b => b.name.toLowerCase()))};
   const c = {bot, state, files: data.files, thread, idle, context, activeRun: live, ...handlers};
   // Live content attaches to the last bot turn of the active run, or starts a new one.
+  const liveStream = streamFor(live?.id);
   const streamAuthor = liveStream.run === live?.id ? liveStream.author : null;
   if (live && (turns.at(-1)?.kind !== 'bot' || turns.at(-1).run !== live.id || (bot.kind === 'group' && streamAuthor && turns.at(-1).author && turns.at(-1).author !== streamAuthor))) turns.push({kind: 'bot', key: 'bot-live-' + live.id + (streamAuthor || ''), blocks: [], run: live.id, author: streamAuthor || undefined});
   const lastTurn = turns.at(-1);
@@ -447,7 +448,7 @@ export function Transcript({bot, data, state, run, thread = null, unreadFrom = 0
     const speaker = figureOf(turn);
     const lastBubble = [...turn.blocks].reverse().find(b => b.kind === 'bubbles')?.items.at(-1);
     return html`<div class="turn turn-bot" key=${turn.key}>
-      <div class="turn-avatar"><${BotFace} bot=${speaker} tokenCount=${isLive ? liveStream.content?.length || 0 : 0} state=${isLive ? (approvals.length ? 'waiting' : liveStream.run === live.id && liveStream.content ? 'working' : 'thinking') : 'idle'}/></div>
+      <div class="turn-avatar"><${BotFace} bot=${speaker} tokenCount=${isLive ? liveStream.content?.length || 0 : 0} state=${isLive ? (approvals.length ? 'waiting' : liveStream.run === live.id && liveStream.content ? 'typing' : live.activity || 'thinking') : 'idle'}/></div>
       <div class="turn-body">
         ${members.length ? html`<span class="turn-name" style=${`--who:${speaker.color}`}>${speaker.name}</span>` : null}
         ${turn.blocks.map(block => {

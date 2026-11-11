@@ -1,0 +1,25 @@
+.localbot-figure{display:inline-block;flex:none;vertical-align:middle}.localbot-figure svg{width:100%;height:100%;overflow:visible}.figure-body{transform-origin:50px 60px;animation:figure-idle 6s ease-in-out infinite}.figure-disc{fill:var(--figure-color);stroke:color-mix(in srgb,var(--figure-color),#000 12%);stroke-width:.6}.figure-gaze{transform-origin:50px 48px;transition:transform .45s ease}.figure-blink{transform-origin:50px 48px;animation:figure-blink 7s infinite}.figure-blink path{fill:none;stroke:#151517;stroke-width:9;stroke-linecap:round;stroke-linejoin:round}
+.state-thinking .figure-body{animation:figure-think 3.6s ease-in-out infinite}.state-thinking .figure-gaze{transform:translateY(-6px)}
+.state-typing .figure-body{animation:figure-type .65s ease-in-out infinite}.state-typing .figure-gaze{animation:figure-scan .8s ease-in-out infinite alternate}
+.state-coding .figure-body{animation:figure-code 1.1s ease-in-out infinite}.state-coding .figure-gaze{transform:translateY(3px) scaleY(.75)}
+.state-researching .figure-body{animation:figure-think 4s ease-in-out infinite}.state-researching .figure-gaze{animation:figure-research 5s ease-in-out infinite}
+.state-reading .figure-gaze{animation:figure-read 3s ease-in-out infinite}.state-reading .figure-body{animation:none}
+.state-listening .figure-body{animation:none;transform:scale(var(--voice-scale))}.state-listening .figure-gaze{transform:scale(1.12)}
+.state-speaking .figure-body{animation:figure-speak .9s ease-in-out infinite}.state-speaking .figure-gaze{animation:figure-scan 2s ease-in-out infinite alternate}
+.state-success .figure-body{animation:figure-success .9s ease-out 1}.state-success .figure-gaze{animation:figure-happy .9s ease-out 1}
+.state-error .figure-body{animation:figure-error .65s ease-out 1}.state-error .figure-gaze{animation:figure-sad 1.3s ease-out 1}
+.localbot-figure:is(.is-paused,.is-offscreen) *{animation-play-state:paused!important}
+@keyframes figure-idle{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg) translateY(-1px)}}
+@keyframes figure-blink{0%,43%,47%,100%{transform:scaleY(1)}45%{transform:scaleY(.08)}}
+@keyframes figure-think{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}
+@keyframes figure-type{0%,100%{transform:translateY(0)}50%{transform:translateY(-2.5px)}}
+@keyframes figure-scan{from{transform:translateX(-3px)}to{transform:translateX(3px)}}
+@keyframes figure-code{0%,100%{transform:rotate(3deg) scaleY(.97)}40%{transform:rotate(1deg) translateY(-1px)}}
+@keyframes figure-research{0%,100%{transform:translate(-4px,-2px)}25%{transform:translate(4px,-4px)}55%{transform:translate(3px,3px)}80%{transform:translate(-3px,2px)}}
+@keyframes figure-read{0%,30%{transform:translate(-4px,-4px)}24%{transform:translate(4px,-4px)}32%,62%{transform:translate(-4px,0)}56%{transform:translate(4px,0)}64%,96%{transform:translate(-4px,4px)}90%{transform:translate(4px,4px)}}
+@keyframes figure-speak{0%,100%{transform:scale(.99)}35%{transform:scale(1.025)}65%{transform:scale(1.005)}}
+@keyframes figure-success{0%,100%{transform:translateY(0)}35%{transform:translateY(-8px) rotate(-5deg)}65%{transform:translateY(1px) scaleY(.96)}}
+@keyframes figure-happy{35%{transform:translateY(-2px) rotate(-3deg) scaleY(.85)}}
+@keyframes figure-error{20%,60%{transform:translateX(-2px)}40%,80%{transform:translateX(2px)}}
+@keyframes figure-sad{25%,60%{transform:translateY(5px) scale(.85)}100%{transform:none}}
+@media(prefers-reduced-motion:reduce){.localbot-figure *{animation:none!important;transition:none!important}}

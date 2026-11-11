@@ -60,6 +60,15 @@ Every side effect follows the permission rules. Password and payment fields are 
 ## Update and identity policy
 The owner requested a fresh start after every new native build (11 November 2026). A content fingerprint in the signed bundle identifies each build. Before opening SQLite, the runtime archives the previous Rebuilt data directory and starts a fresh store when the fingerprint changes. Reopening the same build keeps its chats. Archives are not loaded automatically. The model credential remains in macOS Keychain, and the default endpoint/model remains the local Elpis LLMRig connection.
 
-First launch presents a brief orb splash followed by Enter Your Name and a large name field. Submitting opens the pinned main assistant, LocalBot, with a welcome message. Its display name remains editable. The update_self_profile tool can change only the acting bot's name, use an existing workspace raster image as its profile photo, choose an orb palette, or restore the orb. It follows the existing bots permission category.
+First launch presents LocalBot typing, then asks for the user’s name in a normal chat message. The user replies through the bottom composer. Submitting opens the pinned main assistant, LocalBot, with the introduction preserved in chat. Its display name remains editable. The update_self_profile tool can change only the acting bot's name, use an existing workspace raster image as its profile photo, choose a figure color, or restore the L-eyed figure. It follows the existing bots permission category.
 
 The native host uses a plain NSView and opaque neutral theme surfaces. Wallpaper tint and vibrancy are intentionally disabled. Legacy large-name onboarding styles and hidden transcript activity components have been removed; tool events remain available to runtime diagnostics.
+
+
+## November 11: concurrent conversations and L-eyed identity
+
+The global single-run scheduler is replaced by a map of active runs. Separate bot chats and threads start independently; follow-ups within one conversation stay ordered. Each run owns its abort controller, streaming buffers, approval cleanup and lifecycle. SSE includes the stream start identity. Cancellation and completion do not clear another run. Model hardware can still limit simultaneous inference. The local LLMRig tunnel now targets the two-lane router (remote 11446) with the same qwen3.8-27b model.
+
+The old marble shader, fallback, prototypes and assets have been removed. LocalBotFigure is dependency-free SVG + compositor-friendly CSS: white main figure, seven configurable colors, ten states, visibility pause and reduced-motion support. Tool activity drives coding/researching/reading; stream/voice lifecycle drives typing/listening/speaking. Listening uses real microphone amplitude only. Success/error settle after 1.4 seconds. App and menu-bar icons use the new mark.
+
+Settings use themed file controls and aligned wrapping rows. Connections support a JSON file picker; manual setup is retained under an advanced disclosure pending the user's decision. Candidate applications are listed in PLUGIN-CANDIDATES.md; no third-party connector has been silently installed.

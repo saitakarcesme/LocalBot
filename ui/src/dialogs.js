@@ -3,7 +3,7 @@ import {t, html, useState, useEffect, useRef, cx, api, attempt, toast, useFocusT
 import {Icon} from './icons.js';
 import {Button, Dialog, IconButton} from './ui.js';
 import {Figure} from './figure.js';
-const ORB_COLORS = [['Marble','#86c5f7'],['Lagoon','#7fd8b0'],['Dusk','#f2a2c8']];
+import {FIGURE_COLORS} from './identity.js';
 import {SHAPE_IDS, EYE_IDS, freshLook} from './looks.js';
 import {Settings} from './settings.js';
 
@@ -43,7 +43,7 @@ function BotDialog({bot, state, onClose, onSelect}) {
   const [roll, setRoll] = useState(0);
   const shuffle = () => {
     const pick = list => list[Math.floor(Math.random() * list.length)];
-    setShape(pick(SHAPE_IDS.filter(x => x !== shape))); setEyes(pick(EYE_IDS)); setColor(pick(ORB_COLORS.filter(c => c[1] !== color))[1]); setRoll(r => r + 1);
+    setShape(pick(SHAPE_IDS.filter(x => x !== shape))); setEyes(pick(EYE_IDS)); setColor(pick(FIGURE_COLORS.filter(c => c[1] !== color))[1]); setRoll(r => r + 1);
   };
   const save = async () => {
     if (!name.trim() || busy) return;
@@ -62,9 +62,9 @@ function BotDialog({bot, state, onClose, onSelect}) {
     </div>
     <input id="bot-name" class="bot-name-input" value=${name} maxlength="80" placeholder="Name your Bot" aria-label="Bot name"
       onInput=${e => setName(e.target.value)} onKeyDown=${e => { if (e.key === 'Enter') save(); }}/>
-    <div class="picker-label">Orb palette</div>
-    <div class="color-grid" role="radiogroup" aria-label="Orb palette">
-      ${ORB_COLORS.map(([label, c]) => html`<button type="button" role="radio" aria-checked=${String(c === color)} aria-label=${label} data-tip=${label}
+    <div class="picker-label">Figure color</div>
+    <div class="color-grid" role="radiogroup" aria-label="Figure color">
+      ${FIGURE_COLORS.map(([label, c]) => html`<button type="button" role="radio" aria-checked=${String(c === color)} aria-label=${label} data-tip=${label}
         class=${cx('color-option', c === color && 'is-selected')} style=${'--swatch:' + c} onClick=${() => setColor(c)}/>`)}
     </div>
   </${Dialog}>`;
@@ -143,9 +143,9 @@ export function Onboarding({state}) {
  useEffect(()=>{if(phase==='name')ref.current?.focus();},[phase]);
  const submit=async e=>{e.preventDefault();if(!name.trim()||busy||phase!=='name')return;setBusy(true);try{await api('onboard',{name:name.trim()});}catch(error){toast(error.message);setBusy(false);}};
  return html`<main class="onboarding welcome-conversation" aria-label="Meet LocalBot">
-  <header class="welcome-chat-title"><${Figure} size=${26} color="#b5a3e5"/><span>LocalBot</span></header>
+  <header class="welcome-chat-title"><${Figure} size=${26} color="#eeeef2"/><span>LocalBot</span></header>
   <section class="welcome-messages" aria-live="polite">
-   <div class="welcome-bot-message"><${Figure} size=${32} color="#b5a3e5" state=${phase==='typing'?'thinking':'idle'}/>
+   <div class="welcome-bot-message"><${Figure} size=${32} color="#eeeef2" state=${phase==='typing'?'thinking':'idle'}/>
     ${phase==='typing'?html`<div class="bubble typing" role="status" aria-label="LocalBot is typing"><span></span><span></span><span></span></div>`:html`<div class="bubble">Hi, I’m LocalBot. What should I call you?</div>`}
    </div>
    ${busy?html`<div class="turn turn-user"><div class="bubble">${name.trim()}</div></div>`:null}
