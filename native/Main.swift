@@ -90,6 +90,7 @@ final class WindowControlsView: NSView {
 @MainActor final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate, WKScriptMessageHandler, WKNavigationDelegate, WKUIDelegate, UNUserNotificationCenterDelegate {
  private var filePicker:LocalFilePicker?
 
+ var mouseMonitor:Any?
  var windowButtons:[NSButton]=[]
  var windowControls:WindowControlsView?
  var statusItem: NSStatusItem?
@@ -137,6 +138,12 @@ final class WindowControlsView: NSView {
   windowButtons=types.compactMap{window.standardWindowButton($0)}
   for (index,button) in windowButtons.enumerated(){button.removeFromSuperview();button.target=window;button.action=actions[index];controls.addSubview(button)}
   glass.addSubview(controls,positioned:.above,relativeTo:web);windowControls=controls
+  // WKContentView consumes mouseDown before the WKWebView override sees it.
+  // Capture the original event without intercepting controls or page clicks.
+  mouseMonitor=NSEvent.addLocalMonitorForEvents(matching:.leftMouseDown){[weak self] event in
+   if let self,event.window === self.window {self.web.lastMouseDown=event}
+   return event
+  }
   window.makeKeyAndOrderFront(nil);alignWindowButtons();NSApp.activate(ignoringOtherApps:true)
   UNUserNotificationCenter.current().delegate=self
   startRuntime()
@@ -298,7 +305,7 @@ final class WindowControlsView: NSView {
   case "browser":
    let bot=body["bot"] as? String ?? "";_ = browser(bot);return true
   case "dragWindow":
-   if let event=web.lastMouseDown {window.performDrag(with:event)};return true
+   if let event=web.lastMouseDown,ProcessInfo.processInfo.systemUptime-event.timestamp<1 {web.lastMouseDown=nil;window.performDrag(with:event)};return true
   case "zoomWindow": window.zoom(nil);return true
   case "notify":
    // Only interrupt when LocalBot isn't the app in front.

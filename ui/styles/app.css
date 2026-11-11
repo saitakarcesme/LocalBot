@@ -815,7 +815,7 @@ body.is-resizing, body.is-resizing * { cursor: col-resize !important; }
 /* One opaque application surface; glass is the floating, inset sidebar only. */
 .app {background:var(--bg);}
 :root[data-host="mac"] body {background:var(--bg);}
-.app>.sidebar {position:absolute;z-index:11;top:var(--gutter);bottom:var(--gutter);left:var(--gutter);margin:0;background:linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.015));backdrop-filter:blur(24px) saturate(1.15);-webkit-backdrop-filter:blur(24px) saturate(1.15);border:1px solid var(--panel-border);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 5px 18px rgba(0,0,0,.08);}
+.app>.sidebar {position:absolute;z-index:11;top:var(--gutter);bottom:var(--gutter);left:var(--gutter);margin:0;background:linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.015));border:1px solid var(--panel-border);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 5px 18px rgba(0,0,0,.08);}
 :root[data-theme="light"] .app>.sidebar {background:linear-gradient(145deg,rgba(255,255,255,.55),rgba(255,255,255,.15));}
 .app>.conversation {margin-left:calc(var(--sidebar-width) + var(--gutter) * 2);background:transparent;transition:margin-left 240ms cubic-bezier(.2,.8,.2,1);}
 .app.sidebar-compact>.conversation {margin-left:calc(72px + var(--gutter) * 2);}
@@ -826,3 +826,9 @@ body.is-resizing, body.is-resizing * { cursor: col-resize !important; }
 .app.sidebar-hidden>.sidebar {display:flex;width:0;min-width:0;margin-left:0;border-width:0;opacity:0;transform:translateX(-18px);visibility:hidden;pointer-events:none;transition:width 240ms cubic-bezier(.2,.8,.2,1),min-width 240ms cubic-bezier(.2,.8,.2,1),margin-left 240ms cubic-bezier(.2,.8,.2,1),opacity 160ms ease,transform 240ms cubic-bezier(.2,.8,.2,1),visibility 0s 240ms;}
 .sidebar-hidden .sidebar-top,.sidebar-hidden .sidebar-footer,.sidebar-hidden .bot-list {pointer-events:none;}
 @media(prefers-reduced-motion:reduce){.sidebar,.app.sidebar-hidden>.sidebar,.app>.conversation{transition:none}}
+
+/* There is only a uniform app surface behind this glass: no live blur pass needed. */
+.bot-row .state-idle *, .turn-avatar .state-idle * {animation:none!important;}
+.is-resizing .sidebar,.is-resizing .conversation {transition:none!important;}
+
+.welcome-titlebar{display:flex;justify-content:center;width:100%;flex:none;}

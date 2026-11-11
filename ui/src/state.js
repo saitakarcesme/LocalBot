@@ -8,10 +8,21 @@ import {playSound} from './sounds.js';
  * re-renders the whole app.
  */
 const streamListeners = new Set();
-function emitStream() { streamListeners.forEach(fn => fn()); }
+const pendingRuns = new Set();
+let streamTimer;
+function emitStream(run) {
+  pendingRuns.add(run || '*');
+  if(streamTimer)return;
+  // Token text is accumulated immediately; only visual notifications are batched.
+  streamTimer=setTimeout(()=>{
+    streamTimer=null;
+    const changed=new Set(pendingRuns);pendingRuns.clear();
+    for(const sub of streamListeners) if(changed.has('*') || changed.has(sub.run)) sub.notify();
+  },80);
+}
 export function useLiveStream(run) {
   const [, force] = useState(0);
-  useEffect(() => { const fn = () => force(n => n + 1); streamListeners.add(fn); return () => streamListeners.delete(fn); }, []);
+  useEffect(() => { const sub = {run,notify:()=>force(n=>n+1)}; streamListeners.add(sub); return()=>streamListeners.delete(sub); }, [run]);
   return streamFor(run);
 }
 const streams = new Map();
@@ -73,7 +84,7 @@ export function useAppData(selected, limit = 200) {
       }
       if (event.content) stream.content += event.content;
       if (event.reasoning) stream.reasoning += event.reasoning;
-      emitStream();
+      emitStream(event.run);
     } else if (event.type === 'notify') notify(event);
   }), []);
 

@@ -501,7 +501,7 @@ export function ThreadPanel({bot, data, state, rootId, onClose, onOpenFile, onPa
   const [outbox, setOutbox] = useState([]);
   const [overlay, setOverlay] = useState(null);
   const run = state.runs.find(r => r.bot === bot.id && r.thread === rootId && ['running', 'waiting'].includes(r.status)) || state.runs.findLast(r => r.bot === bot.id && r.thread === rootId && r.status === 'queued');
-  useLiveStream();
+  useLiveStream(run?.id);
   useLayoutEffect(() => {
     const el = scroller.current;
     if (!el || !column.current) return;

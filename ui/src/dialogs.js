@@ -143,7 +143,7 @@ export function Onboarding({state}) {
  useEffect(()=>{if(phase==='name')ref.current?.focus();},[phase]);
  const submit=async e=>{e.preventDefault();if(!name.trim()||busy||phase!=='name')return;setBusy(true);try{await api('onboard',{name:name.trim()});}catch(error){toast(error.message);setBusy(false);}};
  return html`<main class="onboarding welcome-conversation" aria-label="Meet LocalBot">
-  <header class="welcome-chat-title"><${Figure} size=${26} color="#eeeef2"/><span>LocalBot</span></header>
+  <div class="welcome-titlebar drag-region"><header class="welcome-chat-title"><${Figure} size=${26} color="#eeeef2"/><span>LocalBot</span></header></div>
   <section class="welcome-messages" aria-live="polite">
    <div class="welcome-bot-message"><${Figure} size=${32} color="#eeeef2" state=${phase==='typing'?'thinking':'idle'}/>
     ${phase==='typing'?html`<div class="bubble typing" role="status" aria-label="LocalBot is typing"><span></span><span></span><span></span></div>`:html`<div class="bubble">Hi, I’m LocalBot. What should I call you?</div>`}
