@@ -19,3 +19,24 @@ test('phone access requires its own credential and same origin; native bridge st
   assert.equal(calls,1);
  }finally{server.closeAllConnections();await new Promise(r=>server.close(r));}
 });
+
+test('home-screen manifest restores pairing without Safari cookies or local storage',async()=>{
+ const token='b'.repeat(64),origin='https://example.tail000.ts.net';
+ const server=createServer(mobileHandler({origin,token},'desktop',(req,res)=>{res.end(req.url);},12345));
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;
+ try{
+  const r=await fetch(base+'/api/mobile-install',{headers:{Authorization:'Bearer '+token}});
+  const {manifest}=await r.json();
+  const config=await (await fetch(base+manifest)).json();
+  assert.match(config.start_url,/^\/launch\/[a-f0-9]{64}$/);assert.equal(config.scope,'/');
+  // New web-app storage: no cookie, no API credential, only the manifest start URL.
+  const launch=await fetch(base+config.start_url);assert.equal(launch.status,200);assert.equal(await launch.text(),'/');
+  assert.equal(launch.headers.get('referrer-policy'),'no-referrer');
+  const pair=await fetch(base+'/api/mobile-pair',{headers:{Authorization:'Bearer '+config.start_url.split('/').at(-1)}});
+  assert.equal((await pair.json()).token,token);
+  assert.equal((await fetch(base+'/api/mobile-install')).status,401);
+  assert.equal((await fetch(base+'/api/mobile-pair')).status,401);
+  assert.equal((await fetch(base+'/launch/'+'0'.repeat(64))).status,401);
+  assert.equal((await fetch(base+'/mobile-manifest/'+'0'.repeat(64)+'.webmanifest')).status,401);
+ }finally{server.closeAllConnections();await new Promise(r=>server.close(r));}
+});

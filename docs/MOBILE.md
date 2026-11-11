@@ -17,7 +17,7 @@ The phone UI includes conversation navigation, bot creation and colors, message/
 
 Tailscale Serve terminates HTTPS and forwards only inside the private tailnet to `127.0.0.1:18471`. It does not enable Funnel. The runtime requires a separate random 256-bit mobile credential for API calls, validates request origins, and refuses phone access to native host polling/result endpoints. Mac API credentials are never sent to the phone. Files retain their separate unguessable media keys.
 
-`mobile.json` and `mobile-link.txt` are user-only files outside the version-reset data directory. Pairing therefore survives app updates; chats follow the app's existing fresh-install-on-update preference. The phone keeps the pairing credential in its origin's local storage. Treat the link/QR as an access credential.
+`mobile.json` and `mobile-link.txt` are user-only files outside the version-reset data directory. Pairing therefore survives app updates; chats follow the app's existing fresh-install-on-update preference. The phone caches its pairing credential in local storage. Its private installation manifest also contains a launch capability, so a new iOS Home Screen storage container can pair without copying Safari data. Icons created before this installation manifest was introduced must be re-added from the original pairing link. Treat the link/QR as an access credential.
 
 To revoke phone access: run `tailscale serve --https=443 off`, remove `mobile.json` and `mobile-link.txt`, and restart LocalBot. Running the enable script again generates a new credential after those files are removed.
 

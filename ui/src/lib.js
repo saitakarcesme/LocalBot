@@ -7,14 +7,28 @@ export {t, plural, locale, language} from './i18n.js';
 export const html = htm.bind(h);
 export {h, render, Fragment, createContext, Component, useState, useEffect, useRef, useMemo, useCallback, useLayoutEffect, useContext};
 
-// The Mac app injects the token; self-hosted links carry it in the URL hash.
-// It is kept for this tab only so a reload keeps working, and never put in the URL.
+// iOS Home Screen has a separate storage container from Safari. Its private
+// manifest launch URL carries an installation capability, redeemed before boot.
 const mobileOrigin=location.protocol==='https:'&&location.hostname.endsWith('.ts.net');
-const tokenStorage=mobileOrigin?localStorage:sessionStorage;
 let token = window.__localToken || location.hash.slice(1);
-try { if (token) tokenStorage.setItem('localbot-token', token); else token = tokenStorage.getItem('localbot-token') || ''; } catch {}
+try {
+  const storage=mobileOrigin?localStorage:sessionStorage;
+  if (!token) token=storage.getItem('localbot-token')||'';
+  const launch=mobileOrigin&&location.pathname.match(/^\/launch\/([a-f0-9]{64})$/);
+  if(launch){
+    const response=await fetch('/api/mobile-pair',{headers:{Authorization:'Bearer '+launch[1]},signal:AbortSignal.timeout(15000)});
+    if(response.ok)token=(await response.json()).token;
+  }
+  if(token)storage.setItem('localbot-token',token);
+} catch {}
 delete window.__localToken;
 history.replaceState(null, '', '/');
+if(mobileOrigin&&token){
+  try{
+    const response=await fetch('/api/mobile-install',{headers:{Authorization:'Bearer '+token},signal:AbortSignal.timeout(15000)});
+    if(response.ok)document.querySelector('link[rel="manifest"]').href=(await response.json()).manifest;
+  }catch{}
+}
 export const hasToken = !!token;
 
 export async function api(path, body) {
