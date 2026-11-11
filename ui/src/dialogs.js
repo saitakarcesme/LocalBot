@@ -146,12 +146,12 @@ export function Onboarding({state}) {
  return html`<main class="onboarding welcome-name" aria-labelledby="onboarding-title">
   ${phase==='splash'?html`<div class="welcome-splash" role="status"><${Figure} size=${128} color="#b5a3e5"/><h1 id="onboarding-title">LocalBot</h1></div>`:html`
   <div class="welcome-content"><${Figure} size=${88} color="#b5a3e5"/>
-   <h1 id="onboarding-title">Enter Your Name</h1>
+   <h1 id="onboarding-title" class="welcome-prompt">Enter Your Name</h1>
    <form class="welcome-form" onSubmit=${submit}>
     <label class="sr-only" for="welcome-name">Your name</label>
-    <div class="welcome-chatbox"><input ref=${ref} id="welcome-name" name="name" value=${name} maxlength="80" autocomplete="given-name" placeholder="Your name" disabled=${busy} onInput=${e=>setName(e.target.value)}/>
+    <div class="welcome-chatbox"><input ref=${ref} id="welcome-name" name="name" value=${name} maxlength="80" autocomplete="given-name" placeholder="" disabled=${busy} onInput=${e=>setName(e.target.value)}/>
     <button class="welcome-send" type="submit" aria-label="Start with LocalBot" disabled=${busy||!name.trim()}><${Icon} name="arrowUp"/></button></div>
-    <p>Meet LocalBot. Make it yours.</p>
+    
    </form>
   </div>`}
  </main>`;

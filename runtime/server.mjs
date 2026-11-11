@@ -493,6 +493,8 @@ const server = createServer(async (req, res) => {
       }
       case '/api/permissions': {
         const rules = store.permissions();
+        if(['allow','ask','never'].includes(b.all)){for(const c of PERMISSION_CATEGORIES)rules[c]=b.all;store.exec("UPDATE bots SET rules='{}'");store.set('grants',[]);store.set('preferences',{...store.preferences(),autoReview:false});}
+
         for (const c of PERMISSION_CATEGORIES) if (b[c] !== undefined) rules[c] = pick(b[c], ['ask', 'allow', 'never'], rules[c]);
         store.set('permissions', rules); break;
       }

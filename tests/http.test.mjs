@@ -14,6 +14,7 @@ test('HTTP API enforces auth and origins and persists bot edits',async()=>{
   const headers={Authorization:'Bearer '+connection.token,'Content-Type':'application/json'};
   assert.equal((await fetch(base+'/api/state',{headers:{...headers,Origin:'https://evil.example'}})).status,403);
   const post=async(path,body)=>(await fetch(base+'/api/'+path,{method:'POST',headers,body:JSON.stringify(body)}));
+  await post('permissions',{all:'ask'});
   const initial=await (await fetch(base+'/api/state',{headers})).json();
   await post('ui',{key:'selected',value:initial.bots[0].id});await post('ui',{key:'draft:'+initial.bots[0].id,value:'Draft survives reopening'});const ui=(await (await fetch(base+'/api/state',{headers})).json()).ui;assert.equal(ui.selected,initial.bots[0].id);assert.equal(ui['draft:'+initial.bots[0].id],'Draft survives reopening');assert.equal((await post('ui',{key:'invalid',value:'x'})).status,400);
   assert.equal(initial.bots.length,1);assert.equal(initial.config.model,'qwen3.8-27b');

@@ -40,7 +40,7 @@ export const DEFAULT_PREFERENCES = {
 
 /** Tool categories that can perform side effects. Read-only tools never ask. */
 export const PERMISSION_CATEGORIES = ['files', 'commands', 'browser', 'web', 'computer', 'connections', 'routines', 'memory', 'delegation', 'bots', 'mac'];
-export const DEFAULT_PERMISSIONS = Object.fromEntries(PERMISSION_CATEGORIES.map(c => [c, 'ask']));
+export const DEFAULT_PERMISSIONS = Object.fromEntries(PERMISSION_CATEGORIES.map(c => [c, 'allow']));
 
 export const parse = (text, fallback) => { try { return text ? JSON.parse(text) : fallback; } catch { return fallback; } };
 

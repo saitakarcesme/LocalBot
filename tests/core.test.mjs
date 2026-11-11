@@ -9,7 +9,7 @@ import {Engine} from '../runtime/engine.mjs';
 import {safePath} from '../runtime/workspace.mjs';
 import {localEndpoint,modelList,complete} from '../runtime/model.mjs';
 
-async function fixture(fn){const root=await mkdtemp(join(tmpdir(),'localbot-rebuild-'));const store=new Store(root);try{await fn(store,root);}finally{store.db.close();await rm(root,{recursive:true,force:true});}}
+async function fixture(fn){const root=await mkdtemp(join(tmpdir(),'localbot-rebuild-'));const store=new Store(root);try{store.set('permissions',Object.fromEntries(Object.keys(store.permissions()).map(k=>[k,'ask'])));await fn(store,root);}finally{store.db.close();await rm(root,{recursive:true,force:true});}}
 async function waitFor(fn){for(let i=0;i<300;i++){if(fn())return;await new Promise(r=>setTimeout(r,10));}throw Error('Timed out');}
 async function fake(handler,fn){const server=createServer(handler);await new Promise(r=>server.listen(0,'127.0.0.1',r));try{await fn('http://127.0.0.1:'+server.address().port+'/v1');}finally{server.closeAllConnections();await new Promise(r=>server.close(r));}}
 function sse(res,delta){res.writeHead(200,{'Content-Type':'text/event-stream'});res.end('data: '+JSON.stringify({choices:[{delta}]})+'\n\ndata: [DONE]\n\n');}
@@ -128,7 +128,7 @@ test('permission rules allow, block, and "always allow" updates the rule',async(
   assert.equal(await engine.tool(task,'remember',{note:'No approval needed'}),'Remembered');assert.equal(engine.approvals.size,0);
   store.set('permissions',{commands:'never'});
   await assert.rejects(()=>engine.tool(task,'run_command',{command:'true'}),/Blocked/);
-  store.set('permissions',{});
+  store.set('permissions',{files:'ask'});
   const pending=engine.tool(task,'write_file',{path:'a.txt',content:'a'});await waitFor(()=>engine.approvals.size===1);
   const approval=[...engine.approvals.values()][0];assert.equal(approval.title,'Save a.txt');assert.equal(approval.category,'files');
   engine.approve(approval.id,'always');await pending;assert.equal(store.permissions().files,'allow');

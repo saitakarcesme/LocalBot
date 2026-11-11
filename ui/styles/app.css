@@ -825,3 +825,12 @@ body.is-resizing, body.is-resizing * { cursor: col-resize !important; }
 .welcome-splash { display:flex;flex-direction:column;align-items:center;gap:24px; }
 .welcome-splash h1 { font-size:26px;font-weight:500;letter-spacing:-.04em;margin:0; }
 @media(max-width:500px){.welcome-name{padding:20px}.welcome-chatbox{padding:20px;border-radius:28px}.welcome-send{width:42px;height:42px}}
+
+.welcome-content .welcome-prompt { font-size:22px;letter-spacing:-.02em;padding:12px 22px;border-radius:var(--r-bubble);background:var(--bubble-bot);border:1px solid var(--border); }
+.welcome-chatbox { position:relative;border:0;background:transparent;padding:24px 0; }
+.welcome-chatbox input { text-align:center;caret-color:var(--text); }
+.welcome-form .sr-only { position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0; }
+.welcome-send { position:absolute;right:0;top:calc(100% + 12px);width:40px;height:40px; }
+.welcome-send:disabled { visibility:hidden; }
+.approval { background:var(--bg-sidebar);border-radius:var(--r-bubble);box-shadow:none;border-color:var(--border); }
+.approval-detail { background:var(--fill-subtle);border:0;border-radius:var(--r-lg); }

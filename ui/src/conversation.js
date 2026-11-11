@@ -236,6 +236,7 @@ export function Composer({bot, state, data, run, thread = null, composerRef, onS
         <textarea ref=${area} rows="1" value=${value} spellcheck=${prefs.spellcheck} placeholder=${thread ? t('Reply in thread') : t('Message {name}', {name: bot.name})} aria-label=${thread ? t('Reply in thread') : t('Message {name}', {name: bot.name})}
           onInput=${e => { change(e.target.value); detect(e.target); }} onKeyDown=${onKey} onClick=${e => suggest && detect(e.target)} onBlur=${() => setTimeout(() => setSuggest(null), 120)}
           onPaste=${e => { const files = [...(e.clipboardData?.files || [])]; if (files.length) { e.preventDefault(); addFiles(files); } }}/>
+        <${IconButton} icon="shield" label="Permissions for all bots" className="composer-button" onClick=${()=>openDialog('settings',{section:'Permissions'})}/>
         <${IconButton} icon="smile" label=${t('Emoji')} className="composer-button composer-emoji" active=${emoji} onClick=${() => setEmoji(!emoji)}/>
         ${speech && !value ? html`<${IconButton} icon="mic" label=${t('Dictate')} className="composer-button" onClick=${() => record('dictate')}/>` : null}
         <button type="button" class=${cx('send-button', showStop && 'is-stop', (canSend || run) && 'is-ready')} disabled=${!run && !canSend}
