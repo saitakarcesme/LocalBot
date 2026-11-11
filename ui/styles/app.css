@@ -834,3 +834,6 @@ body.is-resizing, body.is-resizing * { cursor: col-resize !important; }
 .welcome-send:disabled { visibility:hidden; }
 .approval { background:var(--bg-sidebar);border-radius:var(--r-bubble);box-shadow:none;border-color:var(--border); }
 .approval-detail { background:var(--fill-subtle);border:0;border-radius:var(--r-lg); }
+
+.welcome-introduction { align-self:flex-start;display:flex;align-items:center;gap:14px;text-align:left; }
+.welcome-introduction .welcome-prompt { margin:0; }

@@ -145,8 +145,8 @@ export function Onboarding({state}) {
  const submit=async e=>{e.preventDefault();if(!name.trim()||busy)return;setBusy(true);try{await api('onboard',{name:name.trim()});}catch(error){toast(error.message);setBusy(false);}};
  return html`<main class="onboarding welcome-name" aria-labelledby="onboarding-title">
   ${phase==='splash'?html`<div class="welcome-splash" role="status"><${Figure} size=${128} color="#b5a3e5"/><h1 id="onboarding-title">LocalBot</h1></div>`:html`
-  <div class="welcome-content"><${Figure} size=${88} color="#b5a3e5"/>
-   <h1 id="onboarding-title" class="welcome-prompt">Enter Your Name</h1>
+  <div class="welcome-content"><div class="welcome-introduction"><${Figure} size=${48} color="#b5a3e5"/>
+   <h1 id="onboarding-title" class="welcome-prompt">Enter Your Name</h1></div>
    <form class="welcome-form" onSubmit=${submit}>
     <label class="sr-only" for="welcome-name">Your name</label>
     <div class="welcome-chatbox"><input ref=${ref} id="welcome-name" name="name" value=${name} maxlength="80" autocomplete="given-name" placeholder="" disabled=${busy} onInput=${e=>setName(e.target.value)}/>
