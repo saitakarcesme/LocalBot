@@ -138,21 +138,22 @@ function CommandPalette({state, onClose, onSelect}) {
 }
 
 export function Onboarding({state}) {
- const [phase,setPhase]=useState('splash'),[name,setName]=useState(''),[busy,setBusy]=useState(false);
+ const [phase,setPhase]=useState('typing'),[name,setName]=useState(''),[busy,setBusy]=useState(false);
  const ref=useRef();
- useEffect(()=>{const timer=setTimeout(()=>setPhase('name'),1000);return()=>clearTimeout(timer);},[]);
+ useEffect(()=>{const timer=setTimeout(()=>setPhase('name'),1300);return()=>clearTimeout(timer);},[]);
  useEffect(()=>{if(phase==='name')ref.current?.focus();},[phase]);
- const submit=async e=>{e.preventDefault();if(!name.trim()||busy)return;setBusy(true);try{await api('onboard',{name:name.trim()});}catch(error){toast(error.message);setBusy(false);}};
- return html`<main class="onboarding welcome-name" aria-labelledby="onboarding-title">
-  ${phase==='splash'?html`<div class="welcome-splash" role="status"><${Figure} size=${128} color="#b5a3e5"/><h1 id="onboarding-title">LocalBot</h1></div>`:html`
-  <div class="welcome-content"><div class="welcome-introduction"><${Figure} size=${48} color="#b5a3e5"/>
-   <h1 id="onboarding-title" class="welcome-prompt">Enter Your Name</h1></div>
-   <form class="welcome-form" onSubmit=${submit}>
-    <label class="sr-only" for="welcome-name">Your name</label>
-    <div class="welcome-chatbox"><input ref=${ref} id="welcome-name" name="name" value=${name} maxlength="80" autocomplete="given-name" placeholder="" disabled=${busy} onInput=${e=>setName(e.target.value)}/>
-    <button class="welcome-send" type="submit" aria-label="Start with LocalBot" disabled=${busy||!name.trim()}><${Icon} name="arrowUp"/></button></div>
-    
-   </form>
-  </div>`}
+ const submit=async e=>{e.preventDefault();if(!name.trim()||busy||phase!=='name')return;setBusy(true);try{await api('onboard',{name:name.trim()});}catch(error){toast(error.message);setBusy(false);}};
+ return html`<main class="onboarding welcome-conversation" aria-label="Meet LocalBot">
+  <header class="welcome-chat-title"><${Figure} size=${26} color="#b5a3e5"/><span>LocalBot</span></header>
+  <section class="welcome-messages" aria-live="polite">
+   <div class="welcome-bot-message"><${Figure} size=${32} color="#b5a3e5" state=${phase==='typing'?'thinking':'idle'}/>
+    ${phase==='typing'?html`<div class="bubble typing" role="status" aria-label="LocalBot is typing"><span></span><span></span><span></span></div>`:html`<div class="bubble">Hi, I’m LocalBot. What should I call you?</div>`}
+   </div>
+   ${busy?html`<div class="turn turn-user"><div class="bubble">${name.trim()}</div></div>`:null}
+  </section>
+  <form class="welcome-composer" onSubmit=${submit}>
+   <input ref=${ref} id="welcome-name" aria-label="Your name" name="name" value=${name} maxlength="80" autocomplete="given-name" placeholder="Message LocalBot" disabled=${busy||phase==='typing'} onInput=${e=>setName(e.target.value)}/>
+   <button class="welcome-message-send" type="submit" aria-label="Start with LocalBot" disabled=${busy||phase==='typing'||!name.trim()}><${Icon} name="arrowUp"/></button>
+  </form>
  </main>`;
 }

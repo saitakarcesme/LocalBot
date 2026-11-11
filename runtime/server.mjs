@@ -429,7 +429,7 @@ const server = createServer(async (req, res) => {
         try {
           store.set('preferences',{...prefs,user:name,onboarded:true,mainBot:bot.id});
           store.exec('UPDATE bots SET pinned=1 WHERE id=?',bot.id);
-          if(!store.one("SELECT id FROM messages WHERE bot=? LIMIT 1",bot.id))store.message(bot.id,'assistant',`Hi ${name}, I’m ${bot.name}. What would you like to do?`);
+          if(!store.one("SELECT id FROM messages WHERE bot=? LIMIT 1",bot.id)){store.message(bot.id,'assistant',`Hi, I’m ${bot.name}. What should I call you?`);store.message(bot.id,'user',name);store.message(bot.id,'assistant',`Nice to meet you, ${name}. What would you like to do?`);}
           store.exec('COMMIT');
         } catch(e) {store.exec('ROLLBACK');throw e;}
         result={bot:bot.id};break;
