@@ -80,9 +80,18 @@ final class HostWebView: WKWebView {
  var lastMouseDown: NSEvent?
  override func mouseDown(with event: NSEvent) { lastMouseDown = event; super.mouseDown(with: event) }
 }
+// Full-window overlay routes hits only to the real AppKit window buttons.
+final class WindowControlsView: NSView {
+ override func hitTest(_ point: NSPoint) -> NSView? {
+  let hit=super.hitTest(point)
+  return hit === self ? nil : hit
+ }
+}
 @MainActor final class AppController: NSObject, NSApplicationDelegate, NSWindowDelegate, WKScriptMessageHandler, WKNavigationDelegate, WKUIDelegate, UNUserNotificationCenterDelegate {
  private var filePicker:LocalFilePicker?
 
+ var windowButtons:[NSButton]=[]
+ var windowControls:WindowControlsView?
  var statusItem: NSStatusItem?
  var window: NSWindow!
  var web: HostWebView!
@@ -118,21 +127,36 @@ final class HostWebView: WKWebView {
   window.setFrameAutosaveName("LocalBotCleanRoom");window.center()
   let config=WKWebViewConfiguration();config.userContentController.add(self,name:"localbot")
   web=HostWebView(frame:.zero,configuration:config);web.navigationDelegate=self;web.uiDelegate=self;web.setValue(false,forKey:"drawsBackground")
-  let glass=NSVisualEffectView(frame:window.contentLayoutRect)
-  glass.material = .underWindowBackground;glass.blendingMode = .behindWindow;glass.state = .active
+  let glass=NSView(frame:window.contentLayoutRect)
   web.frame=glass.bounds;web.autoresizingMask=[.width,.height];glass.addSubview(web)
   glass.wantsLayer=true;glass.layer?.cornerRadius=22;glass.layer?.cornerCurve = .continuous;glass.layer?.masksToBounds=true
-  window.contentView=glass;window.makeKeyAndOrderFront(nil);alignWindowButtons();NSApp.activate(ignoringOtherApps:true)
+  window.contentView=glass
+  let controls=WindowControlsView(frame:glass.bounds);controls.autoresizingMask=[.width,.height]
+  let types:[NSWindow.ButtonType]=[.closeButton,.miniaturizeButton,.zoomButton]
+  let actions:[Selector]=[#selector(NSWindow.performClose(_:)),#selector(NSWindow.performMiniaturize(_:)),#selector(NSWindow.toggleFullScreen(_:))]
+  windowButtons=types.compactMap{window.standardWindowButton($0)}
+  for (index,button) in windowButtons.enumerated(){button.removeFromSuperview();button.target=window;button.action=actions[index];controls.addSubview(button)}
+  glass.addSubview(controls,positioned:.above,relativeTo:web);windowControls=controls
+  window.makeKeyAndOrderFront(nil);alignWindowButtons();NSApp.activate(ignoringOtherApps:true)
   UNUserNotificationCenter.current().delegate=self
   startRuntime()
  }
  func alignWindowButtons() {
-  for (index,type) in [NSWindow.ButtonType.closeButton,.miniaturizeButton,.zoomButton].enumerated() {
-   if let button=window.standardWindowButton(type),let parent=button.superview {
-    button.setFrameOrigin(NSPoint(x:CGFloat(24+20*index),y:parent.bounds.height-34-button.frame.height/2))
-   }
+  guard let controls=windowControls else{return}
+  for (index,button) in windowButtons.enumerated() {
+   button.setFrameOrigin(NSPoint(x:CGFloat(24+20*index),y:controls.bounds.height-34-button.frame.height/2))
   }
  }
+ func restoreWindowButtons(){
+  guard let controls=windowControls else{return}
+  for button in windowButtons {
+   if button.superview !== controls {button.removeFromSuperview();controls.addSubview(button)}
+   button.isHidden=false;button.alphaValue=1
+  }
+  alignWindowButtons()
+ }
+ func windowDidExitFullScreen(_ notification:Notification){restoreWindowButtons()}
+ func windowDidDeminiaturize(_ notification:Notification){restoreWindowButtons()}
  func windowDidResize(_ notification:Notification){alignWindowButtons()}
  func startRuntime(){
   guard let resources=Bundle.main.resourceURL else{return}
@@ -360,7 +384,7 @@ final class HostWebView: WKWebView {
   if result==errSecItemNotFound{var item=Self.keyItem;item[kSecValueData as String]=data;item[kSecAttrLabel as String]="LocalBot model key";guard SecItemAdd(item as CFDictionary,nil)==errSecSuccess else{throw LocalError.message("Could not save key")}}
   else if result != errSecSuccess{throw LocalError.message("Could not update key")}
  }
- @objc func showWindow(){window.makeKeyAndOrderFront(nil);NSApp.activate(ignoringOtherApps:true)}
+ @objc func showWindow(){window.deminiaturize(nil);window.makeKeyAndOrderFront(nil);restoreWindowButtons();NSApp.activate(ignoringOtherApps:true)}
  @objc func minimizeDock(){web.evaluateJavaScript("window.dispatchEvent(new Event('localbot:computer-minimize'))",completionHandler:nil)}
  @objc func zoomIn(){web.pageZoom=min(1.4,web.pageZoom+0.1)}
  @objc func zoomOut(){web.pageZoom=max(0.8,web.pageZoom-0.1)}
