@@ -250,3 +250,44 @@ test('concurrent streams stay isolated and same-conversation follow-ups wait',as
   releases.get(a)();await waitFor(()=>entered.includes(c));releases.get(c)();releases.get(d)();await waitFor(()=>!engine.active);assert.equal(engine.streams.size,0);
  });
 });
+
+test('ten concurrent first tasks recover from server capacity rejections without replaying bot creation', async()=>{
+ await fixture(async store=>{
+  const attempts=new Map();let creations=0;
+  await fake(async(req,res)=>{
+   let raw='';for await(const chunk of req)raw+=chunk;
+   const request=JSON.parse(raw),content=request.messages.at(-1).content;
+   if(content==='Make ten') {
+    creations++;
+    sse(res,{tool_calls:Array.from({length:10},(_,i)=>({index:i,id:'new'+i,function:{name:'create_bot',arguments:JSON.stringify({name:'Worker '+i,personality:'Assistant',first_task:'Task '+i})}}))});return;
+   }
+   if(content?.startsWith('Task ')) {
+    const n=(attempts.get(content)||0)+1;attempts.set(content,n);
+    if(n<3){res.writeHead(429,{'Retry-After':'0'});res.end();return;}
+   }
+   sse(res,{content:'Done'});
+  },async endpoint=>{
+   store.set('permissions',{...store.permissions(),bots:'allow'});
+   store.set('model',{endpoint,model:'mock',context:32000,contextManual:true,maxTokens:100});
+   const engine=new Engine(store),bot=store.all('SELECT id FROM bots')[0].id;
+   engine.enqueue(bot,'Make ten');
+   await waitFor(()=>store.one("SELECT COUNT(*) AS n FROM runs WHERE status='done'").n===11);
+   assert.equal(creations,1);assert.equal(store.all('SELECT id FROM bots').length,11);
+   assert.equal(attempts.size,10);assert.ok([...attempts.values()].every(n=>n===3));
+   assert.equal(store.one("SELECT COUNT(*) AS n FROM runs WHERE status='failed'").n,0);
+  });
+ });
+});
+
+test('capacity retry remains cancellable and authentication errors are not retried',async()=>{
+ let requests=0;
+ await fake((req,res)=>{requests++;res.writeHead(429,{'Retry-After':'60'});res.end();},async endpoint=>{
+  await assert.rejects(complete({endpoint,model:'mock',maxTokens:10},'',[],[],AbortSignal.timeout(80)),/abort/i);
+  assert.equal(requests,1);
+ });
+ requests=0;
+ await fake((req,res)=>{requests++;res.writeHead(401);res.end();},async endpoint=>{
+  await assert.rejects(complete({endpoint,model:'mock',maxTokens:10},'',[],[],AbortSignal.timeout(1000)),/API key/);
+  assert.equal(requests,1);
+ });
+});

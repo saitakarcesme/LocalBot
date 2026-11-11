@@ -1,3 +1,4 @@
+import {MobileSettings, MobileBotDialog} from './mobile.js';
 import {Configure, Tasks} from './manage.js';
 import {t, html, useState, useEffect, useRef, cx, api, attempt, toast, useFocusTrap, modKey} from './lib.js';
 import {Icon} from './icons.js';
@@ -17,6 +18,8 @@ export function DialogHost({state, onSelect}) {
   if (!dialog || !state) return null;
   const close = () => setDialog(null);
   const {type, props} = dialog;
+  if (type === 'mobile-settings') return html`<${MobileSettings} state=${state} onClose=${close} onSelect=${onSelect}/>`;
+  if (type === 'mobile-bot') return html`<${MobileBotDialog} state=${state} onClose=${close} onSelect=${onSelect}/>`;
   if (type === 'configure') return html`<${Configure} bot=${state.bots.find(b=>b.id===props.bot.id)} state=${state} onClose=${close}/>`;
   if (type === 'tasks') return html`<${Dialog} title=${t("Tasks")} onClose=${close}><${Tasks} state=${state} onSelect=${id=>{onSelect(id);close();}}/></${Dialog}>`;
   if (type === 'shortcuts') return html`<${Dialog} title=${t("Keyboard shortcuts")} onClose=${close}><p>⌘/Ctrl N — New bot</p><p>⌘/Ctrl K — Command palette</p><p>⌘/Ctrl F — Find in conversation</p><p>⌘/Ctrl Shift F — Search all</p><p>⌘/Ctrl I — Details</p><p>Alt ↑/↓ — Previous/next bot</p><p>⌘/Ctrl 1–9 — Select bot</p></${Dialog}>`;

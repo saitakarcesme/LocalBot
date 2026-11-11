@@ -9,8 +9,10 @@ export {h, render, Fragment, createContext, Component, useState, useEffect, useR
 
 // The Mac app injects the token; self-hosted links carry it in the URL hash.
 // It is kept for this tab only so a reload keeps working, and never put in the URL.
+const mobileOrigin=location.protocol==='https:'&&location.hostname.endsWith('.ts.net');
+const tokenStorage=mobileOrigin?localStorage:sessionStorage;
 let token = window.__localToken || location.hash.slice(1);
-try { if (token) sessionStorage.setItem('localbot-token', token); else token = sessionStorage.getItem('localbot-token') || ''; } catch {}
+try { if (token) tokenStorage.setItem('localbot-token', token); else token = tokenStorage.getItem('localbot-token') || ''; } catch {}
 delete window.__localToken;
 history.replaceState(null, '', '/');
 export const hasToken = !!token;
@@ -125,6 +127,7 @@ const ERRORS = [
   [/needs its API key/i, 'This model server needs its API key.'],
   [/Model request failed \(HTTP 5\d\d\)/i, 'The model server had a problem. This is usually temporary; try again.'],
   [/Model request failed \(HTTP 404\)/i, 'The model server does not know this model. Pick another one in Settings.'],
+  [/Model request failed \(HTTP 429\)/i, 'The model is still busy after automatic retries. Your completed work is saved.'],
   [/Model request failed \(HTTP 4\d\d\)/i, 'The model server refused the request. Check the model name and key in Settings.'],
   [/operation was aborted due to timeout|TimeoutError|timed out/i, 'The model took too long to answer. Try again.'],
   [/Step limit reached/i, 'This task used all its steps. Send a message to continue.'],

@@ -204,3 +204,5 @@ export function Settings({state, section = 'General', onClose, onSelect}) {
     </section>
   </div>`;
 }
+
+export function SettingsPage({page,state,onSelect}) { const Page=PAGES[page]||General; return html`<${Page} state=${state} onSelect=${onSelect}/>`; }

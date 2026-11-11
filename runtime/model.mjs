@@ -1,5 +1,6 @@
 import {lookup} from 'node:dns/promises';
 import {isIP} from 'node:net';
+import {setTimeout as delay} from 'node:timers/promises';
 
 /*
  * Model traffic must stay on this Mac or on the user's own private network
@@ -64,18 +65,40 @@ export async function modelList(config, key, signal) {
   return {ready: models.includes(config.model), models, model: config.model, context: entry ? contextOf(entry) : 0};
 }
 
+/** Retry only requests rejected before a stream starts. Never replay tools or a partial answer. */
+export async function modelRequest(url, options, {attempts = 24, onRetry = () => {}} = {}) {
+  for (let attempt = 0; ; attempt++) {
+    options.signal?.throwIfAborted();
+    let response;
+    try { response = await fetch(url, options); }
+    catch (error) {
+      // A network failure has an ambiguous outcome. Leave it to the user instead
+      // of replaying an already accepted generation.
+      throw error;
+    }
+    if (![408, 429, 500, 502, 503, 504].includes(response.status) || attempt >= attempts - 1) return response;
+    const raw = response.headers.get('retry-after');
+    const requested = raw === null ? NaN : /^\d+(\.\d+)?$/.test(raw) ? Number(raw) * 1000 : Date.parse(raw) - Date.now();
+    const backoff = Math.min(30000, 1000 * 2 ** Math.min(attempt, 5));
+    const wait = Number.isFinite(requested) ? Math.max(50, Math.min(60000, requested)) : backoff * (0.8 + Math.random() * 0.4);
+    await response.body?.cancel();
+    onRetry({attempt: attempt + 1, status: response.status, delay: wait});
+    await delay(wait, undefined, {signal: options.signal});
+  }
+}
+
 /**
  * Streams a chat completion. Reasoning arrives either as a separate
  * `reasoning_content` field or inline inside <think> tags; both are separated
  * from the visible answer so the UI can show them as a "Thinking" step.
  */
-export async function complete(config, key, messages, tools, signal, onDelta = () => {}) {
+export async function complete(config, key, messages, tools, signal, onDelta = () => {}, onRetry = () => {}) {
   const url = await verifiedEndpoint(config.endpoint) + '/chat/completions';
-  const request = usage => fetch(url, {
+  const request = usage => modelRequest(url, {
     method: 'POST', redirect: 'error', signal,
     headers: {'Content-Type': 'application/json', ...headers(key)},
     body: JSON.stringify({model: config.model, messages, tools: tools.length ? tools : undefined, stream: true, ...(usage ? {stream_options: {include_usage: true}} : {}), max_tokens: config.maxTokens, temperature: config.temperature ?? 0}),
-  });
+  }, {onRetry});
   // Token counts are optional: a server that rejects the option is asked again without it.
   let response = await request(true);
   if (response.status === 400 || response.status === 422) { await response.body?.cancel(); response = await request(false); }
@@ -143,7 +166,7 @@ export async function complete(config, key, messages, tools, signal, onDelta = (
 
 /** One short, non-streamed answer (drafting a bot, checking a rule). Reasoning tags are dropped. */
 export async function completeOnce(config, key, messages, signal, maxTokens = 600) {
-  const response = await fetch(await verifiedEndpoint(config.endpoint) + '/chat/completions', {
+  const response = await modelRequest(await verifiedEndpoint(config.endpoint) + '/chat/completions', {
     method: 'POST', redirect: 'error', signal,
     headers: {'Content-Type': 'application/json', ...headers(key)},
     body: JSON.stringify({model: config.model, messages, stream: false, max_tokens: maxTokens, temperature: 0}),

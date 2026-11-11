@@ -366,7 +366,7 @@ function ContextMeter({state, run, data}) {
     <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.5"/><circle cx="10" cy="10" r="7.5" class="meter-fill" pathLength="1"/></svg></span>`;
 }
 
-export function Conversation({bot, data, state, run, panel, onPanel, focusMessage, onLoadMore, onOpenFile, sidebarHidden, onShowSidebar}) {
+export function Conversation({bot, data, state, run, panel, onPanel, focusMessage, onLoadMore, onOpenFile, sidebarHidden, onShowSidebar, mobile}) {
   const scroller = useRef(), column = useRef(), composerRef = useRef({});
   const [atBottom, setAtBottom] = useState(true);
   const [finding, setFinding] = useState(false);
@@ -458,7 +458,7 @@ export function Conversation({bot, data, state, run, panel, onPanel, focusMessag
       onDragLeave=${e => { if (!e.currentTarget.contains(e.relatedTarget)) setDragging(false); }}
       onDrop=${e => { if (!e.dataTransfer?.files.length) return; e.preventDefault(); setDragging(false); composerRef.current.addFiles([...e.dataTransfer.files]); }}>
     <header class=${cx('chat-header', 'drag-region', sidebarHidden && 'has-traffic')}>
-      <div class="header-side header-start no-drag">${sidebarHidden ? html`<${IconButton} icon="sidebar" label=${t('Show sidebar')} onClick=${onShowSidebar}/>` : null}</div>
+      <div class="header-side header-start no-drag">${sidebarHidden ? html`<${IconButton} icon=${mobile?'chevronLeft':'sidebar'} label=${t(mobile?'Back to bots':'Show sidebar')} onClick=${onShowSidebar}/>` : null}</div>
       <button type="button" class=${cx('title-pill', 'no-drag', detailsOpen && 'is-active')} onClick=${() => onPanel(detailsOpen ? null : {type: 'details'})} aria-expanded=${String(detailsOpen)} aria-label=${t('{name} details', {name: bot.name})}>
         <span class="title-avatar"><${BotFace} bot=${bot} state=${currentFigureState} tokenCount=${figureStream.run === run?.id ? figureStream.content?.length || 0 : 0}/></span><span class="title-name">${bot.name}</span>
         ${bot.label ? html`<span class="title-label">${bot.label}</span>` : null}

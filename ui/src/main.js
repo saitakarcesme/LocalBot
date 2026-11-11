@@ -1,3 +1,4 @@
+import {MobileHome} from './mobile.js';
 import {ComputerDock} from './computer.js';
 import {t, html, render, useState, useEffect, useRef, cx, api, attempt, useToasts, hasNative, native} from './lib.js';
 import {useAppData, activeRunFor, setNotificationPrefs} from './state.js';
@@ -5,7 +6,7 @@ import {Sidebar} from './sidebar.js';
 import {Conversation, ThreadPanel} from './conversation.js';
 import {Details} from './details.js';
 import {DialogHost, Onboarding, openDialog} from './dialogs.js';
-import {MenuHost, Button, ConfirmHost, ErrorBoundary, Skeleton, Toasts} from './ui.js';
+import {MenuHost, Button, ConfirmHost, ErrorBoundary, Toasts} from './ui.js';
 import {Icon} from './icons.js';
 import {Figure} from './figure.js';
 
@@ -48,7 +49,7 @@ function applyPreferences(prefs) {
   root.dataset.textSize = prefs.textSize;
   root.dataset.chatWidth = prefs.chatWidth;
   root.dataset.motion = prefs.motion;
-  root.style.zoom = (prefs.zoom || 100) / 100;
+  root.style.zoom = !hasNative&&matchMedia('(max-width: 600px)').matches ? 1 : (prefs.zoom || 100) / 100;
 }
 
 function App() {
@@ -59,7 +60,13 @@ function App() {
   // A small window gives the chat the room: the sidebar becomes the icon rail by itself.
   const [narrow,setNarrow]=useState(()=>matchMedia('(max-width: 760px)').matches);
   useEffect(()=>{const media=matchMedia('(max-width: 760px)');const on=()=>setNarrow(media.matches);media.addEventListener('change',on);return()=>media.removeEventListener('change',on);},[]);
+  const [phone,setPhone]=useState(()=>matchMedia('(max-width: 600px)').matches);
+  useEffect(()=>{const media=matchMedia('(max-width: 600px)');const on=()=>setPhone(media.matches);media.addEventListener('change',on);return()=>media.removeEventListener('change',on);},[]);
+  const mobile=phone&&!hasNative;
+  const [mobileChat,setMobileChat]=useState(false);
   const compact=compactChosen||narrow;
+  useEffect(()=>{document.documentElement.dataset.mobile=String(mobile);},[mobile]);
+  useEffect(()=>{const view=window.visualViewport;if(!view)return;const resize=()=>document.documentElement.style.setProperty('--viewport-height',view.height+'px');resize();view.addEventListener('resize',resize);return()=>view.removeEventListener('resize',resize);},[]);
   const historyRef=useRef([]),historyAt=useRef(-1);
   const [panel, setPanel] = useState(null);
   const [limit, setLimit] = useState(200);
@@ -94,13 +101,13 @@ function App() {
   const bot = state?.bots.find(b => b.id === selected);
   // Mark as read while the conversation is visible.
   useEffect(() => {
-    if (!bot?.unread) return;
+    if (!bot?.unread || (mobile && !mobileChat)) return;
     const mark = () => { if (document.hasFocus()) api('read', {bot: bot.id}).catch(() => {}); };
     mark(); window.addEventListener('focus', mark);
     return () => window.removeEventListener('focus', mark);
-  }, [bot?.id, bot?.unread]);
+  }, [bot?.id, bot?.unread, mobile, mobileChat]);
 
-  const select = (id, messageId = null) => {if(id!==historyRef.current[historyAt.current]){historyRef.current=historyRef.current.slice(0,historyAt.current+1);historyRef.current.push(id);historyAt.current=historyRef.current.length-1;} setPanel(null); setLimit(200); setSelected(id); setFocusMessage(messageId); api('ui', {key: 'selected', value: id}).catch(() => {}); };
+  const select = (id, messageId = null) => {setMobileChat(true);if(id!==historyRef.current[historyAt.current]){historyRef.current=historyRef.current.slice(0,historyAt.current+1);historyRef.current.push(id);historyAt.current=historyRef.current.length-1;} setPanel(null); setLimit(200); setSelected(id); setFocusMessage(messageId); api('ui', {key: 'selected', value: id}).catch(() => {}); };
 
   useEffect(() => {
     const onKey = e => {
@@ -123,7 +130,7 @@ function App() {
   }, [state, bot?.id]);
 
   useEffect(() => {
-    const openBot=e=>{setSelected(e.detail.id);setPanel(null);setLimit(200);};window.addEventListener('localbot:open-bot',openBot);
+    const openBot=e=>{setMobileChat(true);setSelected(e.detail.id);setPanel(null);setLimit(200);};window.addEventListener('localbot:open-bot',openBot);
     const file=e=>setPanel({type:'file',file:e.detail});
     window.addEventListener('localbot:file',file);
     const shortcuts=()=>openDialog('shortcuts');
@@ -144,16 +151,16 @@ function App() {
 
   if (authError) return html`<div class="empty-chat boot-message"><${Figure} shape="round" color="#b9b9bd" size=${72} state="sleeping" seed="auth"/>
     <h1>Open LocalBot from its link</h1><p>For your privacy, this page needs the link LocalBot printed when it started.</p></div>`;
-  if (!state) return html`<div class="boot"><${Skeleton}/></div>`;
+  if (!state) return html`<div class="boot-identity" role="status" aria-label="Loading LocalBot"><${Figure} color="#eeeef2" size=${64} state="thinking"/></div>`;
   if (!state.preferences.onboarded) return html`<${Onboarding} state=${state}/><${Toasts}/>`;
   const run = bot ? activeRunFor(state, bot.id) : null;
   const computerBot=state.computer?state.bots.find(b=>b.id===state.computer.bot):null;
-  return html`<div class=${cx('app', compact&&'sidebar-compact', sidebarHidden && 'sidebar-hidden', detailsOpen && bot && 'has-details')}>
-    <${Sidebar} concealed=${sidebarHidden} compact=${compact} onCompact=${()=>setCompact(!compactChosen)} narrow=${narrow} onCollapse=${()=>setSidebarHidden(true)} state=${state} selected=${selected} onSelect=${select} onSettings=${() => openDialog('settings', model.state === 'error' ? {section: 'Model'} : {})} connected=${connected} model=${model}/>
+  return html`<div class=${cx('app',mobile&&'mobile-app', mobile&&!mobileChat&&'mobile-home-open', compact&&'sidebar-compact', sidebarHidden && 'sidebar-hidden', detailsOpen && bot && 'has-details')}>
+    ${mobile ? (!mobileChat ? html`<${MobileHome} state=${state} onSelect=${select} onCreate=${()=>openDialog('mobile-bot')} onSettings=${()=>openDialog('mobile-settings')}/>` : null) : html`<${Sidebar} concealed=${sidebarHidden} compact=${compact} onCompact=${()=>setCompact(!compactChosen)} narrow=${narrow} onCollapse=${()=>setSidebarHidden(true)} state=${state} selected=${selected} onSelect=${select} onSettings=${() => openDialog('settings', model.state === 'error' ? {section: 'Model'} : {})} connected=${connected} model=${model}/>`}
     <div class="sidebar-resizer" role="separator" aria-orientation="vertical" aria-label="Resize sidebar" onPointerDown=${startResize}/>
-    ${bot ? html`<${Conversation} key=${bot.id} bot=${bot} data=${data?.id === bot.id ? data : null} state=${state} run=${run} focusMessage=${focusMessage}
-        sidebarHidden=${sidebarHidden} onShowSidebar=${()=>setSidebarHidden(false)} panel=${panel} onPanel=${setPanel} onOpenFile=${openFile} onLoadMore=${() => setLimit(n => n + 200)}/>`
-      : html`<main class="conversation"><header class="chat-header drag-region"/><div class="empty-chat">
+    ${bot && (!mobile||mobileChat) ? html`<${Conversation} key=${bot.id} bot=${bot} data=${data?.id === bot.id ? data : null} state=${state} run=${run} focusMessage=${focusMessage}
+        sidebarHidden=${mobile||sidebarHidden} mobile=${mobile} onShowSidebar=${()=>mobile?setMobileChat(false):setSidebarHidden(false)} panel=${panel} onPanel=${setPanel} onOpenFile=${openFile} onLoadMore=${() => setLimit(n => n + 200)}/>`
+      : mobile ? null : html`<main class="conversation"><header class="chat-header drag-region"/><div class="empty-chat">
           <${Figure} shape="round" color="#b5a3e5" size=${88} follow seed="empty"/><h1>${t("No bots yet")}</h1><p>${t("Create a bot to start a conversation.")}</p>
           <${Button} kind="primary" onClick=${() => openDialog('bot', {})}>${t("New Bot")}</${Button}></div></main>`}
     ${panel?html`<div class="details-resizer" role="separator" aria-orientation="vertical" aria-label="Resize details" tabindex="0" onPointerDown=${resizeDetails} onKeyDown=${e=>{if(['ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();const w=parseInt(getComputedStyle(document.documentElement).getPropertyValue('--details-width'))||320;document.documentElement.style.setProperty('--details-width',Math.min(700,Math.max(280,w+(e.key==='ArrowLeft'?20:-20)))+'px');}}}/>`:null}

@@ -1,3 +1,4 @@
+import {startMobile} from './mobile.mjs';
 import {createServer} from 'node:http';
 import {randomBytes, randomUUID, timingSafeEqual} from 'node:crypto';
 import {readFile, mkdir, writeFile, rm, realpath, stat, open as openFile} from 'node:fs/promises';
@@ -83,7 +84,7 @@ function botData(id, limit = 200) {
   };
 }
 
-const TYPES = {'.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.woff2': 'font/woff2', '.woff': 'font/woff', '.ttf': 'font/ttf', '.json': 'application/json'};
+const TYPES = {'.webmanifest':'application/manifest+json','.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.woff2': 'font/woff2', '.woff': 'font/woff', '.ttf': 'font/ttf', '.json': 'application/json'};
 const CSP = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self' data:; connect-src 'self'; object-src 'none'; frame-src 'self'; base-uri 'none'; form-action 'none'";
 async function serveStatic(p, res) {
   const target = resolve(uiRoot, '.' + (p === '/' ? '/index.html' : decodeURIComponent(p)));
@@ -187,7 +188,7 @@ async function linkPreview(target) {
 const previews = new Map();
 const newer = (a, b) => { const x = a.replace(/^v/, '').split('.').map(Number), y = b.split('.').map(Number); for (let i = 0; i < 3; i++) { if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0); } return false; };
 
-const server = createServer(async (req, res) => {
+const handleRequest = async (req, res) => {
   try {
     const url = new URL(req.url, 'http://127.0.0.1'), p = url.pathname;
     // File previews and local webhooks carry their own key in the path.
@@ -674,17 +675,21 @@ const server = createServer(async (req, res) => {
     if (!QUIET.has(p) || (p === '/api/native/claim' && result) || (p === '/api/ui' && /^(sort|compact|hidden)$/.test(b.key))) engine.changed();
     json(res, 200, result);
   } catch (e) { json(res, 400, {error: e.message}); }
-});
+};
+const server = createServer(handleRequest);
+let mobileServer;
+
 
 const QUIET = new Set(['/api/check', '/api/ui', '/api/native/claim', '/api/connections/test', '/api/file', '/api/export', '/api/export-all', '/api/bots/export', '/api/bots/draft', '/api/transcribe', '/api/update/check']);
 const timer = setInterval(() => engine.tick(), Number(process.env.LOCALBOT_TICK) || 15000);
 const port = Number(process.env.LOCALBOT_PORT || 0);
-server.listen(port, '127.0.0.1', () => {
+server.listen(port, '127.0.0.1', async () => {
   const address = server.address().port;
+  if(host==='local-app')try{mobileServer=await startMobile(root,token,handleRequest,address);}catch(e){console.error('Mobile listener: '+e.message);}
   console.log(JSON.stringify({port: address, token}));
   if (host === 'self-hosted') console.error(`\n  LocalBot is running → http://127.0.0.1:${address}/#${token}\n`);
 });
-function stop() { clearInterval(timer); for (const id of engine.activeTasks.keys()) engine.cancel(id); for (const id of [...engine.stdio.keys()]) engine.stopConnection(id); for (const c of clients) c.end(); server.close(); store.db.close(); process.exit(0); }
+function stop() { mobileServer?.close(); clearInterval(timer); for (const id of engine.activeTasks.keys()) engine.cancel(id); for (const id of [...engine.stdio.keys()]) engine.stopConnection(id); for (const c of clients) c.end(); server.close(); store.db.close(); process.exit(0); }
 process.on('SIGTERM', stop); process.on('SIGINT', stop);
 // Inside the Mac app, exit with the host even if it crashes (no orphaned runtime).
 if (host === 'local-app') { const parent = process.ppid; setInterval(() => { if (process.ppid !== parent) stop(); }, 2000).unref(); }

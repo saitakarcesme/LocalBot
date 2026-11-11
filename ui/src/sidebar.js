@@ -56,6 +56,7 @@ export function botMenuItems(bot, {state, onSelect, onStartSelect} = {}) {
 function statusLine(run, approvals) {
   if (!run) return null;
   if (approvals) return t('Needs your approval');
+  if (run.activity === 'retrying') return t('Model busy · retrying…');
   if (run.status === 'queued') return t('Waiting for the model…');
   if (streamFor(run.id).content) return t('Typing…');
   return t('Thinking…');
@@ -92,7 +93,7 @@ function BotRow({bot, state, active, onSelect, hit, selecting, checked, onCheck,
 
 function Pin({bot, state, active, onSelect, onStartSelect}) {
   const run = activeRunFor(state, bot.id), approvals = state.approvals.some(a => a.bot === bot.id);
-  return html`<button type="button" class=${cx('pin', active && 'is-active')} title=${bot.name} onClick=${() => onSelect(bot.id)} draggable="true" onDragStart=${e => e.dataTransfer.setData('text/localbot', bot.id)}
+  return html`<button type="button" class="pin" aria-current=${active ? 'page' : undefined} title=${bot.name} onClick=${() => onSelect(bot.id)} draggable="true" onDragStart=${e => e.dataTransfer.setData('text/localbot', bot.id)}
     onContextMenu=${e => { e.preventDefault(); openMenu({x: e.clientX, y: e.clientY, items: botMenuItems(bot, {state, onSelect, onStartSelect})}); }}>
     <span class="pin-avatar"><${BotFace} bot=${bot} state=${figureState(run, null, approvals)}/>
       ${bot.unread > 0 && !active ? html`<span class="unread-dot"/>` : null}</span>
@@ -151,7 +152,6 @@ export function Sidebar({state, selected, onSelect, onSettings, connected, model
   const loose = rest.filter(b => !state.sections.some(s => s.id === b.section));
   const activeTasks = state.runs.filter(r => ['queued', 'running', 'waiting'].includes(r.status)).length;
   const prefs = state.preferences;
-  const modelStatus = !connected ? t('Reconnecting…') : model.label;
   const dot = !connected || model.state === 'error' ? 'is-off' : model.state === 'ok' ? 'is-on' : 'is-wait';
 
   // Drag a bot onto another to place it before that bot; onto a section title to file it there.
@@ -227,7 +227,7 @@ export function Sidebar({state, selected, onSelect, onSettings, connected, model
       <button type="button" class="profile-row" onClick=${profileMenu} aria-haspopup="menu" aria-label=${t('Profile menu')}>
         <${UserAvatar} avatar=${prefs.avatar} name=${prefs.user}/>
         <span class="bot-row-text"><span class="bot-row-name">${prefs.user}</span>
-          <span class="profile-status"><span class=${cx('status-dot', dot)}/>${modelStatus}</span></span>
+          <span class="profile-status" aria-label=${connected ? t('Connected') : t('Reconnecting…')}><span class=${cx('status-dot', dot)}/></span></span>
       </button>
     </footer>`}
   </aside>`;

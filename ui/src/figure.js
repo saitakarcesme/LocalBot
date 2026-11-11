@@ -14,6 +14,7 @@ export function figureState(run, streaming, approvals) {
   if (['cancelled','interrupted'].includes(run.status)) return 'idle';
   if (run.status === 'waiting' || approvals) return 'waiting';
   if (streaming?.content) return 'typing';
+  if (run.activity === 'retrying') return 'thinking';
   if (run.activity) return run.activity;
   if (run.status === 'queued') return 'sleeping';
   return 'thinking';
