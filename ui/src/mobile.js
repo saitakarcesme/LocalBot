@@ -62,3 +62,19 @@ export function MobileBotDialog({state,onClose,onSelect}) {
       <button type="submit" class="mobile-create-submit" disabled=${!name.trim()||busy}>Create</button>
     </form></section></div>`;
 }
+
+
+// Recovery also works inside an already-installed icon with empty iOS storage.
+export function PhonePairing() {
+ const [code,setCode]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false);
+ const pair=async e=>{e.preventDefault();if(busy||code.length!==8)return;setBusy(true);setError('');
+  try{
+   const response=await fetch('/api/mobile-pair-code',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code})});
+   if(!response.ok)throw Error(response.status===429?'Too many attempts. Try again in 10 minutes.':'This code is incorrect or expired.');
+   const {token}=await response.json();
+   localStorage.setItem('localbot-token',token);
+   location.reload();
+  }catch(e){setError(e.message);setBusy(false);}
+ };
+ return html`<main class="phone-pairing"><${Figure} color="#eeeef2" size=${72}/><h1>Connect this iPhone</h1><p>Enter the pairing code from your Mac.</p><form onSubmit=${pair}><label for="phone-code">Pairing code</label><input id="phone-code" value=${code} inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{8}" maxlength="8" onInput=${e=>setCode(e.target.value.replace(/\D/g,'').slice(0,8))}/><button class="button button-primary" disabled=${busy||code.length!==8}>Connect</button>${error?html`<p role="alert">${error}</p>`:null}</form></main>`;
+}

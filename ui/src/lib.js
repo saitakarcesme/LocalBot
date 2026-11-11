@@ -9,7 +9,7 @@ export {h, render, Fragment, createContext, Component, useState, useEffect, useR
 
 // iOS Home Screen has a separate storage container from Safari. Its private
 // manifest launch URL carries an installation capability, redeemed before boot.
-const mobileOrigin=location.protocol==='https:'&&location.hostname.endsWith('.ts.net');
+export const mobileOrigin=location.protocol==='https:'&&location.hostname.endsWith('.ts.net');
 let token = window.__localToken || location.hash.slice(1);
 try {
   const storage=mobileOrigin?localStorage:sessionStorage;

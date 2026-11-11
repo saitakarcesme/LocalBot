@@ -1,6 +1,6 @@
-import {MobileHome} from './mobile.js';
+import {MobileHome, PhonePairing} from './mobile.js';
 import {ComputerDock} from './computer.js';
-import {t, html, render, useState, useEffect, useRef, cx, api, attempt, useToasts, hasNative, native} from './lib.js';
+import {t, html, render, useState, useEffect, useRef, cx, api, attempt, useToasts, hasNative, native, mobileOrigin} from './lib.js';
 import {useAppData, activeRunFor, setNotificationPrefs} from './state.js';
 import {Sidebar} from './sidebar.js';
 import {Conversation, ThreadPanel} from './conversation.js';
@@ -149,6 +149,7 @@ function App() {
     window.addEventListener('pointermove', move); window.addEventListener('pointerup', up, {once: true});
   };
 
+  if (authError && mobileOrigin) return html`<${PhonePairing}/>`;
   if (authError) return html`<div class="empty-chat boot-message"><${Figure} shape="round" color="#b9b9bd" size=${72} state="sleeping" seed="auth"/>
     <h1>Open LocalBot from its link</h1><p>For your privacy, this page needs the link LocalBot printed when it started.</p></div>`;
   if (!state) return html`<div class="boot-identity" role="status" aria-label="Loading LocalBot"><${Figure} color="#eeeef2" size=${64} state="thinking"/></div>`;

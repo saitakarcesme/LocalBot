@@ -40,3 +40,17 @@ test('home-screen manifest restores pairing without Safari cookies or local stor
   assert.equal((await fetch(base+'/mobile-manifest/'+'0'.repeat(64)+'.webmanifest')).status,401);
  }finally{server.closeAllConnections();await new Promise(r=>server.close(r));}
 });
+
+test('installed phone can pair with a short-lived code; guesses are rate limited',async()=>{
+ const {phonePairingCode}=await import('../runtime/mobile.mjs');
+ const token='c'.repeat(64),origin='https://example.tail000.ts.net';
+ const server=createServer(mobileHandler({origin,token},'desktop',(_req,res)=>res.end('ok'),12345));
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;
+ const pair=code=>fetch(base+'/api/mobile-pair-code',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json'},body:JSON.stringify({code})});
+ try{
+  const response=await pair(phonePairingCode(token));assert.equal(response.status,200);assert.equal((await response.json()).token,token);
+  for(let i=0;i<5;i++)assert.equal((await pair('invalid')).status,401);
+  assert.equal((await pair(phonePairingCode(token))).status,429);
+  assert.notEqual(phonePairingCode(token,0),phonePairingCode(token,600000));
+ }finally{server.closeAllConnections();await new Promise(r=>server.close(r));}
+});

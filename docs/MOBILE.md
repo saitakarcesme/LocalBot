@@ -24,3 +24,7 @@ To revoke phone access: run `tailscale serve --https=443 off`, remove `mobile.js
 ## Validation
 
 Automated phone-width tests cover creating a bot, saving its color, conversation/back navigation, search, settings, empty connections, light theme, and horizontal overflow. API tests cover credential/origin validation and native bridge isolation. Real iPhone installation/keyboard behavior still requires checking on the user's phone; desktop viewport emulation is not a physical-device test.
+
+### Recover an existing iPhone icon
+
+If the Home Screen opens without Safari's credential, LocalBot shows **Connect this iPhone**. On the Mac, run `node scripts/mobile-code.mjs`, then enter the eight-digit code in the installed phone app. It saves the credential in that app's own storage; the icon need not be reinstalled. Codes expire at the next ten-minute boundary. Five incorrect attempts block this pairing endpoint for ten minutes. Pairing is still private-tailnet-only and does not make the normal API public.
