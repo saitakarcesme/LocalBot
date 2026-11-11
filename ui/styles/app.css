@@ -574,7 +574,7 @@ body.is-resizing, body.is-resizing * { cursor: col-resize !important; }
 @media(max-width:760px){.app.has-details .conversation{display:none}.app.has-details .details{width:100%;min-width:0}.dialog{max-width:96vw}}
 .app.sidebar-hidden {grid-template-columns:0 minmax(0,1fr)}
 .app.sidebar-hidden.has-details {grid-template-columns:0 minmax(0,1fr) var(--details-width,320px)}
-.sidebar-hidden>.sidebar,.sidebar-hidden>.sidebar-resizer {display:none}
+.sidebar-hidden>.sidebar-resizer {display:none}
 .thread-scroll {overflow:auto;flex:1;min-height:0}.thread-column{padding:16px}
 .thread-panel .composer{flex-shrink:0}
 .bot-row-more {z-index:2}
@@ -811,3 +811,14 @@ body.is-resizing, body.is-resizing * { cursor: col-resize !important; }
 .settings .field{display:grid;gap:8px;width:100%;margin:12px 0}.settings .settings-row{gap:16px}.settings-row-text{overflow-wrap:anywhere}.settings-row-control{justify-content:flex-end}.settings-content :is(.manage-card,.settings-group,.field){box-sizing:border-box;max-width:100%}.settings-content textarea{width:100%;box-sizing:border-box}.settings-content .row-buttons{gap:8px}
 
 .advanced-settings{margin:16px 0;border:1px solid var(--border);border-radius:12px;padding:12px}.advanced-settings summary{cursor:pointer;color:var(--text-2);font-size:13px}.advanced-settings[open] summary{margin-bottom:14px}.settings-form{display:grid;gap:12px}.settings-form>.button{justify-self:start}
+
+/* Only the sidebar reveals the native material. Chat remains fully opaque. */
+:root[data-host="mac"] body { background:transparent; }
+:root[data-host="mac"] .sidebar { background:linear-gradient(145deg,rgba(255,255,255,.065),transparent 42%,rgba(255,255,255,.015));border-color:rgba(255,255,255,.15);box-shadow:inset 0 1px 0 rgba(255,255,255,.12),inset 0 -1px 0 rgba(0,0,0,.08); }
+:root[data-host="mac"][data-theme="light"] .sidebar { border-color:rgba(255,255,255,.55); }
+:root[data-host="mac"] :is(.conversation,.details,.onboarding,.boot,.boot-message) { background:var(--bg); }
+.pins {border-bottom:0;}
+.sidebar {transition:width 240ms cubic-bezier(.2,.8,.2,1),min-width 240ms cubic-bezier(.2,.8,.2,1),margin-left 240ms cubic-bezier(.2,.8,.2,1),opacity 180ms ease,transform 240ms cubic-bezier(.2,.8,.2,1),visibility 0s;}
+.app.sidebar-hidden>.sidebar {display:flex;width:0;min-width:0;margin-left:0;border-width:0;opacity:0;transform:translateX(-18px);visibility:hidden;pointer-events:none;transition:width 240ms cubic-bezier(.2,.8,.2,1),min-width 240ms cubic-bezier(.2,.8,.2,1),margin-left 240ms cubic-bezier(.2,.8,.2,1),opacity 160ms ease,transform 240ms cubic-bezier(.2,.8,.2,1),visibility 0s 240ms;}
+.sidebar-hidden .sidebar-top,.sidebar-hidden .sidebar-footer,.sidebar-hidden .bot-list {pointer-events:none;}
+@media(prefers-reduced-motion:reduce){.sidebar,.app.sidebar-hidden>.sidebar{transition:none}}

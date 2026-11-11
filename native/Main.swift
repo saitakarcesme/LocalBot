@@ -118,7 +118,8 @@ final class HostWebView: WKWebView {
   window.setFrameAutosaveName("LocalBotCleanRoom");window.center()
   let config=WKWebViewConfiguration();config.userContentController.add(self,name:"localbot")
   web=HostWebView(frame:.zero,configuration:config);web.navigationDelegate=self;web.uiDelegate=self;web.setValue(false,forKey:"drawsBackground")
-  let glass=NSView(frame:window.contentLayoutRect)
+  let glass=NSVisualEffectView(frame:window.contentLayoutRect)
+  glass.material = .underWindowBackground;glass.blendingMode = .behindWindow;glass.state = .active
   web.frame=glass.bounds;web.autoresizingMask=[.width,.height];glass.addSubview(web)
   glass.wantsLayer=true;glass.layer?.cornerRadius=22;glass.layer?.cornerCurve = .continuous;glass.layer?.masksToBounds=true
   window.contentView=glass;window.makeKeyAndOrderFront(nil);alignWindowButtons();NSApp.activate(ignoringOtherApps:true)
@@ -284,7 +285,7 @@ final class HostWebView: WKWebView {
    let content=UNMutableNotificationContent();content.title=body["title"] as? String ?? "LocalBot";content.body=body["body"] as? String ?? ""
    if body["sound"] as? Bool == true {content.sound = .default}
    try await center.add(UNNotificationRequest(identifier:UUID().uuidString,content:content,trigger:nil));return true
-  case "activity": statusItem?.button?.title=(body["busy"] as? Bool == true) ? "L •" : "L";return true
+  case "activity": statusItem?.button?.title=(body["busy"] as? Bool == true) ? "•" : "";return true
   case "permissionStatus": return ["accessibility":AXIsProcessTrusted(),"screen":CGPreflightScreenCaptureAccess(),"microphone":AVCaptureDevice.authorizationStatus(for:.audio) == .authorized]
   case "browserPreview":
    let bot=body["bot"] as? String ?? ""

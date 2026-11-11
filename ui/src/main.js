@@ -149,7 +149,7 @@ function App() {
   const run = bot ? activeRunFor(state, bot.id) : null;
   const computerBot=state.computer?state.bots.find(b=>b.id===state.computer.bot):null;
   return html`<div class=${cx('app', compact&&'sidebar-compact', sidebarHidden && 'sidebar-hidden', detailsOpen && bot && 'has-details')}>
-    <${Sidebar} compact=${compact} onCompact=${()=>setCompact(!compactChosen)} narrow=${narrow} onCollapse=${()=>setSidebarHidden(true)} state=${state} selected=${selected} onSelect=${select} onSettings=${() => openDialog('settings', model.state === 'error' ? {section: 'Model'} : {})} connected=${connected} model=${model}/>
+    <${Sidebar} concealed=${sidebarHidden} compact=${compact} onCompact=${()=>setCompact(!compactChosen)} narrow=${narrow} onCollapse=${()=>setSidebarHidden(true)} state=${state} selected=${selected} onSelect=${select} onSettings=${() => openDialog('settings', model.state === 'error' ? {section: 'Model'} : {})} connected=${connected} model=${model}/>
     <div class="sidebar-resizer" role="separator" aria-orientation="vertical" aria-label="Resize sidebar" onPointerDown=${startResize}/>
     ${bot ? html`<${Conversation} key=${bot.id} bot=${bot} data=${data?.id === bot.id ? data : null} state=${state} run=${run} focusMessage=${focusMessage}
         sidebarHidden=${sidebarHidden} onShowSidebar=${()=>setSidebarHidden(false)} panel=${panel} onPanel=${setPanel} onOpenFile=${openFile} onLoadMore=${() => setLimit(n => n + 200)}/>`

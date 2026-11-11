@@ -16,7 +16,11 @@ export default async ({page,api,expect,send,idle})=>{
  await page.getByRole('button',{name:'Save'}).click();
  await page.locator('.section-head',{hasText:'Office'}).waitFor();
  await page.getByRole('button',{name:'Profile menu'}).click();
- await page.getByRole('menuitem',{name:'Hide sidebar'}).click();
+ expect(await page.getByRole('menuitem',{name:'Hide sidebar'}).count()===0,'no duplicate hide in profile');
+ expect(await page.getByRole('menuitem',{name:'Compact sidebar'}).count()===0,'no duplicate compact in profile');
+ await page.keyboard.press('Escape');
+ await page.getByRole('button',{name:'Hide sidebar',exact:true}).click();
+ await page.locator('.sidebar').waitFor({state:'hidden'});
  expect(await page.locator('.sidebar').isVisible()===false,'sidebar collapses');
  await page.locator('.chat-header button').first().click();
  await page.locator('.sidebar').waitFor({state:'visible'});

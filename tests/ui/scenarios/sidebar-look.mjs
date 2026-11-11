@@ -20,6 +20,8 @@ export default async ({page, api, shot, expect, idle}) => {
   await shot('row-menu'); await page.keyboard.press('Escape');
   await page.getByRole('button', {name: 'Profile menu'}).click();
   await shot('profile-menu');
-  await page.getByRole('menuitem', {name: 'Compact sidebar'}).click();
+  expect(await page.getByRole('menuitem',{name:'Compact sidebar'}).count()===0,'no duplicate compact option');
+  await page.keyboard.press('Escape');
+  await page.setViewportSize({width:700,height:820});
   await page.waitForTimeout(200); await shot('compact');
 };

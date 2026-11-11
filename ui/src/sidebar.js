@@ -118,7 +118,7 @@ function SectionHeader({section, count, state, onDropBot}) {
   </div>`;
 }
 
-export function Sidebar({state, selected, onSelect, onSettings, connected, model, onCollapse, compact, onCompact, narrow}) {
+export function Sidebar({state, selected, onSelect, onSettings, connected, model, onCollapse, compact, onCompact, narrow, concealed}) {
   const [view, setView] = useState('bots');            // 'bots' | 'archived'
   const [selection, setSelection] = useState(null);     // null = not selecting, else array of bot ids
   const [searching, setSearching] = useState(false);
@@ -176,12 +176,9 @@ export function Sidebar({state, selected, onSelect, onSettings, connected, model
     {label: t('Tasks'), icon: 'tasks', hint: activeTasks ? String(activeTasks) : undefined, onSelect: () => openDialog('tasks')},
     ...(archived.length ? [{label: t('Archived bots'), icon: 'archive', hint: String(archived.length), onSelect: () => { if (compact) onCompact(); setView('archived'); }}] : []),
     {label: t('Keyboard shortcuts'), icon: 'keyboard', onSelect: () => openDialog('shortcuts')},
-    {separator: true},
-    ...(narrow ? [] : [{label: compact ? t('Expand sidebar') : t('Compact sidebar'), icon: 'sidebar', onSelect: onCompact}]),
-    {label: t('Hide sidebar'), icon: 'chevronsLeft', onSelect: onCollapse},
   ]});
 
-  return html`<aside class="sidebar" aria-label=${t('Bots')}>
+  return html`<aside class="sidebar" inert=${concealed ? true : undefined} aria-hidden=${concealed ? "true" : undefined} aria-label=${t('Bots')}>
     <div class="sidebar-top drag-region">
       ${searching ? html`<label class="search-field no-drag">
           <${Icon} name="search"/>

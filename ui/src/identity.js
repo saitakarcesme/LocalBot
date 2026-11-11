@@ -14,6 +14,6 @@ export function LocalBotFigure({size,state='idle',label,color='#eeeef2',amplitud
   return()=>{observer.disconnect();document.removeEventListener('visibilitychange',visibility);};
  },[]);
  return html`<span ref=${ref} class=${'localbot-figure figure state-'+mapped+(paused?' is-paused':'')} style=${`${size?`width:${size}px;height:${size}px;`:''}--figure-color:${/^#[0-9a-f]{6}$/i.test(color)?color:'#eeeef2'};--voice-scale:${1+Math.min(1,Math.max(0,amplitude||0))*.06}`} role=${label?'img':undefined} aria-label=${label} aria-hidden=${label?undefined:'true'}>
-  <svg viewBox="0 0 100 100" focusable="false"><g class="figure-body"><circle class="figure-disc" cx="50" cy="50" r="46"/><g class="figure-gaze"><g class="figure-blink"><path d="M35 36 Q28 46 28 55 Q28 58 34 57 Q40 56 44 58"/><path d="M63 36 Q56 46 56 55 Q56 58 62 57 Q68 56 72 58"/></g></g></g></svg>
+  <svg viewBox="0 0 100 100" focusable="false"><g class="figure-body"><circle class="figure-disc" cx="50" cy="50" r="46"/><g class="figure-gaze"><g class="figure-blink"><path class="eye-left" d="M30 34 V59 H44"/><path class="eye-right" d="M58 34 V59 H72"/></g></g></g></svg>
  </span>`;
 }

@@ -72,3 +72,5 @@ The global single-run scheduler is replaced by a map of active runs. Separate bo
 The old marble shader, fallback, prototypes and assets have been removed. LocalBotFigure is dependency-free SVG + compositor-friendly CSS: white main figure, seven configurable colors, ten states, visibility pause and reduced-motion support. Tool activity drives coding/researching/reading; stream/voice lifecycle drives typing/listening/speaking. Listening uses real microphone amplitude only. Success/error settle after 1.4 seconds. App and menu-bar icons use the new mark.
 
 Settings use themed file controls and aligned wrapping rows. Connections support a JSON file picker; manual setup is retained under an advanced disclosure pending the user's decision. Candidate applications are listed in PLUGIN-CANDIDATES.md; no third-party connector has been silently installed.
+
+Sidebar visual revision: native blur material is visible only through the sidebar area; main conversation remains opaque neutral. Pin separator removed. Duplicate profile-menu sidebar actions removed. Hide/show transitions are bounded to 240ms and respect reduced motion.
