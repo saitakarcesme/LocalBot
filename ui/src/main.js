@@ -1,3 +1,4 @@
+import {installMobileViewport} from './mobile-viewport.js';
 import {MobileHome, PhonePairing} from './mobile.js';
 import {ComputerDock} from './computer.js';
 import {t, html, render, useState, useEffect, useRef, cx, api, attempt, useToasts, hasNative, native, mobileOrigin} from './lib.js';
@@ -62,11 +63,11 @@ function App() {
   useEffect(()=>{const media=matchMedia('(max-width: 760px)');const on=()=>setNarrow(media.matches);media.addEventListener('change',on);return()=>media.removeEventListener('change',on);},[]);
   const [phone,setPhone]=useState(()=>matchMedia('(max-width: 600px)').matches);
   useEffect(()=>{const media=matchMedia('(max-width: 600px)');const on=()=>setPhone(media.matches);media.addEventListener('change',on);return()=>media.removeEventListener('change',on);},[]);
-  const mobile=phone&&!hasNative;
+  const mobile=(phone||/iPhone|iPod|Android.*Mobile/i.test(navigator.userAgent))&&!hasNative;
   const [mobileChat,setMobileChat]=useState(false);
   const compact=compactChosen||narrow;
   useEffect(()=>{document.documentElement.dataset.mobile=String(mobile);},[mobile]);
-  useEffect(()=>{const view=window.visualViewport;if(!view)return;const resize=()=>document.documentElement.style.setProperty('--viewport-height',view.height+'px');resize();view.addEventListener('resize',resize);return()=>view.removeEventListener('resize',resize);},[]);
+  useEffect(()=>mobile?installMobileViewport():undefined,[mobile]);
   const historyRef=useRef([]),historyAt=useRef(-1);
   const [panel, setPanel] = useState(null);
   const [limit, setLimit] = useState(200);

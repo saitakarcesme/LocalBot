@@ -12,7 +12,9 @@ import {startFakeModel} from './fake-model.mjs';
 const here = dirname(fileURLToPath(import.meta.url)), repo = resolve(here, '../..');
 const require = createRequire(import.meta.url);
 const pwRoot = process.env.PLAYWRIGHT_CORE || '/opt/homebrew/lib/node_modules/@playwright/mcp/node_modules/playwright-core';
-const {chromium} = require(pwRoot);
+const engines = require(pwRoot);
+const engineName=process.env.UI_BROWSER_ENGINE||'chromium';
+const browserEngine=engines[engineName];
 const shots = process.env.SHOTS || join(tmpdir(), 'localbot-shots');
 await mkdir(shots, {recursive: true});
 
@@ -27,7 +29,7 @@ for (const name of names) {
   const child = spawn(process.execPath, ['runtime/server.mjs'], {cwd: repo, env: {...process.env, LOCALBOT_DATA: root, LOCALBOT_HOST: 'self-hosted', LOCALBOT_TOKEN: token, LOCALBOT_TICK: '400'}, stdio: ['ignore', 'pipe', 'pipe']});
   let serverLog = '';
   child.stderr.on('data', d => { serverLog += d; });
-  const browser = await chromium.launch({headless: true, ...(process.env.UI_BROWSER_CHANNEL ? {channel: process.env.UI_BROWSER_CHANNEL} : {})});
+  const browser = await browserEngine.launch({headless: true, ...(engineName==='chromium' && process.env.UI_BROWSER_CHANNEL ? {channel: process.env.UI_BROWSER_CHANNEL} : {})});
   try {
     const {port} = await new Promise((ok, no) => { let text = ''; child.stdout.on('data', d => { text += d; if (text.includes('\n')) ok(JSON.parse(text.split('\n')[0])); }); child.on('exit', () => no(Error('server exited: ' + serverLog))); });
     const base = 'http://127.0.0.1:' + port;
@@ -35,14 +37,14 @@ for (const name of names) {
     const api = async (path, body) => { const r = await fetch(base + '/api/' + path, {method: body === undefined ? 'GET' : 'POST', headers, body: body === undefined ? undefined : JSON.stringify(body)}); const j = await r.json().catch(() => ({})); if (!r.ok) throw Error(path + ': ' + (j.error || r.status)); return j; };
     await api('config', {endpoint: model.endpoint, model: 'mock'});
     await api('preferences', {user: 'Sait', onboarded: true, language: 'en'});
-    const context = await browser.newContext({viewport: {width: 1280, height: 820}, reducedMotion: 'reduce', permissions: ['clipboard-read', 'clipboard-write']});
+    const context = await browser.newContext({viewport: {width: 1280, height: 820}, reducedMotion: 'reduce', permissions: engineName==='chromium'?['clipboard-read', 'clipboard-write']:[]});
     const page = await context.newPage();
     const errors = [];
     page.on('pageerror', e => errors.push('pageerror: ' + e.message));
     page.on('console', m => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push('console: ' + m.text()); });
     const open = async () => { await page.goto(base + '/#' + token); await page.waitForSelector('.sidebar, .onboarding', {timeout: 8000}); };
     const expect = (cond, message) => { if (!cond) throw Error('Expectation failed: ' + message); };
-    const shot = file => page.screenshot({path: join(shots, name + '-' + file + '.png')});
+    const shot = async file => { await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))); return page.screenshot({path: join(shots, name + '-' + file + '.png')}); };
     const send = async text => { await page.fill('.composer textarea', text); await page.keyboard.press('Enter'); };
     const idle = async () => { await page.waitForFunction(() => !document.querySelector('.send-button.is-stop') && !document.querySelector('.is-live'), null, {timeout: 15000}); await page.waitForTimeout(120); };
     const scenario = (await import(pathToFileURL(join(here, 'scenarios', name + '.mjs')).href)).default;

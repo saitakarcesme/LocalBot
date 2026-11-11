@@ -74,9 +74,10 @@ export function Composer({bot, state, data, run, thread = null, composerRef, onS
   const [level, setLevel] = useState(0);
   const prefs = state.preferences;
   const speech = useSpeechAvailable(state);
-  useEffect(() => { setValue(state.ui[draftKey] || ''); setReply(null); setEditing(null); setAttachments([]); requestAnimationFrame(() => { resize(); if (!compact) area.current?.focus({preventScroll: true}); }); }, [draftKey]);
+  const mobile=document.documentElement.dataset.mobile==='true';
+  useEffect(() => { setValue(state.ui[draftKey] || ''); setReply(null); setEditing(null); setAttachments([]); requestAnimationFrame(() => { resize(); if (!compact && !mobile) area.current?.focus({preventScroll: true}); }); }, [draftKey]);
   useLayoutEffect(resize, [value]);
-  function resize() { const el = area.current; if (!el) return; el.style.height = '0px'; el.style.height = Math.min(232, Math.max(32, el.scrollHeight)) + 'px'; }
+  function resize() { const el = area.current; if (!el) return; if(!el.value){el.style.height=(mobile?40:32)+'px';return;} el.style.height = '0px'; el.style.height = Math.min(232, Math.max(32, el.scrollHeight)) + 'px'; }
   const change = next => { setValue(next); saveDraft(draftKey, next); };
   const insert = text => { const el = area.current, at = el.selectionStart ?? value.length, next = value.slice(0, at) + text + value.slice(el.selectionEnd ?? at); change(next); requestAnimationFrame(() => { el.focus(); el.setSelectionRange(at + text.length, at + text.length); }); };
 
@@ -207,6 +208,7 @@ export function Composer({bot, state, data, run, thread = null, composerRef, onS
 
   const plusMenu = e => openMenu({anchor: e.currentTarget, items: [
     {label: t('Add files…'), icon: 'file', onSelect: () => fileInput.current.click()},
+    ...(mobile ? [{label:t('Permissions for all bots'),icon:'shield',onSelect:()=>openDialog('settings',{section:'Permissions'})},{label:t('Emoji'),icon:'smile',onSelect:()=>setEmoji(true)}] : []),
     ...(speech ? [{label: t('Record a voice message'), icon: 'wave', onSelect: () => record('message')}] : []),
   ]});
 
@@ -230,13 +232,13 @@ export function Composer({bot, state, data, run, thread = null, composerRef, onS
           <div class="recording" role="status"><span class="recording-dot"/><span>${recording === 'busy' ? t('Transcribing…') : recording.mode === 'message' ? t('Recording voice message…') : t('Listening…')}</span>
             <span class="recording-level"><i style=${`transform:scaleX(${Math.max(.04, level).toFixed(2)})`}/></span></div>
           <button type="button" class="send-button is-ready" disabled=${recording === 'busy'} aria-label=${t('Finish recording')} data-tip=${t('Finish recording')} onClick=${finishRecording}><${Icon} name="check"/></button>
-        </div>` : html`<div class="composer-row">
-        <${IconButton} icon="plus" label=${speech ? t('Add') : t('Add files')} className="composer-button" onClick=${speech ? plusMenu : () => fileInput.current.click()}/>
+        </div>` : html`<div class=${cx('composer-row',!value&&'is-empty')}>
+        <${IconButton} icon="plus" label=${speech ? t('Add') : t('Add files')} className="composer-button" onClick=${speech || mobile ? plusMenu : () => fileInput.current.click()}/>
         <input ref=${fileInput} type="file" multiple hidden onChange=${e => { addFiles([...e.target.files]); e.target.value = ''; }}/>
-        <textarea ref=${area} rows="1" value=${value} spellcheck=${prefs.spellcheck} placeholder=${thread ? t('Reply in thread') : t('Message {name}', {name: bot.name})} aria-label=${thread ? t('Reply in thread') : t('Message {name}', {name: bot.name})}
+        <textarea ref=${area} rows="1" value=${value} spellcheck=${prefs.spellcheck} placeholder=${mobile ? t('Message') : thread ? t('Reply in thread') : t('Message {name}', {name: bot.name})} aria-label=${thread ? t('Reply in thread') : t('Message {name}', {name: bot.name})}
           onInput=${e => { change(e.target.value); detect(e.target); }} onKeyDown=${onKey} onClick=${e => suggest && detect(e.target)} onBlur=${() => setTimeout(() => setSuggest(null), 120)}
           onPaste=${e => { const files = [...(e.clipboardData?.files || [])]; if (files.length) { e.preventDefault(); addFiles(files); } }}/>
-        <${IconButton} icon="shield" label="Permissions for all bots" className="composer-button" onClick=${()=>openDialog('settings',{section:'Permissions'})}/>
+        <${IconButton} icon="shield" label="Permissions for all bots" className="composer-button composer-permissions" onClick=${()=>openDialog('settings',{section:'Permissions'})}/>
         <${IconButton} icon="smile" label=${t('Emoji')} className="composer-button composer-emoji" active=${emoji} onClick=${() => setEmoji(!emoji)}/>
         ${speech && !value ? html`<${IconButton} icon="mic" label=${t('Dictate')} className="composer-button" onClick=${() => record('dictate')}/>` : null}
         <button type="button" class=${cx('send-button', showStop && 'is-stop', (canSend || run) && 'is-ready')} disabled=${!run && !canSend}
@@ -245,7 +247,7 @@ export function Composer({bot, state, data, run, thread = null, composerRef, onS
         </button>
       </div>`}
     </div>
-    ${emoji ? html`<${EmojiPicker} anchor=${box.current.querySelector('.composer-emoji')} placement="top-end" onPick=${e => insert(e)} onClose=${() => setEmoji(false)}/>` : null}
+    ${emoji ? html`<${EmojiPicker} anchor=${mobile?box.current:box.current.querySelector('.composer-emoji')} placement="top-end" onPick=${e => insert(e)} onClose=${() => setEmoji(false)}/>` : null}
     ${suggest && suggestItems.length ? html`<${Suggest} anchor=${box.current} items=${suggestItems} active=${suggest.active} onPick=${pickSuggestion} onClose=${() => setSuggest(null)} title=${suggest.kind === 'slash' ? t('Skills and commands') : t('Mention a bot or file')}/>` : null}
     ${markup ? html`<${MarkupDialog} file=${markup.file} onClose=${() => setMarkup(null)} onDone=${file => { const old = markup; setMarkup(null); removeAttachment(old); addFiles([file]); }}/>` : null}
   </div>`;

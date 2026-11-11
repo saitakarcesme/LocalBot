@@ -1,0 +1,58 @@
+export default async({page,api,expect,shot})=>{
+ await api('preferences',{onboarded:false,restart:true});
+ await page.setViewportSize({width:390,height:844});
+ await page.reload();await page.waitForSelector('.welcome-composer input:not(:disabled)');
+ await page.evaluate(()=>{
+  document.documentElement.style.setProperty('--mobile-safe-top','59px');document.documentElement.style.setProperty('--mobile-safe-bottom','34px');
+  const view=visualViewport;window.testViewport={height:844,top:0};
+  Object.defineProperty(view,'height',{get:()=>window.testViewport.height,configurable:true});
+  Object.defineProperty(view,'offsetTop',{get:()=>window.testViewport.top,configurable:true});
+  window.setTestViewport=(height,top)=>{window.testViewport={height,top};view.dispatchEvent(new Event('resize'));view.dispatchEvent(new Event('scroll'));};
+ });
+ expect(await page.locator('#welcome-name').evaluate(e=>e!==document.activeElement),'phone onboarding does not autofocus');
+ await shot('onboarding');
+ await page.locator('#welcome-name').fill('Ibrahim');
+ await page.evaluate(()=>setTestViewport(420,120));
+ await page.waitForFunction(()=>getComputedStyle(document.documentElement).getPropertyValue('--viewport-top')==='120px');
+ const check=async(selector)=>{
+  await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+  const r=await page.locator(selector).evaluate(e=>{const r=e.getBoundingClientRect();return {top:r.top,bottom:r.bottom,left:r.left,right:r.right};});
+  expect(r.top>=120&&r.bottom<=541,'composer stays in visible keyboard viewport: '+JSON.stringify(r)+' '+JSON.stringify(await page.evaluate(()=>['#root','.onboarding'].map(s=>{const e=document.querySelector(s);return e?{s,rect:e.getBoundingClientRect().toJSON(),height:getComputedStyle(e).height,position:getComputedStyle(e).position,transform:getComputedStyle(e).transform,mobile:document.documentElement.dataset.mobile}:null}))));
+  expect(r.left>=0&&r.right<=390,'composer stays horizontally inside phone');
+ };
+ await check('.welcome-composer');await shot('onboarding-keyboard');
+ await page.getByRole('button',{name:'Start with LocalBot'}).click();
+ await page.waitForSelector('.mobile-home');
+ await page.locator('.mobile-main-bot').click();await page.waitForSelector('.composer textarea');
+ await check('.composer');
+ expect(await page.locator('.composer textarea').evaluate(e=>e.clientWidth)>=190,'text input has enough width');
+ expect(await page.locator('.composer-permissions').isVisible()===false,'extra controls moved to menu');
+ await page.locator('.composer textarea').fill('A multiline message\nwith another line\nand another');
+ await check('.composer');await shot('chat-keyboard');
+ await page.evaluate(()=>{document.activeElement.blur();setTestViewport(844,0);});
+ await page.waitForFunction(()=>document.documentElement.dataset.keyboard==='false');
+ await shot('chat');
+ await page.getByRole('button',{name:'LocalBot details',exact:true}).click();await page.waitForSelector('.details');
+ expect(await page.locator('.details-avatar .figure').evaluate(e=>e.getBoundingClientRect().width)<=72,'details figure stays bounded');
+ await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+ const face=await page.locator('.details-avatar .figure').boundingBox();expect(face.width===72&&face.y>=59&&face.y+face.height<844,'details figure visible inside phone');
+ await shot('details');
+ await page.getByRole('button',{name:'Close details'}).click();
+ await page.locator('.composer textarea').fill('');await shot('empty-composer');
+ expect((await page.locator('.composer').boundingBox()).height<=52,'empty composer shrinks back to one row');
+ await page.setViewportSize({width:320,height:640});
+ await page.evaluate(()=>setTestViewport(640,0));
+ await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+ expect((await page.locator('.composer').boundingBox()).y<600,'small phone composer stays on screen');
+ expect(await page.locator('.composer textarea').evaluate(e=>e.clientWidth)>=140,'small phone still has room for message text');
+ await shot('small-phone');
+ const gestures=await page.evaluate(()=>{
+  const pinch=new Event('gesturestart',{bubbles:true,cancelable:true});document.dispatchEvent(pinch);
+  const multi=new Event('touchmove',{bubbles:true,cancelable:true});Object.defineProperty(multi,'touches',{value:[{},{}]});document.dispatchEvent(multi);
+  const single=new Event('touchmove',{bubbles:true,cancelable:true});Object.defineProperty(single,'touches',{value:[{}]});document.dispatchEvent(single);
+  return {pinch:pinch.defaultPrevented,multi:multi.defaultPrevented,single:single.defaultPrevented,meta:document.querySelector('meta[name=viewport]').content};
+ });
+ expect(gestures.pinch&&gestures.multi&&!gestures.single,'pinch blocked, single-finger scrolling preserved');
+ expect(gestures.meta.includes('maximum-scale=1'),'mobile viewport disables zoom');
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'no document overflow');
+};

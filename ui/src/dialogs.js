@@ -143,7 +143,7 @@ export function Onboarding({state}) {
  const [phase,setPhase]=useState('typing'),[name,setName]=useState(''),[busy,setBusy]=useState(false);
  const ref=useRef();
  useEffect(()=>{const timer=setTimeout(()=>setPhase('name'),1300);return()=>clearTimeout(timer);},[]);
- useEffect(()=>{if(phase==='name')ref.current?.focus();},[phase]);
+ useEffect(()=>{if(phase==='name'&&document.documentElement.dataset.mobile!=='true')ref.current?.focus({preventScroll:true});},[phase]);
  const submit=async e=>{e.preventDefault();if(!name.trim()||busy||phase!=='name')return;setBusy(true);try{await api('onboard',{name:name.trim()});}catch(error){toast(error.message);setBusy(false);}};
  return html`<main class="onboarding welcome-conversation" aria-label="Meet LocalBot">
   <div class="welcome-titlebar drag-region"><header class="welcome-chat-title"><${Figure} size=${26} color="#eeeef2"/><span>LocalBot</span></header></div>
@@ -154,7 +154,7 @@ export function Onboarding({state}) {
    ${busy?html`<div class="turn turn-user"><div class="bubble">${name.trim()}</div></div>`:null}
   </section>
   <form class="welcome-composer" onSubmit=${submit}>
-   <input ref=${ref} id="welcome-name" aria-label="Your name" name="name" value=${name} maxlength="80" autocomplete="given-name" placeholder="Message LocalBot" disabled=${busy||phase==='typing'} onInput=${e=>setName(e.target.value)}/>
+   <input ref=${ref} id="welcome-name" aria-label="Your name" name="name" value=${name} maxlength="80" autocomplete="off" enterkeyhint="send" placeholder="Message LocalBot" disabled=${busy||phase==='typing'} onInput=${e=>setName(e.target.value)}/>
    <button class="welcome-message-send" type="submit" aria-label="Start with LocalBot" disabled=${busy||phase==='typing'||!name.trim()}><${Icon} name="arrowUp"/></button>
   </form>
  </main>`;
