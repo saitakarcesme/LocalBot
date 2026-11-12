@@ -7,7 +7,7 @@ export function installMobileViewport() {
   frame=requestAnimationFrame(()=>{
    const editing=!!document.activeElement?.matches('input,textarea,[contenteditable=true]');
    const keyboard=editing&&!!view&&innerHeight-view.height>150;
-   root.style.setProperty('--viewport-height',keyboard?view.height+'px':'100dvh');
+   root.style.setProperty('--viewport-height',keyboard?view.height+'px':(navigator.standalone||matchMedia('(display-mode: standalone)').matches?'100lvh':'100dvh'));
    root.style.setProperty('--viewport-top',(keyboard?view.offsetTop:0)+'px');
    root.dataset.keyboard=String(keyboard);
   });

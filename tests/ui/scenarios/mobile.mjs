@@ -21,6 +21,13 @@ export default async({page,api,expect,shot})=>{
  expect(await page.locator('.mobile-sheet-body').innerText()==='','no fake plugins or placeholder content');
  await page.getByRole('button',{name:'Back',exact:true}).click();
  await shot('settings');
+ for(const section of ['Permissions','Vault','Tasks','Routines','About']) {
+ await page.getByRole('button',{name:new RegExp(section),exact:true}).click();
+ await shot(section.toLowerCase());
+ expect(await page.locator('.mobile-sheet-body').evaluate(e=>e.scrollWidth<=e.clientWidth),'no overflow in '+section);
+ await page.getByRole('button',{name:'Back',exact:true}).click();
+ }
+
  await page.getByRole('button',{name:/General/,exact:true}).click();
  expect(await page.locator('.photo-picker').count()===1,'profile photo uses themed picker');
  await shot('general');

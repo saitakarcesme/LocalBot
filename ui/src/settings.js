@@ -89,11 +89,11 @@ export const PERMISSIONS = [
 function Permissions({state}) {
   const rules = state.permissions;
   return html`<${Group} note="Reading its own files, pages it opened and its routines never asks. Choosing “Always allow” on an approval changes the rule here.">
-    <${Row} title="All bots" description="One permission policy for every conversation, including delegated tasks."><${Button} onClick=${()=>attempt(()=>api('permissions',{all:'allow'}))}>Always allow everything</${Button}><${Button} onClick=${()=>attempt(()=>api('permissions',{all:'ask'}))}>Ask first</${Button}></${Row}>
-    <${ReviewRules} state=${state}/>
+    <${Row} stack title="All bots" description="One permission policy for every conversation, including delegated tasks."><${Button} onClick=${()=>attempt(()=>api('permissions',{all:'allow'}))}>Always allow everything</${Button}><${Button} onClick=${()=>attempt(()=>api('permissions',{all:'ask'}))}>Ask first</${Button}></${Row}>
+
     ${PERMISSIONS.filter(([k]) => hasNative || k !== 'computer').map(([key, title, desc]) => html`<${Row} title=${title} description=${desc}>
       <${Select} label=${title} value=${rules[key]} onChange=${v => attempt(() => api('permissions', {[key]: v}))} options=${[['ask', 'Ask first'], ['allow', 'Always allow'], ['never', 'Never']]}/></${Row}>`)}
-  </${Group}>`;
+  </${Group}><section class="review-settings"><${ReviewRules} state=${state}/></section>`;
 }
 
 function Computer() {

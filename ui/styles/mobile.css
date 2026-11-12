@@ -144,3 +144,12 @@ html[data-mobile="true"] {overflow:hidden;overscroll-behavior:none;-webkit-text-
 [data-mobile="true"] .mobile-settings-card {margin-bottom:22px;}
 [data-mobile="true"] .mobile-colors {gap:16px;padding:24px 0;}
 [data-mobile="true"] .mobile-create-figure {padding:8px 0 20px;}
+[data-mobile="true"] .settings-row:has(.settings-row-desc) {grid-template-columns:1fr;}
+[data-mobile="true"] .settings-row:has(.settings-row-desc) .settings-row-control {max-width:100%;justify-content:flex-start;gap:8px;}
+[data-mobile="true"] .settings-row:has(.switch) {grid-template-columns:minmax(0,1fr) auto;}
+[data-mobile="true"] .settings-row:has(.switch) .settings-row-control {justify-content:flex-end;}
+[data-mobile="true"] .mobile-sheet-body :is(.field,.settings-form) {display:grid;gap:8px;min-width:0;width:100%;}
+[data-mobile="true"] .mobile-sheet-body :is(input:not([type=checkbox]):not([type=range]):not([type=file]),textarea) {width:100%;min-width:0;border:1px solid var(--border);background:var(--fill-control);border-radius:12px;padding:12px;font:inherit;}
+[data-mobile="true"] .mobile-sheet-body :is(.manage-card,.review-settings) {min-width:0;overflow-wrap:anywhere;}
+[data-mobile="true"] .mobile-sheet-body .row-buttons {display:flex;flex-wrap:wrap;gap:8px;}
+[data-mobile="true"] .mobile-sheet-body .button {min-height:44px;white-space:normal;}

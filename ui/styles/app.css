@@ -836,3 +836,9 @@ body.is-resizing, body.is-resizing * { cursor: col-resize !important; }
 .photo-picker:focus-within {outline:2px solid var(--text-2);outline-offset:2px;}
 .settings-card input[type=file] {width:100%;font:inherit;background:var(--fill-control);border:1px solid var(--border);border-radius:12px;padding:8px;}
 .settings-card input[type=file]::file-selector-button {font:inherit;color:var(--text);background:var(--fill-hover);border:0;border-radius:8px;padding:8px 12px;margin-right:8px;}
+.review-settings {padding:16px;border:1px solid var(--border);border-radius:16px;background:var(--fill-subtle);margin:20px 0;}
+.review-heading {display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:16px;}
+.review-heading h3 {margin:0;}
+.settings-row.is-stacked {flex-direction:column;align-items:stretch;}
+.settings-row.is-stacked .settings-row-text {flex:auto;}
+.settings-row.is-stacked .settings-row-control {justify-content:flex-start;gap:8px;flex-wrap:wrap;}
