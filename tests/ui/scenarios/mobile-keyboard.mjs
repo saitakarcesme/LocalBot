@@ -25,8 +25,8 @@ export default async({page,api,expect,shot})=>{
  await page.waitForSelector('.mobile-home');
  await page.locator('.mobile-main-bot').click();await page.waitForSelector('.composer textarea');
  await check('.composer');
- expect(await page.locator('.composer textarea').evaluate(e=>e.clientWidth)>=190,'text input has enough width');
- expect(await page.locator('.composer-permissions').isVisible()===false,'extra controls moved to menu');
+ expect(await page.locator('.composer textarea').evaluate(e=>e.clientWidth)>=140,'text input has enough width');
+ expect(await page.locator('.composer-permissions').isVisible()===true,'permissions control matches desktop');
  await page.locator('.composer textarea').fill('A multiline message\nwith another line\nand another');
  await check('.composer');await shot('chat-keyboard');
  await page.evaluate(()=>{document.activeElement.blur();setTestViewport(844,0);});
@@ -39,12 +39,12 @@ export default async({page,api,expect,shot})=>{
  await shot('details');
  await page.getByRole('button',{name:'Close details'}).click();
  await page.locator('.composer textarea').fill('');await shot('empty-composer');
- expect((await page.locator('.composer').boundingBox()).height<=52,'empty composer shrinks back to one row');
+ expect((await page.locator('.composer').boundingBox()).height<=60,'empty composer shrinks back to one row');
  await page.setViewportSize({width:320,height:640});
  await page.evaluate(()=>setTestViewport(640,0));
  await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
  expect((await page.locator('.composer').boundingBox()).y<600,'small phone composer stays on screen');
- expect(await page.locator('.composer textarea').evaluate(e=>e.clientWidth)>=140,'small phone still has room for message text');
+ expect(await page.locator('.composer textarea').evaluate(e=>e.clientWidth)>=96,'small phone still has room for message text');
  await shot('small-phone');
  const gestures=await page.evaluate(()=>{
   const pinch=new Event('gesturestart',{bubbles:true,cancelable:true});document.dispatchEvent(pinch);

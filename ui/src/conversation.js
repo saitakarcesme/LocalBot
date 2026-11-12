@@ -5,7 +5,6 @@ import {Transcript, BotFace, metaOf} from './messages.js';
 import {tableText, diagramSvg, plainText} from './markdown.js';
 import {useLiveStream} from './state.js';
 import {openDialog} from './dialogs.js';
-import {EmojiPicker} from './emoji.js';
 import {useSpeechAvailable, startRecording, transcribeBlob, VoiceChat} from './voice.js';
 import {ContentOverlay} from './viewer.js';
 
@@ -60,14 +59,13 @@ function Suggest({anchor, items, active, onPick, onClose, title}) {
   </${Popover}>`;
 }
 
-export function Composer({bot, state, data, run, thread = null, composerRef, onSent, outbox, setOutbox, onNewChat, compact}) {
+export function Composer({bot, state, data, run, thread = null, composerRef, onSent, outbox, setOutbox, compact}) {
   const area = useRef(), fileInput = useRef(), box = useRef();
   const draftKey = 'draft:' + bot.id + (thread ? ':' + thread : '');
   const [value, setValue] = useState(state.ui[draftKey] || '');
   const [attachments, setAttachments] = useState([]);
   const [reply, setReply] = useState(null);       // {id, role, text, quote}
   const [editing, setEditing] = useState(null);   // message being rewritten
-  const [emoji, setEmoji] = useState(false);
   const [suggest, setSuggest] = useState(null);   // {kind, query, start, active}
   const [markup, setMarkup] = useState(null);
   const [recording, setRecording] = useState(null);   // {rec, mode, level} | 'busy'
@@ -140,7 +138,6 @@ export function Composer({bot, state, data, run, thread = null, composerRef, onS
     const q = suggest.query.toLowerCase();
     if (suggest.kind === 'slash') return [
       ...skills.filter(s => s.name.includes(q)).map(s => ({key: s.id, icon: 'skill', label: '/' + s.name, hint: s.description.slice(0, 40), insert: '/' + s.name + ' '})),
-      ...(!thread && 'new'.startsWith(q) ? [{key: 'new', icon: 'compose', label: '/new', hint: t('Start a new chat'), run: onNewChat}] : []),
     ].slice(0, 8);
     const members = bot.kind === 'group' ? new Set(JSON.parse(bot.members || '[]')) : null;
     return [
@@ -208,7 +205,6 @@ export function Composer({bot, state, data, run, thread = null, composerRef, onS
 
   const plusMenu = e => openMenu({anchor: e.currentTarget, items: [
     {label: t('Add files…'), icon: 'file', onSelect: () => fileInput.current.click()},
-    ...(mobile ? [{label:t('Permissions for all bots'),icon:'shield',onSelect:()=>openDialog('settings',{section:'Permissions'})},{label:t('Emoji'),icon:'smile',onSelect:()=>setEmoji(true)}] : []),
     ...(speech ? [{label: t('Record a voice message'), icon: 'wave', onSelect: () => record('message')}] : []),
   ]});
 
@@ -239,7 +235,6 @@ export function Composer({bot, state, data, run, thread = null, composerRef, onS
           onInput=${e => { change(e.target.value); detect(e.target); }} onKeyDown=${onKey} onClick=${e => suggest && detect(e.target)} onBlur=${() => setTimeout(() => setSuggest(null), 120)}
           onPaste=${e => { const files = [...(e.clipboardData?.files || [])]; if (files.length) { e.preventDefault(); addFiles(files); } }}/>
         <${IconButton} icon="shield" label="Permissions for all bots" className="composer-button composer-permissions" onClick=${()=>openDialog('settings',{section:'Permissions'})}/>
-        <${IconButton} icon="smile" label=${t('Emoji')} className="composer-button composer-emoji" active=${emoji} onClick=${() => setEmoji(!emoji)}/>
         ${speech && !value ? html`<${IconButton} icon="mic" label=${t('Dictate')} className="composer-button" onClick=${() => record('dictate')}/>` : null}
         <button type="button" class=${cx('send-button', showStop && 'is-stop', (canSend || run) && 'is-ready')} disabled=${!run && !canSend}
           aria-label=${showStop ? t('Stop') : editing ? t('Save and resend') : t('Send')} data-tip=${showStop ? t('Stop') + '  esc' : prefs.sendKey === 'mod-enter' ? t('Send') + '  ' + modKey + '↩' : t('Send') + '  ↩'} onClick=${showStop ? stop : send}>
@@ -247,7 +242,6 @@ export function Composer({bot, state, data, run, thread = null, composerRef, onS
         </button>
       </div>`}
     </div>
-    ${emoji ? html`<${EmojiPicker} anchor=${mobile?box.current:box.current.querySelector('.composer-emoji')} placement="top-end" onPick=${e => insert(e)} onClose=${() => setEmoji(false)}/>` : null}
     ${suggest && suggestItems.length ? html`<${Suggest} anchor=${box.current} items=${suggestItems} active=${suggest.active} onPick=${pickSuggestion} onClose=${() => setSuggest(null)} title=${suggest.kind === 'slash' ? t('Skills and commands') : t('Mention a bot or file')}/>` : null}
     ${markup ? html`<${MarkupDialog} file=${markup.file} onClose=${() => setMarkup(null)} onDone=${file => { const old = markup; setMarkup(null); removeAttachment(old); addFiles([file]); }}/>` : null}
   </div>`;
@@ -413,7 +407,6 @@ export function Conversation({bot, data, state, run, panel, onPanel, focusMessag
     if (node) { stick.current = false; node.scrollIntoView({block: 'center'}); node.classList.add('flash'); setTimeout(() => node.classList.remove('flash'), 1600); }
   }, [focusMessage, data?.messages.length]);
   useWindowEvent('localbot:find', () => setFinding(true));
-  useWindowEvent('localbot:new-chat', () => newChat(), [bot.id, run?.id]);
   useWindowEvent('localbot:voice', () => speech && setVoice(true), [speech]);
   const onScroll = () => {
     const el = scroller.current, bottom = el.scrollHeight - el.scrollTop - el.clientHeight < 24;
@@ -421,12 +414,6 @@ export function Conversation({bot, data, state, run, panel, onPanel, focusMessag
   };
   const loadMore = () => { anchor.current = scroller.current.scrollHeight - scroller.current.scrollTop; stick.current = false; onLoadMore(); };
 
-  async function newChat() {
-    if (run) { toast(t('Wait for the current reply to finish.')); return; }
-    if (!data?.messages.some(m => !m.thread && m.created > (bot.context_from || 0))) { composerRef.current.focus?.(); return; }
-    const done = await attempt(() => api('bots/newchat', {id: bot.id}));
-    if (done) { stick.current = true; undoToast(t('New chat started. {name} starts fresh.', {name: bot.name}), () => attempt(() => api('bots/newchat', {id: bot.id, undo: true, previous: done.previous}))); }
-  }
 
   const handlers = {
     onReply: (message, quote) => composerRef.current.reply(message, quote),
@@ -442,7 +429,6 @@ export function Conversation({bot, data, state, run, panel, onPanel, focusMessag
   const selectionReply = useSelectionReply(scroller, handlers.onReply, data);
   const pinned = data ? data.messages.filter(m => metaOf(m).pinned) : [];
   const moreItems = () => [
-    {label: t('New chat'), icon: 'compose', hint: modKey + '⇧N', onSelect: newChat},
     {label: t('Find in chat'), icon: 'search', hint: modKey + 'F', onSelect: () => setFinding(true)},
     ...(speech ? [{label: t('Voice chat'), icon: 'wave', onSelect: () => setVoice(true)}] : []),
     ...(pinned.length ? [{separator: true}, {header: t('Pinned messages')}, ...pinned.slice(-6).map(m => ({label: plainText(m.content).slice(0, 44) || t('Message'), icon: 'pin', onSelect: () => m.thread ? onPanel({type: 'thread', id: m.thread}) : jumpTo(m.id)}))] : []),
@@ -459,7 +445,7 @@ export function Conversation({bot, data, state, run, panel, onPanel, focusMessag
       onDragOver=${e => { if (e.dataTransfer?.types.includes('Files')) e.preventDefault(); }}
       onDragLeave=${e => { if (!e.currentTarget.contains(e.relatedTarget)) setDragging(false); }}
       onDrop=${e => { if (!e.dataTransfer?.files.length) return; e.preventDefault(); setDragging(false); composerRef.current.addFiles([...e.dataTransfer.files]); }}>
-    <header class=${cx('chat-header', 'drag-region', sidebarHidden && 'has-traffic')}>
+    <header class=${cx('chat-header', 'drag-region', sidebarHidden && !mobile && 'has-traffic')}>
       <div class="header-side header-start no-drag">${sidebarHidden ? html`<${IconButton} icon=${mobile?'chevronLeft':'sidebar'} label=${t(mobile?'Back to bots':'Show sidebar')} onClick=${onShowSidebar}/>` : null}</div>
       <button type="button" class=${cx('title-pill', 'no-drag', detailsOpen && 'is-active')} onClick=${() => onPanel(detailsOpen ? null : {type: 'details'})} aria-expanded=${String(detailsOpen)} aria-label=${t('{name} details', {name: bot.name})}>
         <span class="title-avatar"><${BotFace} bot=${bot} state=${currentFigureState} tokenCount=${figureStream.run === run?.id ? figureStream.content?.length || 0 : 0}/></span><span class="title-name">${bot.name}</span>
@@ -468,7 +454,6 @@ export function Conversation({bot, data, state, run, panel, onPanel, focusMessag
       </button>
       <div class="header-side header-actions no-drag">
         <${ContextMeter} state=${state} run=${run} data=${data}/>
-        <${IconButton} icon="compose" label=${t('New chat') + '  ' + modKey + '⇧N'} onClick=${newChat}/>
         <${IconButton} icon="more" label=${t('More')} onClick=${e => openMenu({anchor: e.currentTarget, align: 'end', items: moreItems()})}/>
       </div>
       ${finding ? html`<${FindBar} container=${column} onClose=${() => setFinding(false)}/>` : null}
@@ -488,7 +473,7 @@ export function Conversation({bot, data, state, run, panel, onPanel, focusMessag
     <button type="button" class=${cx('jump-button', !atBottom && 'is-visible', newCount > 0 && 'has-count')} aria-label=${newCount ? plural(newCount, '{n} new message', '{n} new messages') : t('Scroll to latest')} tabindex=${atBottom ? -1 : 0}
       onClick=${() => { const el = scroller.current; stick.current = true; el.scrollTo({top: el.scrollHeight, behavior: 'smooth'}); }}>
       ${newCount ? html`<span class="jump-count">${plural(newCount, '{n} new message', '{n} new messages')}</span>` : null}<${Icon} name="arrowUp"/></button>
-    <${Composer} bot=${bot} state=${state} data=${data} run=${run} composerRef=${composerRef} outbox=${outbox} setOutbox=${setOutbox} onNewChat=${newChat} onSent=${() => { stick.current = true; unreadFrom.current = 0; }}/>
+    <${Composer} bot=${bot} state=${state} data=${data} run=${run} composerRef=${composerRef} outbox=${outbox} setOutbox=${setOutbox} onSent=${() => { stick.current = true; unreadFrom.current = 0; }}/>
     ${dragging ? html`<div class="drop-zone"><div><${Icon} name="file"/><strong>${t('Drop to add files')}</strong><span>${t('Up to 25 MB each')}</span></div></div>` : null}
     ${selectionReply}
     ${overlay ? html`<${ContentOverlay} title=${overlay.title} html=${overlay.html} onClose=${() => setOverlay(null)}

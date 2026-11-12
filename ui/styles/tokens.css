@@ -67,7 +67,7 @@
 
   --text: #ececec;
   --text-2: rgb(236 236 236 / .66);
-  --text-3: rgb(236 236 236 / .46);
+  --text-3: rgb(236 236 236 / .60);
   --text-4: rgb(236 236 236 / .3);
   --text-on-strong: #141414;
   --strong: #ececec;
@@ -110,7 +110,7 @@
 
   --text: #1c1c1c;
   --text-2: rgb(28 28 28 / .68);
-  --text-3: rgb(28 28 28 / .5);
+  --text-3: rgb(28 28 28 / .62);
   --text-4: rgb(28 28 28 / .32);
   --text-on-strong: #ffffff;
   --strong: #1c1c1c;

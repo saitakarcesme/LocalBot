@@ -1,7 +1,7 @@
 import {installMobileViewport} from './mobile-viewport.js';
 import {MobileHome, PhonePairing} from './mobile.js';
 import {ComputerDock} from './computer.js';
-import {t, html, render, useState, useEffect, useRef, cx, api, attempt, useToasts, hasNative, native, mobileOrigin} from './lib.js';
+import {t, html, render, useState, useEffect, useLayoutEffect, useRef, cx, api, attempt, useToasts, hasNative, native, mobileOrigin} from './lib.js';
 import {useAppData, activeRunFor, setNotificationPrefs} from './state.js';
 import {Sidebar} from './sidebar.js';
 import {Conversation, ThreadPanel} from './conversation.js';
@@ -89,7 +89,7 @@ function App() {
       setSelected((remembered || live[0])?.id || null);
     }
   }, [state]);
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!state) return;
     setLanguage(state.preferences.language); applyPreferences(state.preferences); setNotificationPrefs(state.preferences);
     const media = matchMedia('(prefers-color-scheme: dark)');

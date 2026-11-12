@@ -144,7 +144,7 @@ export function Onboarding({state}) {
  const ref=useRef();
  useEffect(()=>{const timer=setTimeout(()=>setPhase('name'),1300);return()=>clearTimeout(timer);},[]);
  useEffect(()=>{if(phase==='name'&&document.documentElement.dataset.mobile!=='true')ref.current?.focus({preventScroll:true});},[phase]);
- const submit=async e=>{e.preventDefault();if(!name.trim()||busy||phase!=='name')return;setBusy(true);try{if(document.documentElement.dataset.mobile!=='true'){document.documentElement.dataset.welcomeTransition='true';await new Promise(r=>setTimeout(r,420));setTimeout(()=>delete document.documentElement.dataset.welcomeTransition,900);}await api('onboard',{name:name.trim()});}catch(error){toast(error.message);setBusy(false);}};
+ const submit=async e=>{e.preventDefault();if(!name.trim()||busy||phase!=='name')return;setBusy(true);try{await api('onboard',{name:name.trim()});}catch(error){toast(error.message);setBusy(false);}};
  return html`<main class=${cx("onboarding welcome-conversation",busy&&"is-leaving")} aria-label="Meet LocalBot">
   <div class="welcome-titlebar drag-region"><header class="welcome-chat-title"><${Figure} size=${26} color="#eeeef2"/><span>LocalBot</span></header></div>
   <section class="welcome-messages" aria-live="polite">

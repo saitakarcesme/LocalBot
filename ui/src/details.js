@@ -1,6 +1,6 @@
 import {t, html, useState, useEffect, cx, api, attempt, relativeTime, displayName, hasNative, native, downloadFile, fileKind} from './lib.js';
 import {Icon, toolIcon} from './icons.js';
-import {IconButton, Switch, Segmented, openMenu, Button, undoToast} from './ui.js';
+import {FilePicker, IconButton, Switch, Segmented, openMenu, Button, undoToast} from './ui.js';
 import {Figure} from './figure.js';
 import {openDialog} from './dialogs.js';
 import {stepLabel} from './messages.js';
@@ -62,7 +62,7 @@ export function Memory({bot, data}) {
   const [query,setQuery]=useState(''); const [editing,setEditing]=useState(null);
   const add = () => { const t = text.trim(); if (!t) return; attempt(async () => { await api('memories', {bot: bot.id, text: t}); setText(''); }); };
   return html`<section class="detail-section">
-    <input aria-label=${t("Search memories")} placeholder=${t("Search memories")} value=${query} onInput=${e=>setQuery(e.target.value)}/><label class="field"><span>Import memories (text)</span><input type="file" accept=".txt,.md" onChange=${e=>{const f=e.target.files[0];if(f)attempt(async()=>api('memories/import',{bot:bot.id,text:await f.text()}));}}/></label>
+    <input aria-label=${t("Search memories")} placeholder=${t("Search memories")} value=${query} onInput=${e=>setQuery(e.target.value)}/><label class="field"><span>Import memories (text)</span><${FilePicker} accept=".txt,.md" onChange=${e=>{const f=e.target.files[0];if(f)attempt(async()=>api('memories/import',{bot:bot.id,text:await f.text()}));}}/></label>
     <form class="memory-add" onSubmit=${e => { e.preventDefault(); add(); }}>
       <input value=${text} maxlength="2000" placeholder="Add something to remember" aria-label="New memory" onInput=${e => setText(e.target.value)}/>
       <${IconButton} icon="plus" size="sm" label="Add memory" tip=${false} disabled=${!text.trim()} type="submit"/>

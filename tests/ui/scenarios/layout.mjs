@@ -19,8 +19,12 @@ export default async({page,api,expect,shot,idle})=>{
   expect(!geometry.overflow.length,'sidebar controls contained '+label+': '+JSON.stringify(geometry.overflow));expect(!geometry.overlap,'native titlebar clearance');expect(!geometry.contentUnderHeader,'chat header separated from transcript');
  };
  await api('preferences',{theme:'dark'});await api('send',{bot:initial.id,prompt:'long'});await page.locator('.transcript').getByText('Paragraph 40.',{exact:false}).waitFor();await idle();
- await verify('expanded');await shot('expanded');
- await page.getByRole('button',{name:'Done'}).click();await shot('plain');
+ await verify('expanded');
+ await shot('expanded');
+ await page.getByRole('button',{name:'Done'}).click();
+ const centered=await page.locator('.profile-row').evaluate(e=>{const a=e.querySelector('.user-avatar').getBoundingClientRect(),n=e.querySelector('.bot-row-name').getBoundingClientRect();return Math.abs(a.y+a.height/2-n.y-n.height/2)<2;});
+ expect(centered,'profile name vertically centered with avatar');
+await shot('plain');
  await page.setViewportSize({width:700,height:820});
  expect(await page.locator('.selection-bar').count()===0,'no selection bar in compact mode');
  await verify('compact');await shot('compact');

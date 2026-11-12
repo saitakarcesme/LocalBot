@@ -10,6 +10,12 @@ export function Button({children, kind = 'secondary', onClick, disabled, type = 
   return html`<button type=${type} class=${cx('button', 'button-' + kind, className)} disabled=${disabled} onClick=${onClick} ...${rest}>${children}</button>`;
 }
 
+// Keep the native file dialog while giving every file field the same geometry.
+export function FilePicker({accept,onChange}) {
+  const [name,setName]=useState('');
+  return html`<span class="file-picker"><span class="file-picker-button">${t('Choose file')}</span><span class="file-picker-name">${name||t('No file selected')}</span><input type="file" accept=${accept} onChange=${e=>{setName(e.target.files[0]?.name||'');onChange?.(e);}}/></span>`;
+}
+
 export function Switch({checked, onChange, label, disabled}) {
   return html`<button type="button" role="switch" aria-checked=${String(!!checked)} aria-label=${label} class="switch" disabled=${disabled}
     onClick=${() => onChange(!checked)}><span class="switch-knob"/></button>`;

@@ -439,7 +439,7 @@ export function Transcript({bot, data, state, run, thread = null, unreadFrom = 0
   const figureOf = turn => (turn.author && state.bots.find(b => b.id === turn.author)) || bot;
   return html`${turns.map(turn => {
     if (turn.kind === 'separator') return html`<div class="separator" key=${turn.key}>${separatorTime(turn.created)}</div>`;
-    if (turn.kind === 'reset') return html`<div class="marker" key=${turn.key}><span>${t('New chat')}</span><small>${t('{bot} does not see messages above this line', {bot: bot.name})}</small></div>`;
+    if (turn.kind === 'reset') return null;
     if (turn.kind === 'unread') return html`<div class="marker is-unread" key=${turn.key} id="unread-marker"><span>${t('New messages')}</span></div>`;
     if (turn.kind === 'user') return html`<div class="turn turn-user" key=${turn.key}><div class="bubbles">
       ${turn.blocks.map(item => item.kind === 'file' ? html`<${FileCard} key=${item.id} file=${item} onOpenFile=${handlers.onOpenFile}/>` : html`<${Bubble} key=${item.id} message=${item} side="user" c=${c} isLastUser=${item.id === lastUserId}/>`)}

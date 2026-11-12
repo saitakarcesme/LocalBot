@@ -12,7 +12,7 @@ export default async({page,api,expect,shot})=>{
  expect((await api('state')).bots.some(b=>b.name==='Mobile helper'&&b.color==='#7fd8b0'),'created bot and saved color');
  await page.getByRole('button',{name:'Back to bots'}).click();
  await page.getByRole('button',{name:'Search',exact:true}).click();
- await page.getByRole('textbox',{name:'Search',exact:true}).fill('University');
+ await page.getByRole('searchbox',{name:'Search',exact:true}).fill('University');
  expect(await page.locator('.mobile-bot-row').count()===1,'search filters bot list');
  await shot('search');
  await page.getByRole('button',{name:'Close search'}).click();

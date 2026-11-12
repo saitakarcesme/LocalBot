@@ -50,6 +50,7 @@ export function useAppData(selected, limit = 200) {
   const [authError, setAuthError] = useState(false);
   const selectedRef = useRef(selected), limitRef = useRef(limit);
   selectedRef.current = selected; limitRef.current = limit;
+  const onboardedRef=useRef(null);
   const busy = useRef(false), dirty = useRef(false);
 
   async function refresh() {
@@ -62,8 +63,23 @@ export function useAppData(selected, limit = 200) {
         const [snapshot, data] = await Promise.all([api('state'), id ? api('bot?id=' + encodeURIComponent(id) + '&limit=' + limitRef.current).catch(() => null) : null]);
         setMediaKey(snapshot.mediaKey);
         syncStream(snapshot.streaming);
-        setState(snapshot);
-        setBot(data && id === selectedRef.current ? {id, ...data} : null);
+        const commit=()=>{setState(snapshot);setBot(data && id === selectedRef.current ? {id,...data}:null);};
+        const entering=onboardedRef.current===false&&snapshot.preferences.onboarded;
+        onboardedRef.current=snapshot.preferences.onboarded;
+        if(entering&&document.documentElement.dataset.mobile!=='true'&&snapshot.preferences.motion!=='reduced'&&!matchMedia('(prefers-reduced-motion: reduce)').matches){
+          const before=['.welcome-composer','.welcome-chat-title','.welcome-messages'].map(selector=>document.querySelector(selector)?.getBoundingClientRect());
+          document.documentElement.dataset.welcomeTransition='true';
+          commit();
+          // Preact flushes its queued render in a microtask, before the next paint.
+          await Promise.resolve();
+          const animations=['.conversation>.composer-wrap .composer','.conversation .title-pill','.conversation .column'].map((selector,i)=>{
+            const element=document.querySelector(selector),previous=before[i];
+            if(!element||!previous)return null;
+            const next=element.getBoundingClientRect();
+            return element.animate([{transform:`translateX(${previous.x-next.x}px)`},{transform:'translateX(0)'}],{duration:420,easing:'cubic-bezier(.2,.8,.2,1)'});
+          }).filter(Boolean);
+          Promise.allSettled(animations.map(a=>a.finished)).then(()=>delete document.documentElement.dataset.welcomeTransition);
+        }else commit();
       } while (dirty.current);
     } catch (e) { if (e.message === 'Unauthorized') setAuthError(true); else toast(e.message, 'error'); }
     finally { busy.current = false; }

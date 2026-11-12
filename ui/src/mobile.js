@@ -11,7 +11,7 @@ export function MobileHome({state, onSelect, onCreate, onSettings}) {
   const [searching,setSearching]=useState(false),[query,setQuery]=useState(''),[filter,setFilter]=useState('All');
   const [results,setResults]=useState({messages:[],files:[]});
   const input=useRef();
-  useEffect(()=>{if(searching)input.current?.focus();},[searching]);
+  useEffect(()=>{if(searching)input.current?.focus({preventScroll:true});},[searching]);
   useEffect(()=>{let alive=true;const timer=setTimeout(()=>{
     if(!query.trim()){setResults({messages:[],files:[]});return;}
     api('search?q='+encodeURIComponent(query)).then(r=>{if(alive)setResults(r);}).catch(()=>{});
@@ -32,7 +32,7 @@ export function MobileHome({state, onSelect, onCreate, onSettings}) {
       ${searching&&['All','Messages'].includes(filter)?results.messages.map(m=>html`<button class="mobile-search-result" onClick=${()=>onSelect(m.bot,m.id)}><strong>${live.find(b=>b.id===m.bot)?.name}</strong><span>${plainText(m.content).slice(0,180)}</span></button>`):null}
       ${searching&&['All','Files'].includes(filter)?results.files.map(f=>html`<button class="mobile-search-result" onClick=${()=>{onSelect(f.bot);window.dispatchEvent(new CustomEvent('localbot:file',{detail:f}));}}><${Icon} name="file"/>${f.name}</button>`):null}
     </div>
-    <div class="mobile-search-bar"><label class="mobile-glass mobile-search"><${Icon} name="search"/>${searching?html`<input ref=${input} value=${query} aria-label="Search" onInput=${e=>setQuery(e.target.value)} />`:html`<button aria-label="Search" onClick=${()=>setSearching(true)}>${t('Search')}</button>`}</label>${searching?html`<button class="mobile-glass" aria-label="Close search" onClick=${()=>{setSearching(false);setQuery('');}}><${Icon} name="close"/></button>`:null}</div>
+    <div class="mobile-search-bar"><label class="mobile-glass mobile-search"><${Icon} name="search"/>${searching?html`<input ref=${input} value=${query} aria-label="Search" type="search" enterkeyhint="search" autocomplete="off" onInput=${e=>setQuery(e.target.value)} />`:html`<button aria-label="Search" onClick=${()=>setSearching(true)}>${t('Search')}</button>`}</label>${searching?html`<button class="mobile-glass" aria-label="Close search" onClick=${()=>{setSearching(false);setQuery('');}}><${Icon} name="close"/></button>`:null}</div>
   </main>`;
 }
 
@@ -58,7 +58,7 @@ export function MobileBotDialog({state,onClose,onSelect}) {
     <header class="mobile-sheet-header"><button class="mobile-glass" aria-label="Close" onClick=${onClose}><${Icon} name="close"/></button><h2>Create New Bot</h2></header>
     <form class="mobile-create-form" onSubmit=${e=>{e.preventDefault();save();}}><div class="mobile-create-figure"><${Figure} color=${color} size=${150}/></div>
       <label class="mobile-name-label" for="mobile-bot-name">Name your Bot</label><input id="mobile-bot-name" class="mobile-name-input" value=${name} maxlength="40" autocomplete="off" onInput=${e=>setName(e.target.value)}/>
-      <div class="mobile-colors" role="radiogroup" aria-label="Figure color">${FIGURE_COLORS.map(([label,c])=>html`<button type="button" class=${cx('color-option',color===c&&'is-selected')} style=${'--swatch:'+c} role="radio" aria-label=${label} aria-checked=${color===c} onClick=${()=>setColor(c)}/>` )}</div>
+      <span class="mobile-color-label" id="mobile-color-label">${t("Figure color")}</span><div class="mobile-colors" role="radiogroup" aria-labelledby="mobile-color-label">${FIGURE_COLORS.map(([label,c])=>html`<button type="button" class=${cx('color-option',color===c&&'is-selected')} style=${'--swatch:'+c} role="radio" aria-label=${label} aria-checked=${color===c} onClick=${()=>setColor(c)}/>` )}</div>
       <button type="submit" class="mobile-create-submit" disabled=${!name.trim()||busy}>Create</button>
     </form></section></div>`;
 }

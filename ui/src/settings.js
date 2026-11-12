@@ -1,8 +1,8 @@
 import {RoutineManager, Skills, Vault, Tasks, ConnectionsAdvanced, ReviewRules, Diagnostics} from './manage.js';
 import {t, html, useState, useEffect, useRef, cx, api, attempt, toast, hasNative, native, saveBlob, useFocusTrap, modKey, squareImage} from './lib.js';
 import {Icon} from './icons.js';
-import {Button, IconButton, Switch, Segmented, Select} from './ui.js';
-import {Figure} from './figure.js';
+import {FilePicker, Button, IconButton, Switch, Segmented, Select} from './ui.js';
+import {Figure, UserAvatar} from './figure.js';
 import {ModelSetup} from './models.js';
 
 const SECTIONS = [
@@ -14,8 +14,8 @@ const SECTIONS = [
 export function Group({title, children, note}) {
   return html`<section class="settings-group">${title ? html`<h3>${title}</h3>` : null}<div class="settings-card">${children}</div>${note ? html`<p class="settings-note">${note}</p>` : null}</section>`;
 }
-export function Row({title, description, children, stack}) {
-  return html`<div class=${cx('settings-row', stack && 'is-stacked')}><div class="settings-row-text"><div class="settings-row-title">${title}</div>${description ? html`<div class="settings-row-desc">${description}</div>` : null}</div><div class="settings-row-control">${children}</div></div>`;
+export function Row({title, description, children, stack, desktopOnly}) {
+  return html`<div class=${cx('settings-row', stack && 'is-stacked',desktopOnly&&'is-desktop-only')}><div class="settings-row-text"><div class="settings-row-title">${title}</div>${description ? html`<div class="settings-row-desc">${description}</div>` : null}</div><div class="settings-row-control">${children}</div></div>`;
 }
 const pref = (key, value) => attempt(() => api('preferences', {[key]: value}));
 
@@ -24,9 +24,9 @@ function General({state}) {
   const [name, setName] = useState(p.user);
   return html`
     <${Group}>
-      <${Row} title=${t("Profile photo")}><label class="photo-picker">${t("Choose photo")}<input hidden type="file" accept="image/*" onChange=${e=>{const f=e.target.files[0];if(f)attempt(async()=>api('preferences',{avatar:await squareImage(f)}));}}/></label></${Row}><${Row} title=${t("Your name")} description="Your bots use it when they talk to you."><input class="input-inline" value=${name} maxlength="80" aria-label=${t("Your name")}
+      <${Row} title=${t("Profile photo")}><${UserAvatar} name=${p.user} avatar=${p.avatar}/><label class="photo-picker">${t("Choose photo")}<input hidden type="file" accept="image/*" onChange=${e=>{const f=e.target.files[0];if(f)attempt(async()=>api('preferences',{avatar:await squareImage(f)}));}}/></label></${Row}><${Row} title=${t("Your name")} description="Your bots use it when they talk to you."><input class="input-inline" value=${name} maxlength="80" aria-label=${t("Your name")}
         onInput=${e => setName(e.target.value)} onBlur=${() => name.trim() && name.trim() !== p.user ? pref('user', name.trim()) : setName(p.user)} onKeyDown=${e => e.key === 'Enter' && e.target.blur()}/></${Row}>
-      <${Row} title=${t("Send messages with")} description=${p.sendKey === 'enter' ? 'Shift + Return adds a new line.' : 'Return adds a new line.'}>
+      <${Row} desktopOnly title=${t("Send messages with")} description=${p.sendKey === 'enter' ? 'Shift + Return adds a new line.' : 'Return adds a new line.'}>
         <${Segmented} label="Send with" value=${p.sendKey} onChange=${v => pref('sendKey', v)} options=${[['enter', 'Return'], ['mod-enter', modKey + ' Return']]}/></${Row}>
     </${Group}>
     <${Group} title=${t("Preferences")}>
@@ -47,7 +47,7 @@ function General({state}) {
 function Appearance({state}) {
   const p = state.preferences;
   return html`<${Group}>
-    <${Row} title=${t("Zoom")}><input aria-label=${t("Zoom")} type="range" min="80" max="140" value=${p.zoom} onChange=${e=>pref('zoom',Number(e.target.value))}/></${Row}>
+    <${Row} desktopOnly title=${t("Zoom")}><input aria-label=${t("Zoom")} type="range" min="80" max="140" value=${p.zoom} onChange=${e=>pref('zoom',Number(e.target.value))}/><output class="control-value">${p.zoom}%</output></${Row}>
     <${Row} title=${t("Bot colors")}><${Switch} label=${t("Tint messages")} checked=${p.botTint} onChange=${v=>pref('botTint',v)}/></${Row}>
     <${Row} title=${t("Link previews")}><${Switch} label=${t("Link previews")} checked=${p.linkPreviews} onChange=${v=>pref('linkPreviews',v)}/></${Row}>
     <${Row} title=${t("Theme")}><${Segmented} label=${t("Theme")} value=${p.theme} onChange=${v => pref('theme', v)} options=${[['light', 'Light'], ['dark', 'Dark']]}/></${Row}>
@@ -89,7 +89,7 @@ export const PERMISSIONS = [
 function Permissions({state}) {
   const rules = state.permissions;
   return html`<${Group} note="Reading its own files, pages it opened and its routines never asks. Choosing “Always allow” on an approval changes the rule here.">
-    <${Row} stack title="All bots" description="One permission policy for every conversation, including delegated tasks."><${Button} onClick=${()=>attempt(()=>api('permissions',{all:'allow'}))}>Always allow everything</${Button}><${Button} onClick=${()=>attempt(()=>api('permissions',{all:'ask'}))}>Ask first</${Button}></${Row}>
+    <${Row} stack title="All bots" description="One permission policy for every conversation, including delegated tasks."><${Button} aria-pressed=${Object.values(rules).every(v=>v==='allow')} onClick=${()=>attempt(()=>api('permissions',{all:'allow'}))}>Always allow everything</${Button}><${Button} aria-pressed=${Object.values(rules).every(v=>v==='ask')} onClick=${()=>attempt(()=>api('permissions',{all:'ask'}))}>Ask first</${Button}></${Row}>
 
     ${PERMISSIONS.filter(([k]) => hasNative || k !== 'computer').map(([key, title, desc]) => html`<${Row} title=${title} description=${desc}>
       <${Select} label=${title} value=${rules[key]} onChange=${v => attempt(() => api('permissions', {[key]: v}))} options=${[['ask', 'Ask first'], ['allow', 'Always allow'], ['never', 'Never']]}/></${Row}>`)}
@@ -157,8 +157,8 @@ function Data({state}) {
       ${hasNative ? html`<${Row} title=${t("Data folder")} description="Where LocalBot keeps its database and bot files."><${Button} onClick=${() => attempt(() => native('openDataFolder'))}>${t("Show in Finder")}</${Button}></${Row}>` : null}
     </${Group}>
     <${Group} title=${t("Import")}>
-    <label class="field"><span>${t("Import a bot template")}</span><input type="file" accept=".json" onChange=${e=>{const f=e.target.files[0];if(f)attempt(async()=>api('bots/import',{content:await f.text()}));}}/></label>
-    <label class="field"><span>${t("Restore exported data")}</span><input type="file" accept=".json" onChange=${e=>{const f=e.target.files[0];if(f)attempt(async()=>api('import-all',{content:await f.text()}));}}/></label>
+    <label class="field"><span>${t("Import a bot template")}</span><${FilePicker} accept=".json" onChange=${e=>{const f=e.target.files[0];if(f)attempt(async()=>api('bots/import',{content:await f.text()}));}}/></label>
+    <label class="field"><span>${t("Restore exported data")}</span><${FilePicker} accept=".json" onChange=${e=>{const f=e.target.files[0];if(f)attempt(async()=>api('import-all',{content:await f.text()}));}}/></label>
     </${Group}>
     <${Group} title=${t("Archived bots")}>
       ${archived.length ? archived.map(b => html`<div class="settings-row">
