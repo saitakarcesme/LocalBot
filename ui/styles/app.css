@@ -842,3 +842,15 @@ body.is-resizing, body.is-resizing * { cursor: col-resize !important; }
 .settings-row.is-stacked {flex-direction:column;align-items:stretch;}
 .settings-row.is-stacked .settings-row-text {flex:auto;}
 .settings-row.is-stacked .settings-row-control {justify-content:flex-start;gap:8px;flex-wrap:wrap;}
+/* Keep the welcome composer at the production chat size while the rail enters. */
+html:not([data-mobile="true"]) .welcome-conversation {padding:24px 24px var(--s-5);transition:padding-left 420ms cubic-bezier(.2,.8,.2,1);}
+html:not([data-mobile="true"]) .welcome-conversation.is-leaving {padding-left:calc(var(--sidebar-width) + 24px + var(--gutter) * 2);}
+html:not([data-mobile="true"]) .welcome-composer {width:min(var(--chat-width),100%);min-height:46px;border-radius:22px;padding:6px 6px 6px 16px;gap:8px;}
+html:not([data-mobile="true"]) .welcome-composer input {height:32px;font-size:var(--t-chat);line-height:20px;}
+html:not([data-mobile="true"]) .welcome-message-send {width:32px;height:32px;}
+html:not([data-mobile="true"]) .welcome-messages {width:min(var(--chat-width),100%);}
+html[data-welcome-transition="true"] .app>.sidebar {animation:welcome-rail 420ms cubic-bezier(.2,.8,.2,1) both;}
+html[data-welcome-transition="true"] .app>.conversation {animation:welcome-chat 240ms ease both;}
+@keyframes welcome-rail {from{transform:translateX(-32px);opacity:0}to{transform:none;opacity:1}}
+@keyframes welcome-chat {from{opacity:.6}to{opacity:1}}
+@media(prefers-reduced-motion:reduce){.welcome-conversation {transition:none!important;}html[data-welcome-transition="true"] .app>* {animation:none!important;}}
