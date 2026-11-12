@@ -854,3 +854,6 @@ html[data-welcome-transition="true"] .app>.conversation {animation:welcome-chat 
 @keyframes welcome-rail {from{transform:translateX(-32px);opacity:0}to{transform:none;opacity:1}}
 @keyframes welcome-chat {from{opacity:.6}to{opacity:1}}
 @media(prefers-reduced-motion:reduce){.welcome-conversation {transition:none!important;}html[data-welcome-transition="true"] .app>* {animation:none!important;}}
+:root[data-host="mac"] .profile-row .bot-row-text {display:flex;justify-content:center;align-self:stretch;}
+:root[data-host="mac"] .icon-button {border-radius:50%;background:linear-gradient(145deg,color-mix(in srgb,var(--text) 13%,transparent),color-mix(in srgb,var(--text) 4%,transparent));border:1px solid color-mix(in srgb,var(--text) 14%,transparent);box-shadow:inset 0 1px 1px color-mix(in srgb,var(--text) 12%,transparent),0 2px 5px #0000000a;}
+:root[data-host="mac"] .icon-button:hover:not(:disabled) {background:linear-gradient(145deg,color-mix(in srgb,var(--text) 20%,transparent),color-mix(in srgb,var(--text) 9%,transparent));}

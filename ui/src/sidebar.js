@@ -226,8 +226,7 @@ export function Sidebar({state, selected, onSelect, onSettings, connected, model
       </div>` : html`<footer class="sidebar-footer">
       <button type="button" class="profile-row" onClick=${profileMenu} aria-haspopup="menu" aria-label=${t('Profile menu')}>
         <${UserAvatar} avatar=${prefs.avatar} name=${prefs.user}/>
-        <span class="bot-row-text"><span class="bot-row-name">${prefs.user}</span>
-          <span class="profile-status" aria-label=${connected ? t('Connected') : t('Reconnecting…')}><span class=${cx('status-dot', dot)}/></span></span>
+        <span class="bot-row-text"><span class="bot-row-name">${prefs.user}</span></span>
       </button>
     </footer>`}
   </aside>`;

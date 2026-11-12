@@ -15,7 +15,7 @@ export function mobileHandler({origin,token}, desktopToken, handler, port) {
  const matches=(a,b)=>{a=Buffer.from(a||'');b=Buffer.from(b);return a.length===b.length&&timingSafeEqual(a,b);};
  const reply=(res,value)=>{res.writeHead(200,{'Content-Type':'application/json','Cache-Control':'no-store','Referrer-Policy':'no-referrer'});res.end(JSON.stringify(value));};
  const equal=value=>{const a=Buffer.from(value||''),b=Buffer.from('Bearer '+token);return a.length===b.length&&timingSafeEqual(a,b);};
- let failures=0,windowStart=Date.now();
+ let failures=0,windowStart=Date.now(),viewport=null;
  return async (req,res)=>{
   const path=new URL(req.url,'http://localhost').pathname;
   const deny=status=>{res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify({error:status===401?'Unauthorized':'Origin denied'}));};
@@ -46,6 +46,13 @@ export function mobileHandler({origin,token}, desktopToken, handler, port) {
   }
   if(path.startsWith('/api/')){
    if(!equal(req.headers.authorization))return deny(401);
+   if(path==='/api/mobile-viewport'){
+    if(req.method==='POST'){
+     let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>4096)return deny(413);}
+     try{const data=JSON.parse(raw);viewport={at:Date.now(),data};}catch{return deny(400);}
+    }
+    return reply(res,viewport);
+   }
    if(path==='/api/mobile-install' && req.method==='GET')return reply(res,{manifest:'/mobile-manifest/'+installKey+'.webmanifest'});
    // Native host polling/results are exclusively for the Mac bridge.
    if(path.startsWith('/api/native'))return deny(403);
