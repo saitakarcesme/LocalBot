@@ -24,7 +24,7 @@ function General({state}) {
   const [name, setName] = useState(p.user);
   return html`
     <${Group}>
-      <label class="field"><span>${t("Profile photo")}</span><input type="file" accept="image/*" onChange=${e=>{const f=e.target.files[0];if(f)attempt(async()=>api('preferences',{avatar:await squareImage(f)}));}}/></label><${Row} title=${t("Your name")} description="Your bots use it when they talk to you."><input class="input-inline" value=${name} maxlength="80" aria-label=${t("Your name")}
+      <${Row} title=${t("Profile photo")}><label class="photo-picker">${t("Choose photo")}<input hidden type="file" accept="image/*" onChange=${e=>{const f=e.target.files[0];if(f)attempt(async()=>api('preferences',{avatar:await squareImage(f)}));}}/></label></${Row}><${Row} title=${t("Your name")} description="Your bots use it when they talk to you."><input class="input-inline" value=${name} maxlength="80" aria-label=${t("Your name")}
         onInput=${e => setName(e.target.value)} onBlur=${() => name.trim() && name.trim() !== p.user ? pref('user', name.trim()) : setName(p.user)} onKeyDown=${e => e.key === 'Enter' && e.target.blur()}/></${Row}>
       <${Row} title=${t("Send messages with")} description=${p.sendKey === 'enter' ? 'Shift + Return adds a new line.' : 'Return adds a new line.'}>
         <${Segmented} label="Send with" value=${p.sendKey} onChange=${v => pref('sendKey', v)} options=${[['enter', 'Return'], ['mod-enter', modKey + ' Return']]}/></${Row}>
@@ -33,7 +33,7 @@ function General({state}) {
       <${Row} title=${t("Language")}><${Select} label=${t("Language")} value=${p.language} onChange=${v=>pref('language',v)} options=${[['system','System'],['en','English'],['tr','Türkçe']]}/></${Row}>
       <${Row} title=${t("Spelling")}><${Switch} label=${t("Check spelling")} checked=${p.spellcheck} onChange=${v=>pref('spellcheck',v)}/></${Row}>
       <${Row} title=${t("Notification sound")}><${Select} label=${t("Notification sound")} value=${p.soundName} onChange=${v=>pref('soundName',v)} options=${['chime','pop','bell','tick'].map(x=>[x,x])}/></${Row}>
-      <${Row} title=${t("Time zone")}><input aria-label=${t("Time zone")} defaultValue=${p.timezone} onBlur=${e=>pref('timezone',e.target.value)}/></${Row}>
+      <${Row} title=${t("Time zone")}><input class="input-inline" aria-label=${t("Time zone")} defaultValue=${p.timezone} onBlur=${e=>pref('timezone',e.target.value)}/></${Row}>
       <${Row} title=${t("Main bot")}><${Select} label=${t("Main bot")} value=${p.mainBot} onChange=${v=>pref('mainBot',v)} options=${[['','None'],...state.bots.map(b=>[b.id,b.name])]}/></${Row}>
       <${Row} title=${t("First-use guide")}><${Button} onClick=${()=>attempt(()=>api('preferences',{onboarded:false,restart:true}))}>${t("Restart guide")}</${Button}></${Row}>
     </${Group}>

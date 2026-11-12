@@ -5,9 +5,11 @@ export function installMobileViewport() {
  const update=()=>{
   cancelAnimationFrame(frame);
   frame=requestAnimationFrame(()=>{
-   root.style.setProperty('--viewport-height',(view?.height||innerHeight)+'px');
-   root.style.setProperty('--viewport-top',(view?.offsetTop||0)+'px');
-   root.dataset.keyboard=String(!!view&&innerHeight-view.height>150&&view.scale===1);
+   const editing=!!document.activeElement?.matches('input,textarea,[contenteditable=true]');
+   const keyboard=editing&&!!view&&innerHeight-view.height>150;
+   root.style.setProperty('--viewport-height',keyboard?view.height+'px':'100dvh');
+   root.style.setProperty('--viewport-top',(keyboard?view.offsetTop:0)+'px');
+   root.dataset.keyboard=String(keyboard);
   });
  };
  const preventPinch=e=>{if(e.type.startsWith('gesture')||e.touches?.length>1)e.preventDefault();};

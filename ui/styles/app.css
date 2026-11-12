@@ -832,3 +832,7 @@ body.is-resizing, body.is-resizing * { cursor: col-resize !important; }
 .is-resizing .sidebar,.is-resizing .conversation {transition:none!important;}
 
 .welcome-titlebar{display:flex;justify-content:center;width:100%;flex:none;}
+.photo-picker {display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px 16px;border-radius:12px;background:var(--fill-control);border:1px solid var(--border);cursor:pointer;font-size:15px;}
+.photo-picker:focus-within {outline:2px solid var(--text-2);outline-offset:2px;}
+.settings-card input[type=file] {width:100%;font:inherit;background:var(--fill-control);border:1px solid var(--border);border-radius:12px;padding:8px;}
+.settings-card input[type=file]::file-selector-button {font:inherit;color:var(--text);background:var(--fill-hover);border:0;border-radius:8px;padding:8px 12px;margin-right:8px;}

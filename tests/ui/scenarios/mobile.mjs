@@ -21,6 +21,10 @@ export default async({page,api,expect,shot})=>{
  expect(await page.locator('.mobile-sheet-body').innerText()==='','no fake plugins or placeholder content');
  await page.getByRole('button',{name:'Back',exact:true}).click();
  await shot('settings');
+ await page.getByRole('button',{name:/General/,exact:true}).click();
+ expect(await page.locator('.photo-picker').count()===1,'profile photo uses themed picker');
+ await shot('general');
+ await page.getByRole('button',{name:'Back',exact:true}).click();
  await page.getByRole('button',{name:/Appearance/,exact:true}).click();
  await page.getByRole('radio',{name:'Light',exact:true}).click();
  await page.waitForFunction(()=>document.documentElement.dataset.theme==='light');
